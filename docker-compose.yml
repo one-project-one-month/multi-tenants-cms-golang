@@ -1,0 +1,70 @@
+services:
+  cms-main-system:
+    build:
+      context: cms-sys
+      dockerfile: Dockerfile
+    networks:
+      - whole-system-network
+    depends_on:
+      - postgres-cms
+    environment:
+      - DB_HOST=postgres-cms
+      - DB_PORT=5432
+      - DB_NAME=cms_db
+      - DB_USER=cms_user
+      - DB_PASSWORD=cms_password
+    ports:
+      - "8080:8080"
+
+  lms-main-system:
+    build:
+      context: lms-sys
+      dockerfile: Dockerfile
+    networks:
+      - whole-system-network
+    depends_on:
+      - postgres-lms
+    environment:
+      - DB_HOST=postgres-lms
+      - DB_PORT=5432
+      - DB_NAME=lms_db
+      - DB_USER=lms_user
+      - DB_PASSWORD=lms_password
+    ports:
+      - "8081:8080"
+
+  postgres-cms:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=cms_db
+      - POSTGRES_USER=cms_user
+      - POSTGRES_PASSWORD=cms_password
+    volumes:
+      - postgres-cms:/var/lib/postgresql/data
+    networks:
+      - whole-system-network
+    ports:
+      - "5432:5432"
+
+  postgres-lms:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=lms_db
+      - POSTGRES_USER=lms_user
+      - POSTGRES_PASSWORD=lms_password
+    volumes:
+      - postgres-lms:/var/lib/postgresql/data
+    networks:
+      - whole-system-network
+    ports:
+      - "5433:5432"
+
+networks:
+  whole-system-network:
+    driver: bridge
+
+volumes:
+  postgres-cms:
+    driver: local
+  postgres-lms:
+    driver: local

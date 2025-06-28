@@ -1,0 +1,213 @@
+name: Continuous Integration Development
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+jobs:
+  security-scan:
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [cms-sys,lms-sys]
+
+    steps:
+      - name: Checking Out
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Detect Folder Changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            service:
+              - '${{ matrix.service }}/**'
+
+      - name: Cache Go Modules
+        if: steps.changes.outputs.service == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ matrix.service }}-${{ hashFiles(format('{0}/go.sum', matrix.service)) }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.service }}-
+            
+
+      - name: Download Dependencies
+        if: steps.changes.outputs.service == 'true'
+        working-directory: ./${{ matrix.service }}
+        run: go mod download
+
+      - name: Run Tests
+        if: steps.changes.outputs.service == 'true'
+        working-directory: ./${{ matrix.service }}
+        run: go test -v ./...
+
+      - name: Linting
+        if: steps.changes.outputs.service == 'true'
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          working-directory: ./${{ matrix.service}}
+
+      - name: Scanning with GoSec
+        if: steps.changes.outputs.service == 'true'
+        run:  |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          cd ./${{ matrix.service }}
+          go mod tidy  
+          gosec -fmt sarif -out ../gosec-result-${{matrix.service}}.sarif ./... || echo "Gosec completed √"
+          gosec -fmt json -out ../gosec-result-${{matrix.service}}.json ./... || echo "Gosec json completed √"
+          
+      - name: Vulnerability Scanner (Nancy)
+        run: |
+          go install github.com/sonatype-nexus-community/nancy@latest
+          cd ./${{ matrix.service }}
+          echo "=== 🔍 Vulnerability Scan Results for ${{ matrix.service }} ==="
+          go list -json -deps ./... | nancy sleuth --output-format=text || echo "Nancy scan completed"
+          go list -json -deps ./... | nancy sleuth --output-format=json > ../nancy-results-${{ matrix.service }}.json || echo "Nancy JSON report generated"A
+
+      - name: Go Security Checker (Govulncheck)
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          cd ./${{ matrix.service }}
+          
+          echo "=== 🔍 Go Vulnerability Check for ${{ matrix.service }} ==="
+          govulncheck -json ./... > ../govulncheck-results-${{ matrix.service }}.json || echo "Govulncheck completed"
+          govulncheck ./... || echo "Govulncheck completed"
+
+      - name: Run All the test
+        run: |
+          cd ./${{matrix.service}}
+          go test -v ./..
+
+  terraform-security:
+    permissions:
+      contents: read
+      security-events: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checking out
+        uses: actions/checkout@v4
+
+      - name: Detect Terraform Changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            terraform:
+              - 'infra/**'
+
+      - name: Terraform format Check
+        if: steps.changes.outputs.terraform == 'true'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 'latest'
+
+      - name: Format Check
+        if: steps.changes.outputs.terraform == 'true'
+        working-directory: ./infra
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init
+        if: steps.changes.outputs.terraform == 'true'
+        working-directory: ./infra
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        if: steps.changes.outputs.terraform == 'true'
+        working-directory: ./infra
+        run: terraform validate
+
+      - name: Terraform Security Scan (tfsec)
+        if: steps.changes.outputs.terraform == 'true'
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: ./infra
+          format: sarif
+          soft_fail: true
+
+      - name: Terraform Plan (Dry Run)
+        if: steps.changes.outputs.terraform == 'true'
+        working-directory: ./infra
+        run: |
+            echo "=== 🏗️ Terraform Plan (Dry Run) ==="
+            terraform plan -input=false -no-color || echo "Plan completed with warnings"
+
+  build:
+    needs: security-scan
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [ cms-sys, infra, lms-sys ]
+
+    steps:
+      - name: Checking Out
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Detect Folder Changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            service:
+              - '${{ matrix.service }}/**'
+
+      - name: Build Go Application
+        if: steps.changes.outputs.service == 'true'
+        working-directory: ./${{ matrix.service }}
+        run: |
+          go mod download
+          go build -o  cmd/app.go
+
+      - name: Login to Github Container repo
+        if: steps.changes.outputs.service == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: gchr.io
+          username: ${{github.actor}}
+          password: ${{secrets.GITHUB_TOKEN}}
+
+      - name: Extract metadata
+        if: steps.changes.outputs.service == 'true'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}
+          tags: |
+              type=ref,event=branch
+              type=ref,event=pr
+              type=sha,prefix={{branch}}-
+              type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and Push Docker image
+        if: steps.changes.outputs.service == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{matrix.service}}
+          push: true
+          tags: ${{steps.meta.outputs.tags}}
+          labels: ${{ steps.meta.outputs.labels }}
