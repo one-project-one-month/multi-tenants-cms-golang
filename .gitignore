@@ -1,4 +1,4 @@
 .idea
 infra/.terraform
-cms-sys/.env
-lms-sys/.env
+backend/cms-sys/.env
+backend/lms-sys/.env

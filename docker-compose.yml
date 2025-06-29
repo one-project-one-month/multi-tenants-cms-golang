@@ -1,7 +1,7 @@
 services:
   cms-main-system:
     build:
-      context: cms-sys
+      context: backend/cms-sys
       dockerfile: Dockerfile
     networks:
       - whole-system-network
@@ -18,7 +18,7 @@ services:
 
   lms-main-system:
     build:
-      context: lms-sys
+      context: backend/lms-sys
       dockerfile: Dockerfile
     networks:
       - whole-system-network
