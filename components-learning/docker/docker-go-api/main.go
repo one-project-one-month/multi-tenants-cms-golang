@@ -2,16 +2,15 @@ package main
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"os/signal"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal(err.Error())
-	}
+	//if err := godotenv.Load(); err != nil {
+	//	log.Fatal(err.Error())
+	//}
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "5000"
