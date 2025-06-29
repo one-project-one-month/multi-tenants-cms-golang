@@ -1,4 +1,131 @@
-.idea
-infra/.terraform
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Terraform
+infra/.terraform/
+infra/.terraform.lock.hcl
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+infra/*.tfvars
+infra/.terraform.tfstate.lock.info
+
+# Environment files
 backend/cms-sys/.env
 backend/lms-sys/.env
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+*.env
+
+# Node.js
+**/node_modules/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+.pnp
+.pnp.js
+
+# Go
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+vendor/
+# Test binary, built with `go test -c`
+*.test
+# Output of the go build
+*.out
+# Go workspace file
+go.work
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Logs
+logs/
+*.log
+log/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage and test reports
+coverage/
+*.cover
+*.py,cover
+.nyc_output
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+
+# Build outputs
+dist/
+build/
+*.tar.gz
+*.zip
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.cert
+
+# Cache directories
+.cache/
+.parcel-cache/
+
+# Editor backups
+*~
+*.orig
+*.rej
+
+
+# Java (if used)
+*.class
+*.jar
+*.war
+*.ear
+.gradle/
+build/
+
+secrets/
+*.secrets
+config/secrets/
