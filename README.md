@@ -25,7 +25,7 @@
 │   │   └── main.go
 │   ├── go.mod
 │   ├── go.sum
-│   ├── internal
+│   ├── types
 │   │   ├── config
 │   │   ├── handler
 │   │   ├── model
@@ -49,7 +49,7 @@
 │   │   └── main.go
 │   ├── go.mod
 │   ├── go.sum
-│   ├── internal
+│   ├── types
 │   │   ├── config
 │   │   ├── handler
 │   │   ├── model
