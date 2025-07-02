@@ -28,7 +28,7 @@
 │   ├── types
 │   │   ├── config
 │   │   ├── handler
-│   │   ├── model
+│   │   ├── tenants
 │   │   ├── repository
 │   │   └── service
 │   ├── pkg
@@ -52,7 +52,7 @@
 │   ├── types
 │   │   ├── config
 │   │   ├── handler
-│   │   ├── model
+│   │   ├── tenants
 │   │   ├── repository
 │   │   └── service
 │   ├── pkg
