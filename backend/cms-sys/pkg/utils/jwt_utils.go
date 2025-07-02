@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var jwtSecret = []byte("your-secret-key-change-this-in-production")
+var jwtSecret = GetEnv("JWT_SECRET", "")
 
 type Claims struct {
 	UserID    uuid.UUID `json:"user_id"`
