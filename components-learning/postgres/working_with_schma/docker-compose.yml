@@ -1,0 +1,42 @@
+services:
+  application:
+    build:
+      context: gorm
+      dockerfile: gorm/Dockerfile
+    depends_on:
+      - postgres
+    networks:
+      - application-suite
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: cms_db
+      POSTGRES_USER: cms_user
+      POSTGRES_PASSWORD: cms_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - application-suite
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U cms_user -d cms_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+
+networks:
+  application-suite:
+    driver: bridge
+
+volumes:
+  postgres_data:

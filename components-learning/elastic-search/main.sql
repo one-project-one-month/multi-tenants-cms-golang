@@ -8,8 +8,8 @@
 -- );
 --
 -- INSERT INTO Items (item_name, description, is_deleted) VALUES
---                                                            ('Laptop', '{"brand": "Dell", "model": "XPS 13", "specs": {"ram": "16GB", "storage": "512GB SSD"}, "price": 1200}', false),
---                                                            ('Phone', '{"brand": "Apple", "model": "iPhone 14", "specs": {"storage": "128GB", "color": "blue"}, "price": 999}', false),
+--                                                            ('Laptop', '{"brand": "Dell", "tenants": "XPS 13", "specs": {"ram": "16GB", "storage": "512GB SSD"}, "price": 1200}', false),
+--                                                            ('Phone', '{"brand": "Apple", "tenants": "iPhone 14", "specs": {"storage": "128GB", "color": "blue"}, "price": 999}', false),
 --                                                            ('Book', '{"title": "PostgreSQL Guide", "author": "John Doe", "pages": 350, "categories": ["database", "programming"]}', false);
 --
 -- SELECT  item_name, description->'brand' as brandjsonb  FROM items;
