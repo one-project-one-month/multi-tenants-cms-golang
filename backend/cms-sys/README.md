@@ -35,5 +35,5 @@ wanhtet@swanhtets-MacBook-Air cms-sys % tree
 │       └── response.go
 └── test
 11 directories, 22 files
-Here is all struct and give me clear and nice go project readme file
+
 ```
