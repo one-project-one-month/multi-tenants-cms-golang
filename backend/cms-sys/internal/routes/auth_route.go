@@ -5,10 +5,7 @@ import (
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/handler"
 )
 
-func SetupRoutes(
-	app *fiber.App,
-	handler handler.AuthHandle,
-) {
+func SetupRoutes(app *fiber.App, handler handler.AuthHandle) {
 	auth := app.Group("/auth")
 	auth.Post("/login", handler.Login)
 	auth.Post("/register", handler.Register)
