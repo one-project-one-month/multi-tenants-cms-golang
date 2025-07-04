@@ -438,19 +438,7 @@ git push -u origin ft-CM-<according-to-your-ticket>
 
 ## ⚡ Pro Tips
 
-<details>
-<summary><strong>🎯 Best Practices</strong></summary>
 
-- **Small Commits**: Make frequent, small commits with clear messages
-- **Test First**: Run tests before committing
-- **Clean Code**: Follow the project's linting and formatting rules
-- **Documentation**: Update docs when adding new features
-- **Code Review**: Be open to feedback and suggestions
-
-</details>
-
-<details>
-<summary><strong>🔧 Useful Git Commands</strong></summary>
 
 ```bash
 # View commit history
