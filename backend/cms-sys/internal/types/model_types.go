@@ -56,12 +56,12 @@ func (u *CMSUser) BeforeCreate(tx *gorm.DB) error {
 }
 
 type CMSCusPurchase struct {
-	RelationID   uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"relation_id"`
-	CMSCusID     uuid.UUID  `gorm:"type:uuid;not null" json:"cms_cus_id"`
-	SystemName   SystemType `gorm:"type:system_type;not null" json:"system_name"`
-	PurchaseDate time.Time  `gorm:"not null;default:CURRENT_TIMESTAMP" json:"purchase_date"`
-	CreatedAt    time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	Customer     CMSUser    `gorm:"foreignKey:CMSCusID;references:CMSUserID" json:"customer,omitempty"`
+	RelationID   uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"relation_id"`
+	CMSCusID     uuid.UUID `gorm:"type:uuid;not null" json:"cms_cus_id"`
+	SystemName   string    `gorm:"type:varchar(100);not null" json:"system_name"`
+	PurchaseDate time.Time `gorm:"not null;default:CURRENT_TIMESTAMP" json:"purchase_date"`
+	CreatedAt    time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	Customer     CMSUser   `gorm:"foreignKey:CMSCusID;references:CMSUserID" json:"customer,omitempty"`
 }
 
 func (CMSCusPurchase) TableName() string {

@@ -48,7 +48,7 @@ func main() {
 		Host:            utils.GetEnv("DB_HOST", "localhost"),
 		Port:            utils.GetEnvAsInt("DB_PORT", 5432),
 		User:            utils.GetEnv("DB_USER", "postgres"),
-		Password:        utils.GetEnv("DB_PASSWORD", "password"),
+		Password:        utils.GetEnv("DB_PASSWORD", "Swanhtet12@"),
 		DBName:          utils.GetEnv("DB_NAME", "cms_db"),
 		SSLMode:         utils.GetEnv("DB_SSL_MODE", "disable"),
 		MaxOpenConns:    utils.GetEnvAsInt("DB_MAX_OPEN_CONNS", 25),

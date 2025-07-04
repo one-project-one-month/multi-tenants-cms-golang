@@ -9,25 +9,25 @@ services:
       vault:
         condition: service_healthy
       postgres-cms:
-        condition: service_started
+        condition: service_healthy
     environment:
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - APP_ENV=${APP_ENV}
-      - LOG_LEVEL=${LOG_LEVEL}
-      - LOG_FILE_PATH=${LOG_FILE_PATH}
-      - LOG_MAX_SIZE=${LOG_MAX_SIZE}
-      - LOG_MAX_BACKUPS=${LOG_MAX_BACKUPS}
-      - LOG_MAX_AGE=${LOG_MAX_AGE}
-      - LOG_COMPRESS=${LOG_COMPRESS}
-      - VAULT_ADDR=${VAULT_ADDR}
-      - VAULT_TOKEN=${VAULT_TOKEN}
-      - LOG_CONSOLE=${LOG_CONSOLE}
+      - DB_HOST=postgres-cms
+      - DB_PORT=5432
+      - DB_NAME=cms_db
+      - DB_USER=postgres
+      - DB_PASSWORD=cms_password_123
+      - APP_ENV=development
+      - LOG_LEVEL=info
+      - LOG_FILE_PATH=/app/logs/app.log
+      - LOG_MAX_SIZE=100
+      - LOG_MAX_BACKUPS=3
+      - LOG_MAX_AGE=28
+      - LOG_COMPRESS=true
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=root
+      - LOG_CONSOLE=true
     ports:
-      - "${PORT}:8080"
+      - "8080:8080"
     restart: unless-stopped
 
   vault:
@@ -38,8 +38,8 @@ services:
     ports:
       - "8200:8200"
     environment:
-      - VAULT_DEV_ROOT_TOKEN_ID=${VAULT_DEV_ROOT_TOKEN_ID}
-      - VAULT_DEV_LISTEN_ADDRESS=${VAULT_DEV_LISTEN_ADDRESS}
+      - VAULT_DEV_ROOT_TOKEN_ID=root
+      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
     volumes:
       - ./vault-init.sh:/vault-init.sh
       - ./rsa:/vault/keys
@@ -55,17 +55,17 @@ services:
   postgres-cms:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=cms_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=cms_password_123
     volumes:
       - postgres-cms:/var/lib/postgresql/data
     networks:
       - whole-system-network
     ports:
-      - "${DB_PORT}:5432"
+      - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cms_db"]
       interval: 10s
       timeout: 5s
       retries: 5
