@@ -2,9 +2,11 @@ name: Continuous Integration Development
 
 on:
   push:
-    branches: [main, dev]
+    branches:
+      - '**'
   pull_request:
-    branches: [main, dev]
+    branches:
+      - '**'
   workflow_dispatch:
 
 jobs:
@@ -16,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [cms-sys,lms-sys]
+        service: [cms-sys, lms-sys]
 
     steps:
       - name: Checking Out
@@ -25,7 +27,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '1.21'
 
       - name: Detect Folder Changes
         uses: dorny/paths-filter@v3
@@ -33,7 +35,7 @@ jobs:
         with:
           filters: |
             service:
-              - '${{ matrix.service }}/**'
+              - 'backend/${{ matrix.service }}/**'
 
       - name: Cache Go Modules
         if: steps.changes.outputs.service == 'true'
@@ -42,19 +44,18 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ matrix.service }}-${{ hashFiles(format('{0}/go.sum', matrix.service)) }}
+          key: ${{ runner.os }}-go-${{ matrix.service }}-${{ hashFiles(format('backend/{0}/go.sum', matrix.service)) }}
           restore-keys: |
             ${{ runner.os }}-go-${{ matrix.service }}-
-            
 
       - name: Download Dependencies
         if: steps.changes.outputs.service == 'true'
-        working-directory: ./${{ matrix.service }}
+        working-directory: ./backend/${{ matrix.service }}
         run: go mod download
 
       - name: Run Tests
         if: steps.changes.outputs.service == 'true'
-        working-directory: ./${{ matrix.service }}
+        working-directory: ./backend/${{ matrix.service }}
         run: go test -v ./...
 
       - name: Linting
@@ -62,38 +63,40 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: latest
-          working-directory: ./${{ matrix.service}}
+          working-directory: ./backend/${{ matrix.service }}
 
       - name: Scanning with GoSec
         if: steps.changes.outputs.service == 'true'
-        run:  |
+        run: |
           go install github.com/securego/gosec/v2/cmd/gosec@latest
-          cd ./${{ matrix.service }}
+          cd ./backend/${{ matrix.service }}
           go mod tidy  
-          gosec -fmt sarif -out ../gosec-result-${{matrix.service}}.sarif ./... || echo "Gosec completed √"
-          gosec -fmt json -out ../gosec-result-${{matrix.service}}.json ./... || echo "Gosec json completed √"
-          
+          gosec -fmt sarif -out ../../gosec-result-${{ matrix.service }}.sarif ./... || echo "Gosec completed"
+          gosec -fmt json -out ../../gosec-result-${{ matrix.service }}.json ./... || echo "Gosec json completed"
+
       - name: Vulnerability Scanner (Nancy)
+        if: steps.changes.outputs.service == 'true'
         run: |
           go install github.com/sonatype-nexus-community/nancy@latest
-          cd ./${{ matrix.service }}
-          echo "=== 🔍 Vulnerability Scan Results for ${{ matrix.service }} ==="
+          cd ./backend/${{ matrix.service }}
+          echo "Vulnerability Scan Results for ${{ matrix.service }}"
           go list -json -deps ./... | nancy sleuth --output-format=text || echo "Nancy scan completed"
-          go list -json -deps ./... | nancy sleuth --output-format=json > ../nancy-results-${{ matrix.service }}.json || echo "Nancy JSON report generated"A
+          go list -json -deps ./... | nancy sleuth --output-format=json > ../../nancy-results-${{ matrix.service }}.json || echo "Nancy JSON report generated"
 
       - name: Go Security Checker (Govulncheck)
+        if: steps.changes.outputs.service == 'true'
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
-          cd ./${{ matrix.service }}
-          
-          echo "=== 🔍 Go Vulnerability Check for ${{ matrix.service }} ==="
-          govulncheck -json ./... > ../govulncheck-results-${{ matrix.service }}.json || echo "Govulncheck completed"
+          cd ./backend/${{ matrix.service }}
+          echo "Go Vulnerability Check for ${{ matrix.service }}"
+          govulncheck -json ./... > ../../govulncheck-results-${{ matrix.service }}.json || echo "Govulncheck completed"
           govulncheck ./... || echo "Govulncheck completed"
 
       - name: Run All the test
+        if: steps.changes.outputs.service == 'true'
         run: |
-          cd ./${{matrix.service}}
-          go test -v ./..
+          cd ./backend/${{ matrix.service }}
+          go test -v ./...
 
   terraform-security:
     permissions:
@@ -111,7 +114,7 @@ jobs:
         with:
           filters: |
             terraform:
-              - 'infra/**'
+              - 'infra/terraform/**'
 
       - name: Terraform format Check
         if: steps.changes.outputs.terraform == 'true'
@@ -121,33 +124,33 @@ jobs:
 
       - name: Format Check
         if: steps.changes.outputs.terraform == 'true'
-        working-directory: ./infra
+        working-directory: ./infra/terraform
         run: terraform fmt -check -recursive
 
       - name: Terraform init
         if: steps.changes.outputs.terraform == 'true'
-        working-directory: ./infra
+        working-directory: ./infra/terraform
         run: terraform init -backend=false
 
       - name: Terraform Validate
         if: steps.changes.outputs.terraform == 'true'
-        working-directory: ./infra
+        working-directory: ./infra/terraform
         run: terraform validate
 
       - name: Terraform Security Scan (tfsec)
         if: steps.changes.outputs.terraform == 'true'
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
-          working_directory: ./infra
+          working_directory: ./infra/terraform
           format: sarif
           soft_fail: true
 
       - name: Terraform Plan (Dry Run)
         if: steps.changes.outputs.terraform == 'true'
-        working-directory: ./infra
+        working-directory: ./infra/terraform
         run: |
-            echo "=== 🏗️ Terraform Plan (Dry Run) ==="
-            terraform plan -input=false -no-color || echo "Plan completed with warnings"
+          echo "Terraform Plan (Dry Run)"
+          terraform plan -input=false -no-color || echo "Plan completed with warnings"
 
   build:
     needs: security-scan
@@ -157,7 +160,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [ cms-sys, infra, lms-sys ]
+        service: [cms-sys, lms-sys]
 
     steps:
       - name: Checking Out
@@ -166,7 +169,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '1.21'
 
       - name: Detect Folder Changes
         uses: dorny/paths-filter@v3
@@ -174,22 +177,22 @@ jobs:
         with:
           filters: |
             service:
-              - '${{ matrix.service }}/**'
+              - 'backend/${{ matrix.service }}/**'
 
       - name: Build Go Application
         if: steps.changes.outputs.service == 'true'
-        working-directory: ./${{ matrix.service }}
+        working-directory: ./backend/${{ matrix.service }}
         run: |
           go mod download
-          go build -o  cmd/app.go
+          go build -o app ./cmd/main.go
 
       - name: Login to Github Container repo
         if: steps.changes.outputs.service == 'true'
         uses: docker/login-action@v3
         with:
-          registry: gchr.io
-          username: ${{github.actor}}
-          password: ${{secrets.GITHUB_TOKEN}}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata
         if: steps.changes.outputs.service == 'true'
@@ -198,16 +201,16 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}
           tags: |
-              type=ref,event=branch
-              type=ref,event=pr
-              type=sha,prefix={{branch}}-
-              type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and Push Docker image
         if: steps.changes.outputs.service == 'true'
         uses: docker/build-push-action@v6
         with:
-          context: ./${{matrix.service}}
+          context: ./backend/${{ matrix.service }}
           push: true
-          tags: ${{steps.meta.outputs.tags}}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
