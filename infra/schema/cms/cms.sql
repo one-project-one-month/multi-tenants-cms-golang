@@ -130,7 +130,7 @@ CREATE INDEX idx_mfa_token_user ON mfa_token(user_id);
 CREATE INDEX idx_mfa_token_expires ON mfa_token(expires_at);
 
 -- Query to verify customer data
-SELECT
+EXPLAIN SELECT
     u.cms_user_name,
     u.cms_user_email,
     u.cms_name_space,

@@ -6,45 +6,69 @@ services:
     networks:
       - whole-system-network
     depends_on:
-      - postgres-cms
+      vault:
+        condition: service_healthy
+      postgres-cms:
+        condition: service_started
     environment:
-      - DB_HOST=postgres-cms
-      - DB_PORT=5432
-      - DB_NAME=cms_db
-      - DB_USER=cms_user
-      - DB_PASSWORD=cms_password
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - APP_ENV=${APP_ENV}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - LOG_FILE_PATH=${LOG_FILE_PATH}
+      - LOG_MAX_SIZE=${LOG_MAX_SIZE}
+      - LOG_MAX_BACKUPS=${LOG_MAX_BACKUPS}
+      - LOG_MAX_AGE=${LOG_MAX_AGE}
+      - LOG_COMPRESS=${LOG_COMPRESS}
+      - VAULT_ADDR=${VAULT_ADDR}
+      - VAULT_TOKEN=${VAULT_TOKEN}
+      - LOG_CONSOLE=${LOG_CONSOLE}
     ports:
-      - "8080:8080"
+      - "${PORT}:8080"
+    restart: unless-stopped
 
-  lms-main-system:
-    build:
-      context: backend/lms-sys
-      dockerfile: Dockerfile
+  vault:
+    image: hashicorp/vault:1.15
+    container_name: vault
     networks:
       - whole-system-network
-    depends_on:
-      - postgres-lms
-    environment:
-      - DB_HOST=postgres-lms
-      - DB_PORT=5432
-      - DB_NAME=lms_db
-      - DB_USER=lms_user
-      - DB_PASSWORD=lms_password
     ports:
-      - "8081:8080"
+      - "8200:8200"
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=${VAULT_DEV_ROOT_TOKEN_ID}
+      - VAULT_DEV_LISTEN_ADDRESS=${VAULT_DEV_LISTEN_ADDRESS}
+    volumes:
+      - ./vault-init.sh:/vault-init.sh
+      - ./rsa:/vault/keys
+    entrypoint: /bin/sh
+    command: -c "vault server -dev & sleep 5 && sh /vault-init.sh && tail -f /dev/null"
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   postgres-cms:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_DB=cms_db
-      - POSTGRES_USER=cms_user
-      - POSTGRES_PASSWORD=cms_password
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
       - postgres-cms:/var/lib/postgresql/data
     networks:
       - whole-system-network
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres-lms:
     image: postgres:15-alpine
@@ -58,6 +82,11 @@ services:
       - whole-system-network
     ports:
       - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lms_user -d lms_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   whole-system-network:
