@@ -1,7 +1,12 @@
 package main
 
 import (
+	"errors"
+	"fmt"
+	"github.com/google/uuid"
+	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
 	"gorm.io/gorm"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -60,13 +65,30 @@ func main() {
 		appLogger.WithError(err).Fatal("Failed to initialize database connection")
 	}
 
+	err := dbConnection.DB.AutoMigrate(&types.CMSWholeSysRole{}, &types.CMSUser{}, &types.CMSCusPurchase{}, &types.UserPageRequest{})
+	if err != nil {
+		appLogger.WithError(err).Fatal("Failed to migrate database")
+		return
+	}
+	if err := utils.InitJWTKeysFromVault(); err != nil {
+		log.Fatalf("Vault key init failed: %v", err)
+	}
+
+	uid := uuid.New()
+	token, err := utils.GenerateAccessToken(uid, "user@example.com", "admin")
+	if err != nil {
+		log.Fatalf("token generation failed: %v", err)
+	}
+
+	fmt.Println("JWT:", token)
 	healthChecker := utils.NewHealthChecker(dbConnection.DB, appLogger)
 
 	app := fiber.New(fiber.Config{
 		AppName: "CMS Multi-Tenant System",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
-			if e, ok := err.(*fiber.Error); ok {
+			var e *fiber.Error
+			if errors.As(err, &e) {
 				code = e.Code
 			}
 
