@@ -100,7 +100,7 @@ const (
 type UserPageRequest struct {
 	UserPageRequestID uint              `gorm:"primaryKey;autoIncrement" json:"user_page_request_id"`
 	UserID            uuid.UUID         `gorm:"type:uuid;not null;unique" json:"user_id"`
-	PageType          PageType          `gorm:"type:system_check_domain;not null" json:"pagetype"`
+	PageType          PageType          `gorm:"type:varchar(20);not null" json:"pagetype"`
 	Status            PageRequestStatus `gorm:"type:varchar(20);default:'PENDING'" json:"status"`
 
 	User CMSUser `gorm:"foreignKey:UserID;references:CMSUserID" json:"user,omitempty"`
