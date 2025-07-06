@@ -15,6 +15,7 @@ type AuthService interface {
 	Register(req *types.RegisterRequest) (*types.AuthResponse, error)
 	RefreshToken(refreshToken string) (*types.TokenResponse, error)
 	GetUserProfile(userID uuid.UUID) (*types.UserResponse, error)
+	Logout(accessToken, refreshToken string) error
 }
 
 type Service struct {
@@ -111,17 +112,17 @@ func (s *Service) Register(req *types.RegisterRequest) (*types.AuthResponse, err
 		return nil, errors.New("failed to create user")
 	}
 
-	accessToken, err := utils.GenerateAccessToken(user.CMSUserID, user.CMSUserEmail, user.CMSUserRole)
-	if err != nil {
-		s.log.WithError(err).Error("Failed to generate access token")
-		return nil, errors.New("failed to generate access token")
-	}
-
-	refreshToken, err := utils.GenerateRefreshToken(user.CMSUserID, user.CMSUserEmail, user.CMSUserRole)
-	if err != nil {
-		s.log.WithError(err).Error("Failed to generate refresh token")
-		return nil, errors.New("failed to generate refresh token")
-	}
+	//accessToken, err := utils.GenerateAccessToken(user.CMSUserID, user.CMSUserEmail, user.CMSUserRole)
+	//if err != nil {
+	//	s.log.WithError(err).Error("Failed to generate access token")
+	//	return nil, errors.New("failed to generate access token")
+	//}
+	//
+	//refreshToken, err := utils.GenerateRefreshToken(user.CMSUserID, user.CMSUserEmail, user.CMSUserRole)
+	//if err != nil {
+	//	s.log.WithError(err).Error("Failed to generate refresh token")
+	//	return nil, errors.New("failed to generate refresh token")
+	//}
 
 	userResponse := types.UserResponse{
 		ID:        user.CMSUserID,
@@ -134,10 +135,10 @@ func (s *Service) Register(req *types.RegisterRequest) (*types.AuthResponse, err
 	}
 
 	return &types.AuthResponse{
-		User:         userResponse,
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		ExpiresAt:    time.Now().Add(15 * time.Minute),
+		User: userResponse,
+		////AccessToken:  accessToken,
+		////RefreshToken: refreshToken,
+		//ExpiresAt:    time.Now().Add(15 * time.Minute),
 	}, nil
 }
 
@@ -193,4 +194,34 @@ func (s *Service) GetUserProfile(userID uuid.UUID) (*types.UserResponse, error) 
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}, nil
+}
+
+func (s *Service) Logout(accessToken, refreshToken string) error {
+	if accessToken != "" {
+		accessClaims, err := utils.ValidateToken(accessToken)
+		if err == nil && accessClaims.ID != "" {
+			ttl := time.Until(accessClaims.ExpiresAt.Time)
+			if ttl > 0 {
+				if err := utils.RevokeToken(accessClaims.ID, ttl); err != nil {
+					s.log.WithError(err).Error("Failed to revoke access token")
+					return errors.New("failed to revoke access token")
+				}
+			}
+		}
+	}
+
+	if refreshToken != "" {
+		refreshClaims, err := utils.ValidateToken(refreshToken)
+		if err == nil && refreshClaims.ID != "" {
+			ttl := time.Until(refreshClaims.ExpiresAt.Time)
+			if ttl > 0 {
+				if err := utils.RevokeToken(refreshClaims.ID, ttl); err != nil {
+					s.log.WithError(err).Error("Failed to revoke refresh token")
+					return errors.New("failed to revoke refresh token")
+				}
+			}
+		}
+	}
+
+	return nil
 }

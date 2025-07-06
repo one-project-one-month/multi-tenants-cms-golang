@@ -1,0 +1,241 @@
+### Variables
+@baseUrl = http://localhost:8080
+@contentType = application/json
+
+### Register a new user
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+### Register a new user without role (should default to customer)
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Jane Smith",
+  "email": "jane.smith@example.com",
+  "password": "password123"
+}
+
+### Register with invalid email (should fail)
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Invalid User",
+  "email": "invalid-email",
+  "password": "password123"
+}
+
+### Register with short password (should fail)
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Short Pass",
+  "email": "shortpass@example.com",
+  "password": "123"
+}
+
+### Register with duplicate email (should fail)
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Duplicate User",
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+### Login with valid credentials
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+### Login with invalid credentials (should fail)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com",
+  "password": "wrongpassword"
+}
+
+### Login with non-existent user (should fail)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "nonexistent@example.com",
+  "password": "password123"
+}
+
+### Login with invalid email format (should fail)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "invalid-email",
+  "password": "password123"
+}
+
+### Login with missing fields (should fail)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com"
+}
+
+### Refresh token (replace with actual refresh token from login response)
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTIzNDU2NzgtOTBhYi1jZGVmLTEyMzQtNTY3ODkwYWJjZGVmIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInJvbGUiOiJhZG1pbiIsInRva2VuX3R5cGUiOiJyZWZyZXNoIiwiaXNzIjoiY21zLXN5cyIsImV4cCI6MTY5NTEyMzQ1NiwiaWF0IjoxNjk0NTE4NjU2LCJuYmYiOjE2OTQ1MTg2NTZ9.example_signature"
+}
+
+### Refresh token with invalid token (should fail)
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "invalid.token.here"
+}
+
+### Refresh token with access token instead of refresh token (should fail)
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTIzNDU2NzgtOTBhYi1jZGVmLTEyMzQtNTY3ODkwYWJjZGVmIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInJvbGUiOiJhZG1pbiIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJpc3MiOiJjbXMtc3lzIiwiZXhwIjoxNjk0NTE5NTU2LCJpYXQiOjE2OTQ1MTg2NTYsIm5iZiI6MTY5NDUxODY1Nn0.example_signature"
+}
+
+### Logout with both access and refresh tokens
+POST {{baseUrl}}/auth/logout
+Content-Type: {{contentType}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTIzNDU2NzgtOTBhYi1jZGVmLTEyMzQtNTY3ODkwYWJjZGVmIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInJvbGUiOiJhZG1pbiIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJpc3MiOiJjbXMtc3lzIiwiZXhwIjoxNjk0NTE5NTU2LCJpYXQiOjE2OTQ1MTg2NTYsIm5iZiI6MTY5NDUxODY1Nn0.example_signature
+
+{
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTIzNDU2NzgtOTBhYi1jZGVmLTEyMzQtNTY3ODkwYWJjZGVmIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInJvbGUiOiJhZG1pbiIsInRva2VuX3R5cGUiOiJyZWZyZXNoIiwiaXNzIjoiY21zLXN5cyIsImV4cCI6MTY5NTEyMzQ1NiwiaWF0IjoxNjk0NTE4NjU2LCJuYmYiOjE2OTQ1MTg2NTZ9.example_signature"
+}
+
+### Logout with only access token (from Authorization header)
+POST {{baseUrl}}/auth/logout
+Content-Type: {{contentType}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTIzNDU2NzgtOTBhYi1jZGVmLTEyMzQtNTY3ODkwYWJjZGVmIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInJvbGUiOiJhZG1pbiIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJpc3MiOiJjbXMtc3lzIiwiZXhwIjoxNjk0NTE5NTU2LCJpYXQiOjE2OTQ1MTg2NTYsIm5iZiI6MTY5NDUxODY1Nn0.example_signature
+
+### Logout with only refresh token (in request body)
+POST {{baseUrl}}/auth/logout
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTIzNDU2NzgtOTBhYi1jZGVmLTEyMzQtNTY3ODkwYWJjZGVmIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInJvbGUiOiJhZG1pbiIsInRva2VuX3R5cGUiOiJyZWZyZXNoIiwiaXNzIjoiY21zLXN5cyIsImV4cCI6MTY5NTEyMzQ1NiwiaWF0IjoxNjk0NTE4NjU2LCJuYmYiOjE2OTQ1MTg2NTZ9.example_signature"
+}
+
+### Logout without any tokens (should still succeed)
+POST {{baseUrl}}/auth/logout
+Content-Type: {{contentType}}
+
+### Test using revoked token (should fail after logout)
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTIzNDU2NzgtOTBhYi1jZGVmLTEyMzQtNTY3ODkwYWJjZGVmIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInJvbGUiOiJhZG1pbiIsInRva2VuX3R5cGUiOiJyZWZyZXNoIiwiaXNzIjoiY21zLXN5cyIsImV4cCI6MTY5NTEyMzQ1NiwiaWF0IjoxNjk0NTE4NjU2LCJuYmYiOjE2OTQ1MTg2NTZ9.example_signature"
+}
+
+### === WORKFLOW TEST SEQUENCE ===
+
+### 1. Register a new test user
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Test User",
+  "email": "test@example.com",
+  "password": "testpass123",
+  "role": "customer"
+}
+
+### 2. Login with the test user (save the tokens from response)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "password": "testpass123"
+}
+
+### 3. Use the access token to access protected endpoint (if you have any)
+# GET {{baseUrl}}/protected-endpoint
+# Authorization: Bearer {{accessToken}}
+
+### 4. Refresh the token using the refresh token from login
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+### 5. Logout using both tokens (copy actual tokens from previous responses)
+POST {{baseUrl}}/auth/logout
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+### 6. Try to use the revoked refresh token (should fail)
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+### === EDGE CASES ===
+
+### Empty request body tests
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{}
+
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{}
+
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{}
+
+### Invalid JSON format
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com"
+  "password": "missing comma"
+}
+
+### Missing Content-Type header
+POST {{baseUrl}}/auth/login
+
+{
+  "email": "test@example.com",
+  "password": "testpass123"
+}

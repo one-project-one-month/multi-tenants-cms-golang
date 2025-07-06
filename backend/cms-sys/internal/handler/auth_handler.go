@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"strings"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 
@@ -70,6 +72,29 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 }
 
 func (h *Handler) Logout(c *fiber.Ctx) error {
+	authHeader := c.Get("Authorization")
+	var accessToken string
+	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+		accessToken = strings.TrimPrefix(authHeader, "Bearer ")
+	}
+
+	var refreshToken string
+	var req struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+
+	if err := c.BodyParser(&req); err == nil {
+		refreshToken = req.RefreshToken
+	}
+
+	if accessToken == "" && refreshToken == "" {
+		return utils.SuccessResponse(c, "Logout successful", nil)
+	}
+
+	if err := h.service.Logout(accessToken, refreshToken); err != nil {
+		return utils.InternalServerErrorResponse(c, err.Error(), nil)
+	}
+
 	return utils.SuccessResponse(c, "Logout successful", nil)
 }
 
