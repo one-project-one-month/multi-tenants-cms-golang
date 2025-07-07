@@ -7,9 +7,9 @@ import (
 
 type AuthResponse struct {
 	User         UserResponse `json:"user"`
-	AccessToken  string       `json:"access_token"`
-	RefreshToken string       `json:"refresh_token"`
-	ExpiresAt    time.Time    `json:"expires_at"`
+	AccessToken  string       `json:"access_token,omitempty"`
+	RefreshToken string       `json:"refresh_token,omitempty"`
+	ExpiresAt    time.Time    `json:"expires_at,omitempty"`
 }
 
 type UserResponse struct {

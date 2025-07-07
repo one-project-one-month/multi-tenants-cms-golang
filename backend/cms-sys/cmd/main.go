@@ -68,6 +68,15 @@ func main() {
 		appLogger.WithError(err).Fatal("Failed to migrate database")
 		return
 	}
+	if err := utils.InitRedis(); err != nil {
+		appLogger.Fatal("Failed to initialize Redis:", err)
+	}
+	defer func() {
+		err := utils.CloseRedis()
+		if err != nil {
+			appLogger.WithError(err).Fatal("Failed to close Redis connection")
+		}
+	}()
 	//if err := utils.InitJWTKeysFromVault(); err != nil {
 	//	log.Fatalf("Vault key init failed: %v", err)
 	//}
@@ -176,6 +185,9 @@ func main() {
 
 func DependencyInjectionSection(logger *logrus.Logger, db *gorm.DB) *DISection {
 	repo := repository.NewRepo(logger, db)
+	if err := repo.CreateDefaultRoles(); err != nil {
+		logger.Fatalf("Failed to create default roles: %v", err)
+	}
 	srv := service.NewService(logger, repo)
 	authHandler := handler.NewHandler(srv)
 
