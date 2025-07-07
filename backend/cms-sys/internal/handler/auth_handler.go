@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/service"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
@@ -14,6 +15,8 @@ type AuthHandle interface {
 	Register(c *fiber.Ctx) error
 	Logout(c *fiber.Ctx) error
 	Refresh(c *fiber.Ctx) error
+	GetMe(c *fiber.Ctx) error
+	UpdateUserProfile(c *fiber.Ctx) error
 }
 
 type Handler struct {
@@ -89,4 +92,48 @@ func (h *Handler) Refresh(c *fiber.Ctx) error {
 	}
 
 	return utils.SuccessResponse(c, "Token refreshed successfully", tokenResponse)
+}
+
+func (h *Handler) GetMe(c *fiber.Ctx) error {
+	var req types.GetMeRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.BadRequestResponse(c, "Invalid request body", err.Error())
+	}
+
+	if err := h.validator.Struct(&req); err != nil {
+		return utils.BadRequestResponse(c, "Validation failed", err.Error())
+	}
+
+	profileResponse, err := h.service.GetMe(req)
+
+	if err != nil {
+		return utils.UnauthorizedResponse(c, err.Error())
+	}
+
+	return utils.SuccessResponse(c, "Get User Information successfully", profileResponse)
+}
+
+func (h *Handler) UpdateUserProfile(c *fiber.Ctx) error {
+	stringId := c.Params("id")
+
+	id, err := uuid.Parse(stringId)
+
+	if err != nil {
+		return utils.BadRequestResponse(c, "The provided ID is not a valid UUID", err.Error())
+	}
+	var req types.UserUpdateRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.BadRequestResponse(c, "Invalid request body", err.Error())
+	}
+	if err := h.validator.Struct(&req); err != nil {
+		return utils.BadRequestResponse(c, "Validation failed!", err.Error())
+	}
+
+	updatedProfileResponse, err := h.service.UpdateUserProfile(id, req)
+
+	if err != nil {
+		return utils.InternalServerErrorResponse(c, "Failed to update user profile", err.Error())
+	}
+	return utils.SuccessResponse(c, "User profile updated", updatedProfileResponse)
+
 }
