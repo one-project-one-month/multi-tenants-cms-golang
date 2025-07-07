@@ -6,9 +6,9 @@ services:
     networks:
       - whole-system-network
     depends_on:
-      vault:
-        condition: service_healthy
       postgres-cms:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     environment:
       - DB_HOST=postgres-cms
@@ -26,6 +26,10 @@ services:
       - VAULT_ADDR=http://vault:8200
       - VAULT_TOKEN=root
       - LOG_CONSOLE=true
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
     ports:
       - "8080:8080"
     restart: unless-stopped
@@ -44,13 +48,28 @@ services:
       - ./vault-init.sh:/vault-init.sh
       - ./rsa:/vault/keys
     entrypoint: /bin/sh
-    command: -c "vault server -dev & sleep 5 && sh /vault-init.sh && tail -f /dev/null"
+    command: -c "vault server -dev & sleep 15 && sh /vault-init.sh && tail -f /dev/null"
     healthcheck:
-      test: ["CMD", "vault", "status"]
+      test: ["CMD", "sh", "-c", "vault status || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks:
+      - whole-system-network
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
 
   postgres-cms:
     image: postgres:15-alpine
@@ -96,4 +115,6 @@ volumes:
   postgres-cms:
     driver: local
   postgres-lms:
+    driver: local
+  redis-data:
     driver: local
