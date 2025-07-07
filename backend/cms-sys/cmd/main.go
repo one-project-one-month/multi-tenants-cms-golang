@@ -68,6 +68,7 @@ func main() {
 		appLogger.WithError(err).Fatal("Failed to migrate database")
 		return
 	}
+
 	if err := utils.InitRedis(); err != nil {
 		appLogger.Fatal("Failed to initialize Redis:", err)
 	}
@@ -76,7 +77,7 @@ func main() {
 		if err != nil {
 			appLogger.WithError(err).Fatal("Failed to close Redis connection")
 		}
-	}()
+  }()
 	//if err := utils.InitJWTKeysFromVault(); err != nil {
 	//	log.Fatalf("Vault key init failed: %v", err)
 	//}
@@ -91,7 +92,7 @@ func main() {
 	healthChecker := utils.NewHealthChecker(dbConnection.DB, appLogger)
 
 	app := fiber.New(fiber.Config{
-		AppName: "CMS Multi-Tenant System",
+		AppName: "CMS Multi-Tenant System ",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 			var e *fiber.Error

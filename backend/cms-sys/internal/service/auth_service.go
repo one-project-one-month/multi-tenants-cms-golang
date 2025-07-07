@@ -15,6 +15,8 @@ type AuthService interface {
 	Register(req *types.RegisterRequest) (*types.AuthResponse, error)
 	RefreshToken(refreshToken string) (*types.TokenResponse, error)
 	GetUserProfile(userID uuid.UUID) (*types.UserResponse, error)
+	GetMe(req types.GetMeRequest) (*types.UserResponse, error)
+	UpdateUserProfile(id uuid.UUID, req types.UserUpdateRequest) (*types.UserResponse, error)
 	Logout(accessToken, refreshToken string) error
 }
 
@@ -195,6 +197,52 @@ func (s *Service) GetUserProfile(userID uuid.UUID) (*types.UserResponse, error) 
 		UpdatedAt: user.UpdatedAt,
 	}, nil
 }
+
+
+func (s *Service) GetMe(req types.GetMeRequest) (*types.UserResponse, error) {
+
+	user, err := s.repo.GetUserByEmail(req.Email)
+
+	if err != nil {
+		s.log.WithError(err).Error("Failed to get user profile")
+		return nil, errors.New("user not found")
+	}
+
+	return &types.UserResponse{
+		ID:        user.CMSUserID,
+		Name:      user.CMSUserName,
+		Email:     user.CMSUserEmail,
+		Role:      user.CMSUserRole,
+		Verified:  user.Verified,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}, nil
+}
+
+func (s *Service) UpdateUserProfile(id uuid.UUID, req types.UserUpdateRequest) (*types.UserResponse, error) {
+
+	user, err := s.repo.GetUserByID(id)
+	if err != nil {
+		s.log.WithError(err).Error("Failed to get user profile with id ", id)
+		return nil, errors.New("user not found")
+	}
+
+	user.CMSUserName = req.Name
+	if err := s.repo.UpdateUser(user); err != nil {
+		s.log.WithError(err).Error("Failed to update user profile")
+		return nil, errors.New("failed to update user profile")
+	}
+
+	return &types.UserResponse{
+		ID:        user.CMSUserID,
+		Name:      user.CMSUserName,
+		Email:     user.CMSUserEmail,
+		Role:      user.CMSUserRole,
+		Verified:  user.Verified,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}, nil
+
 
 func (s *Service) Logout(accessToken, refreshToken string) error {
 	if accessToken != "" {
