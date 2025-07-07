@@ -1,0 +1,99 @@
+package service
+
+import (
+	"errors"
+	"github.com/google/uuid"
+	"github.com/multi-tenants-cms-golang/cms-sys/internal/repository"
+	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
+	"github.com/multi-tenants-cms-golang/cms-sys/pkg/utils"
+	"github.com/sirupsen/logrus"
+	"time"
+)
+
+type OwnerService interface {
+	Create(req types.OwnerCreateRequest) (*types.OwnerResponse, error)
+	Update(id string, req types.OwnerUpdateRequest) (*types.OwnerResponse, error)
+}
+
+type OwnerServiceImpl struct {
+	log      *logrus.Logger
+	repo     repository.OwnerRepository
+	authRepo repository.AuthRepository
+}
+
+var _ OwnerService = (*OwnerServiceImpl)(nil)
+
+func NewOwnerService(log *logrus.Logger, repo repository.OwnerRepository, authRepo repository.AuthRepository) OwnerService {
+	return &OwnerServiceImpl{
+		log:      log,
+		repo:     repo,
+		authRepo: authRepo,
+	}
+}
+
+func (os *OwnerServiceImpl) Create(req types.OwnerCreateRequest) (*types.OwnerResponse, error) {
+	exists, err := os.authRepo.EmailExists(req.Email)
+	if err != nil {
+		os.log.WithError(err).Error("Failed to check email exists!")
+	}
+
+	if exists {
+		return nil, errors.New("email already exists")
+	}
+
+	hashedPassword, err := utils.HashPassword(req.Password)
+	if err != nil {
+		os.log.WithError(err).Error("Failed to hash password!")
+		return nil, errors.New("filed to process password")
+	}
+
+	owner := &types.CMSUser{
+		CMSUserID:    uuid.New(),
+		CMSUserName:  req.Name,
+		CMSUserEmail: req.Email,
+		CMSNameSpace: &req.NameSpace, // TODO : Gotta fix it later as business logic
+		Password:     hashedPassword,
+		CMSUserRole:  string(types.CMSCustomer),
+		Verified:     false,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+
+	if err := os.repo.CreateOwner(owner); err != nil {
+		os.log.WithError(err).Error("Failed to create owner")
+		return nil, errors.New("failed to create owner")
+	}
+
+	return &types.OwnerResponse{
+		ID:        owner.CMSUserID,
+		Name:      owner.CMSUserName,
+		Email:     owner.CMSUserEmail,
+		Role:      owner.CMSUserRole,
+		NameSpace: *owner.CMSNameSpace,
+		Verified:  owner.Verified,
+	}, nil
+}
+
+func (os *OwnerServiceImpl) Update(id string, req types.OwnerUpdateRequest) (*types.OwnerResponse, error) {
+	owner, err := os.repo.GeyById(id)
+	if err != nil {
+		os.log.WithError(err).Error("Failed to get owner with id ", id)
+		return nil, errors.New("failed to get owner")
+	}
+	owner.CMSUserName = req.Name
+	// TODO : Gotta fix it later as business logic
+	owner.CMSNameSpace = &req.NameSpace
+	if err := os.repo.UpdateOwner(owner); err != nil {
+		os.log.WithError(err).Error("Failed to update owner")
+		return nil, errors.New("failed to update owner")
+	}
+
+	return &types.OwnerResponse{
+		ID:        owner.CMSUserID,
+		Name:      owner.CMSUserName,
+		Email:     owner.CMSUserEmail,
+		Role:      owner.CMSUserRole,
+		NameSpace: *owner.CMSNameSpace,
+		Verified:  owner.Verified,
+	}, nil
+}

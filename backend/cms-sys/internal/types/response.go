@@ -27,3 +27,12 @@ type TokenResponse struct {
 	RefreshToken string    `json:"refresh_token"`
 	ExpiresAt    time.Time `json:"expires_at"`
 }
+
+type OwnerResponse struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	NameSpace string    `json:"name_space"`
+	Verified  bool      `json:"verified"`
+}
