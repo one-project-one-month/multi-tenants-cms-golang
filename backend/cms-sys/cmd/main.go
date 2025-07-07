@@ -23,9 +23,10 @@ import (
 )
 
 type DISection struct {
-	repo    repository.AuthRepository
-	srv     service.AuthService
-	handler handler.AuthHandle
+	repo         repository.AuthRepository
+	srv          service.AuthService
+	handler      handler.AuthHandle
+	ownerHandler handler.OwnerHandle
 }
 
 func main() {
@@ -145,6 +146,7 @@ func main() {
 
 	di := DependencyInjectionSection(appLogger, dbConnection.DB)
 	routes.SetupRoutes(app, di.handler)
+	routes.SetupOwnerRoutes(app, di.ownerHandler)
 
 	port := utils.GetEnv("PORT", "8080")
 
@@ -175,11 +177,17 @@ func main() {
 func DependencyInjectionSection(logger *logrus.Logger, db *gorm.DB) *DISection {
 	repo := repository.NewRepo(logger, db)
 	srv := service.NewService(logger, repo)
-	handler := handler.NewHandler(srv)
+	authHandler := handler.NewHandler(srv)
+
+	// Owner
+	ownerRepo := repository.NewOwnerRepository(logger, db)
+	ownerService := service.NewOwnerService(logger, ownerRepo, repo)
+	ownerHandler := handler.NewOwnerHandler(ownerService)
 
 	return &DISection{
-		repo:    repo,
-		srv:     srv,
-		handler: handler,
+		repo:         repo,
+		srv:          srv,
+		handler:      authHandler,
+		ownerHandler: ownerHandler,
 	}
 }
