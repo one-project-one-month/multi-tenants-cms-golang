@@ -87,3 +87,43 @@ func (r *Repo) EmailExists(email string) (bool, error) {
 	}
 	return count > 0, nil
 }
+func (r *Repo) CreateRole(role *types.CMSWholeSysRole) error {
+	if err := r.db.Create(role).Error; err != nil {
+		r.logger.WithError(err).Error("Failed to create role")
+		return err
+	}
+	return nil
+}
+
+func (r *Repo) RoleExists(roleName string) (bool, error) {
+	var count int64
+	if err := r.db.Model(&types.CMSWholeSysRole{}).Where("role_name = ?", roleName).Count(&count).Error; err != nil {
+		r.logger.WithError(err).Error("Failed to check if role exists")
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (r *Repo) CreateDefaultRoles() error {
+	roles := []types.CMSWholeSysRole{
+		{RoleName: string(types.RootAdmin)},
+		{RoleName: string(types.CMSCustomer)},
+	}
+
+	for _, role := range roles {
+		exists, err := r.RoleExists(role.RoleName)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			if err := r.CreateRole(&role); err != nil {
+				return err
+			}
+			r.logger.Infof("Created role: %s", role.RoleName)
+		} else {
+			r.logger.Infof("Role already exists: %s", role.RoleName)
+		}
+	}
+	return nil
+}
