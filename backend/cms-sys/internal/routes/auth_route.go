@@ -11,4 +11,6 @@ func SetupRoutes(app *fiber.App, handler handler.AuthHandle) {
 	auth.Post("/register", handler.Register)
 	auth.Post("/logout", handler.Logout)
 	auth.Post("/refresh", handler.Refresh)
+	auth.Post("/me", handler.GetMe)
+	auth.Put("/profile/:id", handler.UpdateUserProfile)
 }
