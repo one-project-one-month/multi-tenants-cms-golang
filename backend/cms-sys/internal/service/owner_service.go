@@ -2,17 +2,19 @@ package service
 
 import (
 	"errors"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/repository"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
 	"github.com/multi-tenants-cms-golang/cms-sys/pkg/utils"
 	"github.com/sirupsen/logrus"
-	"time"
 )
 
 type OwnerService interface {
 	Create(req types.OwnerCreateRequest) (*types.OwnerResponse, error)
 	Update(id string, req types.OwnerUpdateRequest) (*types.OwnerResponse, error)
+	GetOwnerByID(id string) (*types.OwnerResponse, error)
 }
 
 type OwnerServiceImpl struct {
@@ -75,7 +77,7 @@ func (os *OwnerServiceImpl) Create(req types.OwnerCreateRequest) (*types.OwnerRe
 }
 
 func (os *OwnerServiceImpl) Update(id string, req types.OwnerUpdateRequest) (*types.OwnerResponse, error) {
-	owner, err := os.repo.GeyById(id)
+	owner, err := os.repo.GetById(id)
 	if err != nil {
 		os.log.WithError(err).Error("Failed to get owner with id ", id)
 		return nil, errors.New("failed to get owner")
@@ -86,6 +88,23 @@ func (os *OwnerServiceImpl) Update(id string, req types.OwnerUpdateRequest) (*ty
 	if err := os.repo.UpdateOwner(owner); err != nil {
 		os.log.WithError(err).Error("Failed to update owner")
 		return nil, errors.New("failed to update owner")
+	}
+
+	return &types.OwnerResponse{
+		ID:        owner.CMSUserID,
+		Name:      owner.CMSUserName,
+		Email:     owner.CMSUserEmail,
+		Role:      owner.CMSUserRole,
+		NameSpace: *owner.CMSNameSpace,
+		Verified:  owner.Verified,
+	}, nil
+}
+
+func (os *OwnerServiceImpl) GetOwnerByID(id string) (*types.OwnerResponse, error) {
+	owner, err := os.repo.GetById(id)
+	if err != nil {
+		os.log.WithError(err).Error("Failed to get owner with id ", id)
+		return nil, errors.New("failed to fetch owner")
 	}
 
 	return &types.OwnerResponse{
