@@ -26,3 +26,11 @@ type OwnerUpdateRequest struct {
 	Name      string `json:"name" validate:"required,min=2"`
 	NameSpace string `json:"namespace" validate:"required,min=3"` // TODO : Gotta remove namespace later
 }
+
+type GetMeRequest struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
+type UserUpdateRequest struct {
+	Name string `json:"name" validate:"required,min=2"`
+}
