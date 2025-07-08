@@ -2,17 +2,19 @@ package service
 
 import (
 	"errors"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/repository"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
 	"github.com/multi-tenants-cms-golang/cms-sys/pkg/utils"
 	"github.com/sirupsen/logrus"
-	"time"
 )
 
 type OwnerService interface {
 	Create(req types.OwnerCreateRequest) (*types.OwnerResponse, error)
 	Update(id string, req types.OwnerUpdateRequest) (*types.OwnerResponse, error)
+	GetAllOwners() ([]types.CMSUser, error)
 }
 
 type OwnerServiceImpl struct {
@@ -96,4 +98,8 @@ func (os *OwnerServiceImpl) Update(id string, req types.OwnerUpdateRequest) (*ty
 		NameSpace: *owner.CMSNameSpace,
 		Verified:  owner.Verified,
 	}, nil
+}
+
+func (os *OwnerServiceImpl) GetAllOwners() ([]types.CMSUser, error) {
+	return os.repo.GetAllOwners()
 }
