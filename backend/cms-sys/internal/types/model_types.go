@@ -9,6 +9,10 @@ import (
 type RoleType string
 type SystemType string
 
+type PageStatus string
+
+type RequestStatus string
+
 const (
 	RootAdmin   RoleType = "ROOT_ADMIN"
 	CMSCustomer RoleType = "CMS_CUSTOMER"
@@ -17,6 +21,18 @@ const (
 const (
 	LMS SystemType = "LMS"
 	EMS SystemType = "EMS"
+)
+
+const (
+	PageStatusDraft     PageStatus = "DRAFT"
+	PageStatusPublished PageStatus = "PUBLISHED"
+	PageStatusArchived  PageStatus = "ARCHIVED"
+)
+
+const (
+	RequestStatusPending  RequestStatus = "PENDING"
+	RequestStatusApproved RequestStatus = "APPROVED"
+	RequestStatusRejected RequestStatus = "REJECTED"
 )
 
 type CMSWholeSysRole struct {
@@ -56,12 +72,12 @@ func (u *CMSUser) BeforeCreate(tx *gorm.DB) error {
 }
 
 type CMSCusPurchase struct {
-	RelationID   uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"relation_id"`
-	CMSCusID     uuid.UUID `gorm:"type:uuid;not null" json:"cms_cus_id"`
-	SystemName   string    `gorm:"type:varchar(100);not null" json:"system_name"`
-	PurchaseDate time.Time `gorm:"not null;default:CURRENT_TIMESTAMP" json:"purchase_date"`
-	CreatedAt    time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	Customer     CMSUser   `gorm:"foreignKey:CMSCusID;references:CMSUserID" json:"customer,omitempty"`
+	RelationID   uuid.UUID     `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"relation_id"`
+	CMSCusID     uuid.UUID     `gorm:"type:uuid;not null" json:"cms_cus_id"`
+	SystemName   string        `gorm:"type:varchar(100);not null" json:"system_name"`
+	PurchaseDate time.Time     `gorm:"not null;default:CURRENT_TIMESTAMP" json:"purchase_date"`
+	CreatedAt    time.Time     `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	Customer     CMSUser       `gorm:"foreignKey:CMSCusID;references:CMSUserID" json:"customer,omitempty"`
 }
 
 func (CMSCusPurchase) TableName() string {
@@ -108,4 +124,59 @@ type UserPageRequest struct {
 
 func (UserPageRequest) TableName() string {
 	return "user_page_request"
+}
+
+type Page struct {
+	PageID             uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"page_id"`
+	PageRequestID      uuid.UUID  `gorm:"type:uuid;not null" json:"page_request_id"`
+	Title              string     `gorm:"type:varchar(255);not null" json:"title"`
+	Content            string     `gorm:"type:text" json:"content"`
+	ImageURL           *string    `gorm:"type:varchar(255)" json:"image_url,omitempty"`
+	Status             PageStatus `gorm:"type:varchar(50);default:'DRAFT'" json:"status"`
+	OwnerID            uuid.UUID  `gorm:"type:uuid;not null" json:"owner_id"`
+	PublishedByStaffID *uuid.UUID `gorm:"type:uuid" json:"published_by_staff_id,omitempty"`
+	CreatedAt          time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt          time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
+
+	Owner            CMSUser     `gorm:"foreignKey:OwnerID;references:CMSUserID" json:"owner,omitempty"`
+	PublishedByStaff *CMSUser    `gorm:"foreignKey:PublishedByStaffID;references:CMSUserID" json:"published_by_staff,omitempty"`
+	PageRequest      PageRequest `gorm:"foreignKey:PageRequestID;references:RequestID" json:"page_request,omitempty"`
+}
+
+func (Page) TableName() string {
+	return "cms_page"
+}
+
+func (p *Page) BeforeCreate(tx *gorm.DB) error {
+	if p.PageID == uuid.Nil {
+		p.PageID = uuid.New()
+	}
+	return nil
+}
+
+type PageRequest struct {
+	RequestID			uuid.UUID     `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"request_id"`
+	OwnerID				uuid.UUID     `gorm:"type:uuid;not null" json:"owner_id"`
+	RequestType			string        `gorm:"type:varchar(100);not null" json:"request_type"`
+	Title				string       `gorm:"type:varchar(100);not null" json:"title"`
+	Description			*string       `gorm:"type:text" json:"description,omitempty"`
+	PageUrl				*string       `gorm:"type:varchar(100)" json:"page_url"`
+	LogoUrl				*string       `gorm:"type:text" json:"logo_url,omitempty"`
+	Status				RequestStatus `gorm:"type:varchar(50);default:'PENDING'" json:"status"`
+	AdminID				*uuid.UUID    `gorm:"type:uuid" json:"admin_id,omitempty"`
+	CreatedAt			time.Time     `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt			time.Time     `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
+	Owner				CMSUser        `gorm:"foreignKey:OwnerID;references:CMSUserID" json:"owner,omitempty"`
+	Admin				*CMSUser       `gorm:"foreignKey:AdminID;references:CMSUserID" json:"admin,omitempty"`
+}
+
+func (PageRequest) TableName() string {
+	return "cms_page_request"
+}
+
+func (pr *PageRequest) BeforeCreate(tx *gorm.DB) error {
+	if pr.RequestID == uuid.Nil {
+		pr.RequestID = uuid.New()
+	}
+	return nil
 }
