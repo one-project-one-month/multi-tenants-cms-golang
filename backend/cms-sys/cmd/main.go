@@ -24,10 +24,11 @@ import (
 )
 
 type DISection struct {
-	repo         repository.AuthRepository
-	srv          service.AuthService
-	handler      handler.AuthHandle
-	ownerHandler handler.OwnerHandle
+	repo               repository.AuthRepository
+	srv                service.AuthService
+	handler            handler.AuthHandle
+	ownerHandler       handler.OwnerHandle
+	pageRequestHandler handler.PageRequestHandle
 }
 
 func main() {
@@ -47,7 +48,7 @@ func main() {
 		Host:            utils.GetEnv("DB_HOST", "localhost"),
 		Port:            utils.GetEnvAsInt("DB_PORT", 5432),
 		User:            utils.GetEnv("DB_USER", "postgres"),
-		Password:        utils.GetEnv("DB_PASSWORD", "@milo"),
+		Password:        utils.GetEnv("DB_PASSWORD", "Swanhtet12@"),
 		DBName:          utils.GetEnv("DB_NAME", "cms_db"),
 		SSLMode:         utils.GetEnv("DB_SSL_MODE", "disable"),
 		MaxOpenConns:    utils.GetEnvAsInt("DB_MAX_OPEN_CONNS", 25),
@@ -64,11 +65,21 @@ func main() {
 		appLogger.WithError(err).Fatal("Failed to initialize database connection")
 	}
 
-	err := dbConnection.DB.AutoMigrate(&types.CMSWholeSysRole{}, &types.CMSUser{}, &types.CMSCusPurchase{}, &types.UserPageRequest{})
+	err := dbConnection.DB.AutoMigrate(&types.CMSWholeSysRole{}, &types.CMSUser{}, &types.CMSCusPurchase{}, &types.UserPageRequest{}, &types.Page{}, &types.PageRequest{})
 	if err != nil {
 		appLogger.WithError(err).Fatal("Failed to migrate database")
 		return
 	}
+
+	if err := utils.InitRedis(); err != nil {
+		appLogger.Fatal("Failed to initialize Redis:", err)
+	}
+	defer func() {
+		err := utils.CloseRedis()
+		if err != nil {
+			appLogger.WithError(err).Fatal("Failed to close Redis connection")
+		}
+	}()
 	//if err := utils.InitJWTKeysFromVault(); err != nil {
 	//	log.Fatalf("Vault key init failed: %v", err)
 	//}
@@ -83,7 +94,7 @@ func main() {
 	healthChecker := utils.NewHealthChecker(dbConnection.DB, appLogger)
 
 	app := fiber.New(fiber.Config{
-		AppName: "CMS Multi-Tenant System",
+		AppName: "CMS Multi-Tenant System ",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 			var e *fiber.Error
@@ -148,6 +159,7 @@ func main() {
 	di := DependencyInjectionSection(appLogger, dbConnection.DB)
 	routes.SetupRoutes(app, di.handler)
 	routes.SetupOwnerRoutes(app, di.ownerHandler)
+	routes.SetupPageRequestRoutes(app, di.pageRequestHandler)
 
 	port := utils.GetEnv("PORT", "8080")
 
@@ -177,6 +189,9 @@ func main() {
 
 func DependencyInjectionSection(logger *logrus.Logger, db *gorm.DB) *DISection {
 	repo := repository.NewRepo(logger, db)
+	if err := repo.CreateDefaultRoles(); err != nil {
+		logger.Fatalf("Failed to create default roles: %v", err)
+	}
 	srv := service.NewService(logger, repo)
 	authHandler := handler.NewHandler(srv)
 
@@ -185,10 +200,16 @@ func DependencyInjectionSection(logger *logrus.Logger, db *gorm.DB) *DISection {
 	ownerService := service.NewOwnerService(logger, ownerRepo, repo)
 	ownerHandler := handler.NewOwnerHandler(ownerService)
 
+	// Page Request
+	pageRequestRepo := repository.NewPageRequestRepository(logger, db)
+	pageRequestSrv := service.NewPageRequestService(logger, pageRequestRepo)
+	pageRequestHandler := handler.NewPageRequestHandler(pageRequestSrv)
+
 	return &DISection{
-		repo:         repo,
-		srv:          srv,
-		handler:      authHandler,
-		ownerHandler: ownerHandler,
+		repo:               repo,
+		srv:                srv,
+		handler:            authHandler,
+		ownerHandler:       ownerHandler,
+		pageRequestHandler: pageRequestHandler,
 	}
 }
