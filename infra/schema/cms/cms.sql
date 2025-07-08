@@ -38,7 +38,6 @@ CREATE TABLE cms_cus_purchase (
                                   relation_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                   cms_cus_id UUID NOT NULL,
                                   system_name system_type NOT NULL,
-                                  page_request_id UUID,
                                   purchase_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                   CONSTRAINT fk_cms_purchase_user
@@ -158,8 +157,7 @@ SELECT
     u.cms_user_name,
     u.cms_user_email,
     p.system_name,
-    p.purchase_date,
-    p.page_request_id
+    p.purchase_date
 FROM cms_cus_purchase p
          JOIN cms_user u ON p.cms_cus_id = u.cms_user_id
 ORDER BY p.purchase_date DESC;
