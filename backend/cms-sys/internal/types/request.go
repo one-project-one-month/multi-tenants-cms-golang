@@ -34,3 +34,17 @@ type GetMeRequest struct {
 type UserUpdateRequest struct {
 	Name string `json:"name" validate:"required,min=2"`
 }
+
+type PaginateRequest struct {
+	Page  int `query:"page"`
+	Limit int `query:"limit"`
+}
+
+type CreatePageRequest struct {
+	OwnerID    	string `json:"ownerId" validate:"required,uuid4"`
+	RequestType string `json:"requestType"`
+	Title       string `json:"title"`	
+	Description	string `json:"description"`
+	PageUrl     *string `json:"pageUrl"`
+	Logo		*string `json:"logo"`
+}

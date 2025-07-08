@@ -60,6 +60,12 @@ CREATE INDEX idx_role_name_filter ON cms_whole_sys_role(role_name);
 CREATE INDEX idx_cms_user_role_id ON cms_user(cms_user_role_id);
 CREATE INDEX idx_cms_cus_purchase_customer ON cms_cus_purchase(cms_cus_id);
 CREATE INDEX idx_role_name ON cms_whole_sys_role(role_name);
+
+CREATE INDEX idx_page_request_owner ON cms_page_request(owner_id);
+CREATE INDEX idx_page_owner ON cms_page(owner_id);
+CREATE INDEX idx_page_request_fk ON cms_page(page_request_id);
+CREATE INDEX idx_purchase_page_request_fk ON cms_cus_purchase(page_request_id);
+
 -- Insert initial role data
 INSERT INTO cms_whole_sys_role (role_name)
 VALUES
@@ -158,3 +164,45 @@ ORDER BY p.purchase_date DESC;
 
 -- Example UUID comparison
 SELECT 'd69e2e9e-65ea-47e7-9fe7-7f5b661f069b'::uuid = 'd69e2e9e-65ea-47e7-9fe7-7f5b661f069b'::uuid;
+
+-- Create Page Table
+CREATE TABLE Page (
+                      page_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                      title VARCHAR(255) NOT NULL,
+                      content TEXT,
+                      image_url VARCHAR(255),
+                      status VARCHAR(50) DEFAULT 'draft',
+                      owner_id UUID NOT NULL,
+                      published_by_staff_id UUID,
+                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                      CONSTRAINT fk_page_owner
+                          FOREIGN KEY (owner_id)
+                              REFERENCES cms_user(cms_user_id) ON DELETE CASCADE,
+                      CONSTRAINT fk_page_staff
+                          FOREIGN KEY (published_by_staff_id)
+                              REFERENCES cms_user(cms_user_id) ON DELETE SET NULL
+);
+
+-- Create PageRequest Table
+CREATE TABLE PageRequest (
+                             request_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                             owner_id UUID NOT NULL,
+                             request_type VARCHAR(100) NOT NULL,
+                             title VARCHAR(100) NOT NULL,
+                             description TEXT,
+                             status VARCHAR(50) DEFAULT 'pending',
+                             admin_id UUID,
+                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                             
+                             CONSTRAINT fk_pagerequest_owner
+                                 FOREIGN KEY (owner_id)
+                                     REFERENCES cms_user(cms_user_id) ON DELETE CASCADE,
+                             CONSTRAINT fk_pagerequest_admin
+                                 FOREIGN KEY (admin_id)
+                                     REFERENCES cms_user(cms_user_id) ON DELETE SET NULL
+);
+
+
+CREATE INDEX idx_page_owner ON Page(owner_id);
+CREATE INDEX idx_pagerequest_owner ON PageRequest(owner_id);

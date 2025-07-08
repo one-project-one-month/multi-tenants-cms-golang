@@ -241,6 +241,7 @@ func (s *Service) UpdateUserProfile(id uuid.UUID, req types.UserUpdateRequest) (
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}, nil
+}
 
 }
 func (s *Service) Logout(accessToken, refreshToken string) error {
