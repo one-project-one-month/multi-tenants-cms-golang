@@ -2,12 +2,13 @@ package main
 
 import (
 	"errors"
-	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
-	"gorm.io/gorm"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
+	"gorm.io/gorm"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -46,7 +47,7 @@ func main() {
 		Host:            utils.GetEnv("DB_HOST", "localhost"),
 		Port:            utils.GetEnvAsInt("DB_PORT", 5432),
 		User:            utils.GetEnv("DB_USER", "postgres"),
-		Password:        utils.GetEnv("DB_PASSWORD", "Swanhtet12@"),
+		Password:        utils.GetEnv("DB_PASSWORD", "@milo"),
 		DBName:          utils.GetEnv("DB_NAME", "cms_db"),
 		SSLMode:         utils.GetEnv("DB_SSL_MODE", "disable"),
 		MaxOpenConns:    utils.GetEnvAsInt("DB_MAX_OPEN_CONNS", 25),
