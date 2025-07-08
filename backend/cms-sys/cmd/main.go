@@ -27,6 +27,7 @@ type DISection struct {
 	srv          service.AuthService
 	handler      handler.AuthHandle
 	ownerHandler handler.OwnerHandle
+	pageRequestHandler handler.PageRequestHandle
 }
 
 func main() {
@@ -63,7 +64,7 @@ func main() {
 		appLogger.WithError(err).Fatal("Failed to initialize database connection")
 	}
 
-	err := dbConnection.DB.AutoMigrate(&types.CMSWholeSysRole{}, &types.CMSUser{}, &types.CMSCusPurchase{}, &types.UserPageRequest{})
+	err := dbConnection.DB.AutoMigrate(&types.CMSWholeSysRole{}, &types.CMSUser{}, &types.CMSCusPurchase{}, &types.UserPageRequest{}, &types.Page{}, &types.PageRequest{})
 	if err != nil {
 		appLogger.WithError(err).Fatal("Failed to migrate database")
 		return
@@ -157,6 +158,7 @@ func main() {
 	di := DependencyInjectionSection(appLogger, dbConnection.DB)
 	routes.SetupRoutes(app, di.handler)
 	routes.SetupOwnerRoutes(app, di.ownerHandler)
+	routes.SetupPageRequestRoutes(app, di.pageRequestHandler)
 
 	port := utils.GetEnv("PORT", "8080")
 
@@ -197,10 +199,16 @@ func DependencyInjectionSection(logger *logrus.Logger, db *gorm.DB) *DISection {
 	ownerService := service.NewOwnerService(logger, ownerRepo, repo)
 	ownerHandler := handler.NewOwnerHandler(ownerService)
 
+	// Page Request
+	pageRequestRepo := repository.NewPageRequestRepository(logger, db)
+	pageRequestSrv := service.NewPageRequestService(logger, pageRequestRepo)
+	pageRequestHandler := handler.NewPageRequestHandler(pageRequestSrv)
+
 	return &DISection{
-		repo:         repo,
-		srv:          srv,
-		handler:      authHandler,
+		repo:    repo,
+		srv:     srv,
+		handler: authHandler,
 		ownerHandler: ownerHandler,
+		pageRequestHandler: pageRequestHandler,
 	}
 }

@@ -36,3 +36,14 @@ type OwnerResponse struct {
 	NameSpace string    `json:"name_space"`
 	Verified  bool      `json:"verified"`
 }
+
+type PageRequestResponse struct {
+	ID          uuid.UUID `json:"id"`
+	OwnerID     uuid.UUID `json:"ownerId"`
+	RequestType string    `json:"requestType"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	PageUrl     *string   `json:"pageUrl"`
+	LogoUrl	 	*string   `json:"logoUrl"`
+	CreatedAt   time.Time `json:"createdAt"`
+}
