@@ -198,7 +198,6 @@ func (s *Service) GetUserProfile(userID uuid.UUID) (*types.UserResponse, error) 
 	}, nil
 }
 
-
 func (s *Service) GetMe(req types.GetMeRequest) (*types.UserResponse, error) {
 
 	user, err := s.repo.GetUserByEmail(req.Email)
@@ -243,7 +242,7 @@ func (s *Service) UpdateUserProfile(id uuid.UUID, req types.UserUpdateRequest) (
 		UpdatedAt: user.UpdatedAt,
 	}, nil
 
-
+}
 func (s *Service) Logout(accessToken, refreshToken string) error {
 	if accessToken != "" {
 		accessClaims, err := utils.ValidateToken(accessToken)
