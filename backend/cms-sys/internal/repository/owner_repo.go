@@ -7,6 +7,7 @@ import (
 )
 
 type OwnerRepository interface {
+	GetAllOwners() ([]types.CMSUser, error)
 	CreateOwner(owner *types.CMSUser) error
 	GetById(id string) (*types.CMSUser, error)
 	UpdateOwner(owner *types.CMSUser) error
@@ -44,6 +45,13 @@ func (r *OwnerRepositoryImpl) UpdateOwner(owner *types.CMSUser) error {
 	}
 	return nil
 }
+
+func (r *OwnerRepositoryImpl) GetAllOwners() ([]types.CMSUser, error) {
+	var owners []types.CMSUser
+	if err := r.db.Find(&owners).Error; err != nil {
+		return nil, err
+	}
+	return owners, nil
 
 func (r *OwnerRepositoryImpl) GetOwnerByID(id string) (*types.CMSUser, error) {
 	var owner types.CMSUser
