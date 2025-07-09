@@ -15,7 +15,7 @@ import (
 type OwnerService interface {
 	Create(req types.OwnerCreateRequest) (*types.OwnerResponse, error)
 	Update(id string, req types.OwnerUpdateRequest) (*types.OwnerResponse, error)
-	GetAllOwners() ([]types.CMSUser, error)
+	GetAllOwners() ([]types.OwnerResponse, error)
 	GetOwnerByID(id string) (*types.OwnerResponse, error)
 	BulkDeleteOwners(ids []string, force bool) error
 }
@@ -103,8 +103,32 @@ func (os *OwnerServiceImpl) Update(id string, req types.OwnerUpdateRequest) (*ty
 	}, nil
 }
 
-func (os *OwnerServiceImpl) GetAllOwners() ([]types.CMSUser, error) {
-	return os.repo.GetAllOwners()
+func (os *OwnerServiceImpl) GetAllOwners() ([]types.OwnerResponse, error) {
+    owners, err := os.repo.GetAllOwners()
+    if err != nil {
+        os.log.WithError(err).Error("Failed to get all owners")
+        return nil, errors.New("failed to retrieve owners")
+    }
+
+    responses := make([]types.OwnerResponse, len(owners))
+
+    for i, owner := range owners {
+        var nameSpace string
+        if owner.CMSNameSpace != nil {
+            nameSpace = *owner.CMSNameSpace
+        }
+
+        responses[i] = types.OwnerResponse{
+            ID:        owner.CMSUserID,
+            Name:      owner.CMSUserName,
+            Email:     owner.CMSUserEmail,
+            Role:      owner.CMSUserRole,
+            NameSpace: nameSpace,
+            Verified:  owner.Verified,
+        }
+    }
+
+    return responses, nil
 }
 
 func (os *OwnerServiceImpl) GetOwnerByID(id string) (*types.OwnerResponse, error) {
