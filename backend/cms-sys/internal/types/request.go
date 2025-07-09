@@ -48,3 +48,8 @@ type CreatePageRequest struct {
 	PageUrl     *string `json:"pageUrl"`
 	Logo		*string `json:"logo"`
 }
+
+type OwnerDeleteRequest struct {
+	IDs         []string `json:"ids" validate:"required"`
+	ForceDelete bool     `json:"forceDelete"`
+}
