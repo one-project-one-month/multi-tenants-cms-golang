@@ -2,13 +2,12 @@ package main
 
 import (
 	"errors"
+	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
+	"gorm.io/gorm"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
-	"gorm.io/gorm"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -24,10 +23,10 @@ import (
 )
 
 type DISection struct {
-	repo               repository.AuthRepository
-	srv                service.AuthService
-	handler            handler.AuthHandle
-	ownerHandler       handler.OwnerHandle
+	repo         repository.AuthRepository
+	srv          service.AuthService
+	handler      handler.AuthHandle
+	ownerHandler handler.OwnerHandle
 	pageRequestHandler handler.PageRequestHandle
 }
 
@@ -79,7 +78,7 @@ func main() {
 		if err != nil {
 			appLogger.WithError(err).Fatal("Failed to close Redis connection")
 		}
-	}()
+  }()
 	//if err := utils.InitJWTKeysFromVault(); err != nil {
 	//	log.Fatalf("Vault key init failed: %v", err)
 	//}
@@ -206,10 +205,10 @@ func DependencyInjectionSection(logger *logrus.Logger, db *gorm.DB) *DISection {
 	pageRequestHandler := handler.NewPageRequestHandler(pageRequestSrv)
 
 	return &DISection{
-		repo:               repo,
-		srv:                srv,
-		handler:            authHandler,
-		ownerHandler:       ownerHandler,
+		repo:    repo,
+		srv:     srv,
+		handler: authHandler,
+		ownerHandler: ownerHandler,
 		pageRequestHandler: pageRequestHandler,
 	}
 }

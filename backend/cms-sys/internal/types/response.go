@@ -7,9 +7,9 @@ import (
 
 type AuthResponse struct {
 	User         UserResponse `json:"user"`
-	AccessToken  string       `json:"access_token"`
-	RefreshToken string       `json:"refresh_token"`
-	ExpiresAt    time.Time    `json:"expires_at"`
+	AccessToken  string       `json:"access_token,omitempty"`
+	RefreshToken string       `json:"refresh_token,omitempty"`
+	ExpiresAt    time.Time    `json:"expires_at,omitempty"`
 }
 
 type UserResponse struct {
@@ -35,4 +35,15 @@ type OwnerResponse struct {
 	Role      string    `json:"role"`
 	NameSpace string    `json:"name_space"`
 	Verified  bool      `json:"verified"`
+}
+
+type PageRequestResponse struct {
+	ID          uuid.UUID `json:"id"`
+	OwnerID     uuid.UUID `json:"ownerId"`
+	RequestType string    `json:"requestType"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	PageUrl     *string   `json:"pageUrl"`
+	LogoUrl	 	*string   `json:"logoUrl"`
+	CreatedAt   time.Time `json:"createdAt"`
 }

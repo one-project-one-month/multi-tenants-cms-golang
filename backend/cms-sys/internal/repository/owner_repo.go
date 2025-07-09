@@ -9,8 +9,9 @@ import (
 type OwnerRepository interface {
 	GetAllOwners() ([]types.CMSUser, error)
 	CreateOwner(owner *types.CMSUser) error
-	GeyById(id string) (*types.CMSUser, error)
+	GetById(id string) (*types.CMSUser, error)
 	UpdateOwner(owner *types.CMSUser) error
+	GetOwnerByID(id string) (*types.CMSUser, error)
 }
 
 type OwnerRepositoryImpl struct {
@@ -32,7 +33,7 @@ func (r *OwnerRepositoryImpl) CreateOwner(owner *types.CMSUser) error {
 	return nil
 }
 
-func (r *OwnerRepositoryImpl) GeyById(id string) (*types.CMSUser, error) {
+func (r *OwnerRepositoryImpl) GetById(id string) (*types.CMSUser, error) {
 	var owner types.CMSUser
 	err := r.db.Where("cms_user_id", id).First(&owner).Error
 	return &owner, err
@@ -51,4 +52,11 @@ func (r *OwnerRepositoryImpl) GetAllOwners() ([]types.CMSUser, error) {
 		return nil, err
 	}
 	return owners, nil
+
+func (r *OwnerRepositoryImpl) GetOwnerByID(id string) (*types.CMSUser, error) {
+	var owner types.CMSUser
+	err := r.db.Joins("JOIN cms_whole_sys_role r ON r.role_id = cms_user.cms_user_role").
+		Where("cms_user_id = ? AND r.role_name = ?", id, string(types.CMSCustomer)).
+		Find(&owner).Error
+	return &owner, err
 }
