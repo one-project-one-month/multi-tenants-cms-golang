@@ -243,7 +243,6 @@ func (s *Service) UpdateUserProfile(id uuid.UUID, req types.UserUpdateRequest) (
 	}, nil
 }
 
-}
 func (s *Service) Logout(accessToken, refreshToken string) error {
 	if accessToken != "" {
 		accessClaims, err := utils.ValidateToken(accessToken)
