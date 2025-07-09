@@ -11,6 +11,7 @@ import (
 type OwnerHandle interface {
 	Create(c *fiber.Ctx) error
 	Update(c *fiber.Ctx) error
+	GetAll(c *fiber.Ctx) error
 	GetOwnerByID(c *fiber.Ctx) error
 }
 type OwnerHandler struct {
@@ -60,6 +61,14 @@ func (o OwnerHandler) Update(c *fiber.Ctx) error {
 
 	return utils.SuccessResponse(c, "Owner updated", ownerResponse)
 }
+
+func (o OwnerHandler) GetAll(c *fiber.Ctx) error {
+	owners, err := o.service.GetAllOwners()
+	if err != nil {
+		return utils.InternalServerErrorResponse(c, "Failed to get owners", err.Error())
+	}
+
+	return utils.SuccessResponse(c, "Owners fetched", owners)
 
 func (o OwnerHandler) GetOwnerByID(c *fiber.Ctx) error {
 	id := c.Params("id")

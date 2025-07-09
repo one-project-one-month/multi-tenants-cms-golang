@@ -14,6 +14,7 @@ import (
 type OwnerService interface {
 	Create(req types.OwnerCreateRequest) (*types.OwnerResponse, error)
 	Update(id string, req types.OwnerUpdateRequest) (*types.OwnerResponse, error)
+	GetAllOwners() ([]types.CMSUser, error)
 	GetOwnerByID(id string) (*types.OwnerResponse, error)
 }
 
@@ -98,6 +99,10 @@ func (os *OwnerServiceImpl) Update(id string, req types.OwnerUpdateRequest) (*ty
 		NameSpace: *owner.CMSNameSpace,
 		Verified:  owner.Verified,
 	}, nil
+}
+
+func (os *OwnerServiceImpl) GetAllOwners() ([]types.CMSUser, error) {
+	return os.repo.GetAllOwners()
 }
 
 func (os *OwnerServiceImpl) GetOwnerByID(id string) (*types.OwnerResponse, error) {
