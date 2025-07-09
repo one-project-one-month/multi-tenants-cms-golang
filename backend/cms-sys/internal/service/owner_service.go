@@ -9,13 +9,15 @@ import (
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
 	"github.com/multi-tenants-cms-golang/cms-sys/pkg/utils"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type OwnerService interface {
 	Create(req types.OwnerCreateRequest) (*types.OwnerResponse, error)
 	Update(id string, req types.OwnerUpdateRequest) (*types.OwnerResponse, error)
-	GetAllOwners() ([]types.CMSUser, error)
+	GetAllOwners() ([]types.OwnerResponse, error)
 	GetOwnerByID(id string) (*types.OwnerResponse, error)
+	BulkDeleteOwners(ids []string, force bool) error
 }
 
 type OwnerServiceImpl struct {
@@ -101,8 +103,32 @@ func (os *OwnerServiceImpl) Update(id string, req types.OwnerUpdateRequest) (*ty
 	}, nil
 }
 
-func (os *OwnerServiceImpl) GetAllOwners() ([]types.CMSUser, error) {
-	return os.repo.GetAllOwners()
+func (os *OwnerServiceImpl) GetAllOwners() ([]types.OwnerResponse, error) {
+    owners, err := os.repo.GetAllOwners()
+    if err != nil {
+        os.log.WithError(err).Error("Failed to get all owners")
+        return nil, errors.New("failed to retrieve owners")
+    }
+
+    responses := make([]types.OwnerResponse, len(owners))
+
+    for i, owner := range owners {
+        var nameSpace string
+        if owner.CMSNameSpace != nil {
+            nameSpace = *owner.CMSNameSpace
+        }
+
+        responses[i] = types.OwnerResponse{
+            ID:        owner.CMSUserID,
+            Name:      owner.CMSUserName,
+            Email:     owner.CMSUserEmail,
+            Role:      owner.CMSUserRole,
+            NameSpace: nameSpace,
+            Verified:  owner.Verified,
+        }
+    }
+
+    return responses, nil
 }
 
 func (os *OwnerServiceImpl) GetOwnerByID(id string) (*types.OwnerResponse, error) {
@@ -112,12 +138,47 @@ func (os *OwnerServiceImpl) GetOwnerByID(id string) (*types.OwnerResponse, error
 		return nil, errors.New("failed to fetch owner")
 	}
 
+	var nameSpace string
+	if owner.CMSNameSpace != nil {
+		nameSpace = *owner.CMSNameSpace
+	}
+
 	return &types.OwnerResponse{
 		ID:        owner.CMSUserID,
 		Name:      owner.CMSUserName,
 		Email:     owner.CMSUserEmail,
 		Role:      owner.CMSUserRole,
-		NameSpace: *owner.CMSNameSpace,
+		NameSpace: nameSpace,
 		Verified:  owner.Verified,
 	}, nil
+}
+
+func (os *OwnerServiceImpl) BulkDeleteOwners(ids []string, force bool) error {
+	for _, id := range ids {
+		owner, err := os.repo.GetById(id)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("owner not found: " + id)
+			}
+			return err
+		}
+
+		if !force {
+			hasAssociations := os.repo.OwnerHasAssociations(id)
+			if hasAssociations {
+				return errors.New("owner " + owner.CMSUserName + " has associated records")
+			}
+		}
+
+		if force {
+			if err := os.repo.ForceDeleteOwner(id); err != nil {
+				return err
+			}
+		} else {
+			if err := os.repo.DeleteOwnerByID(id); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
