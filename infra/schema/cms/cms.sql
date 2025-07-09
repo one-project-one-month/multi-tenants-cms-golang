@@ -166,8 +166,9 @@ ORDER BY p.purchase_date DESC;
 SELECT 'd69e2e9e-65ea-47e7-9fe7-7f5b661f069b'::uuid = 'd69e2e9e-65ea-47e7-9fe7-7f5b661f069b'::uuid;
 
 -- Create Page Table
-CREATE TABLE Page (
+CREATE TABLE cms_page (
                       page_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                      page_request_id UUID NOT NULL,
                       title VARCHAR(255) NOT NULL,
                       content TEXT,
                       image_url VARCHAR(255),
@@ -182,6 +183,9 @@ CREATE TABLE Page (
                       CONSTRAINT fk_page_staff
                           FOREIGN KEY (published_by_staff_id)
                               REFERENCES cms_user(cms_user_id) ON DELETE SET NULL
+                      CONSTRAINT fk_page_request
+                          FOREIGN KEY (page_request_id)
+                              REFERENCES cms_page_request(request_id) ON DELETE CASCADE
 );
 
 -- Create PageRequest Table
@@ -191,6 +195,8 @@ CREATE TABLE PageRequest (
                              request_type VARCHAR(100) NOT NULL,
                              title VARCHAR(100) NOT NULL,
                              description TEXT,
+                             page_url VARCHAR(100),
+                             logo_url TEXT,
                              status VARCHAR(50) DEFAULT 'pending',
                              admin_id UUID,
                              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
