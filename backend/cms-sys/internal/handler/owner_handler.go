@@ -13,6 +13,7 @@ type OwnerHandle interface {
 	Update(c *fiber.Ctx) error
 	GetAll(c *fiber.Ctx) error
 	GetOwnerByID(c *fiber.Ctx) error
+	Delete(c *fiber.Ctx) error
 }
 type OwnerHandler struct {
 	service   service.OwnerService
@@ -69,6 +70,7 @@ func (o OwnerHandler) GetAll(c *fiber.Ctx) error {
 	}
 
 	return utils.SuccessResponse(c, "Owners fetched", owners)
+}
 
 func (o OwnerHandler) GetOwnerByID(c *fiber.Ctx) error {
 	id := c.Params("id")
@@ -80,3 +82,23 @@ func (o OwnerHandler) GetOwnerByID(c *fiber.Ctx) error {
 
 	return utils.SuccessResponse(c, "Fetched owner", ownerResponse)
 }
+
+func (o OwnerHandler) Delete(c *fiber.Ctx) error {
+	var req types.OwnerDeleteRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return utils.BadRequestResponse(c, "Invalid request", err.Error())
+	}
+
+	if err := o.validator.Struct(req); err != nil {
+		return utils.BadRequestResponse(c, "Validation failed", err.Error())
+	}
+
+	err := o.service.BulkDeleteOwners(req.IDs, req.ForceDelete)
+	if err != nil {
+		return utils.InternalServerErrorResponse(c, "Failed to delete owners", err.Error())
+	}
+
+	return utils.SuccessResponse(c, "Owner(s) deleted", nil)
+}
+
