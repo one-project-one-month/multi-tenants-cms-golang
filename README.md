@@ -45,6 +45,13 @@ This CMS platform implements a sophisticated microservices architecture with mul
 
 ---
 
+# CMS High level 
+
+![img_2.png](img_2.png)
+
+# API level overview
+
+
 ## 🏛️ Architecture Overview
 
 ### 🚀 Backend Services (`backend/`)
@@ -436,7 +443,7 @@ git push -u origin ft-CM-<according-to-your-ticket>
 
 ---
 
-## ⚡ Pro Tips
+##  Pro Tips
 
 
 
@@ -455,18 +462,16 @@ git stash pop
 
 # Check remote branches
 git branch -r
+
 ```
-
-</details>
-
 ---
 
 ## 🎯 After Push
 
-1. ** Create Pull Request**: Go to GitHub and create a PR from your feature branch
+1. **Create Pull Request**: Go to GitHub and create a PR from your feature branch
 2. **Code Review**: Wait for team review and address feedback
 3. **Merge**: Once approved, your changes will be merged to main branch
-4. ** Cleanup**: Delete your feature branch after successful merge
+4. **Cleanup**: Delete your feature branch after successful merge
 
 ---
 
