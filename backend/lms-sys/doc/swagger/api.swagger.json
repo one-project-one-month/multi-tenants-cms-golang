@@ -7,6 +7,9 @@
   "tags": [
     {
       "name": "AssignmentService"
+    },
+    {
+      "name": "TenantService"
     }
   ],
   "consumes": [
@@ -47,6 +50,40 @@
         ],
         "tags": [
           "AssignmentService"
+        ]
+      }
+    },
+    "/lms/v1/tenants": {
+      "post": {
+        "summary": "Create Tenant",
+        "description": "Create a new tenant",
+        "operationId": "TenantService_CreateTenant",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tenantsCreateTenantResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tenantsCreateTenantRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TenantService"
         ]
       }
     }
@@ -124,6 +161,46 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "tenantsCreateTenantRequest": {
+      "type": "object",
+      "properties": {
+        "namespace": {
+          "type": "string"
+        },
+        "cmsOwnerId": {
+          "type": "string"
+        }
+      }
+    },
+    "tenantsCreateTenantResponse": {
+      "type": "object",
+      "properties": {
+        "createdTenant": {
+          "$ref": "#/definitions/tenantsTenants"
+        }
+      }
+    },
+    "tenantsTenants": {
+      "type": "object",
+      "properties": {
+        "tenantsId": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "cmsOwnerId": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "isActive": {
+          "type": "boolean"
         }
       }
     }

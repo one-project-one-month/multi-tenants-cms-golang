@@ -67,7 +67,7 @@ func Load() (*Config, error) {
 	}
 
 	if err := cfg.validate(); err != nil {
-		return nil, fmt.Errorf("config validation failed: %w", err)
+		return nil, fmt.Errorf("convert validation failed: %w", err)
 	}
 
 	return cfg, nil
