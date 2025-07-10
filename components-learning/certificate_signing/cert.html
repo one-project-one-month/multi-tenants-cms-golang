@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate of Completion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .certificate-container {
+            background: white;
+            width: 100%;
+            max-width: 900px;
+            aspect-ratio: 1.414;
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .certificate-border {
+            position: absolute;
+            inset: 20px;
+            border: 3px solid transparent;
+            border-radius: 15px;
+            background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #f5576c) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+        }
+
+        .certificate-content {
+            position: relative;
+            z-index: 2;
+            padding: 60px 80px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .certificate-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .certificate-subtitle {
+            font-size: 18px;
+            color: #718096;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .recipient-section {
+            margin: 50px 0;
+        }
+
+        .this-certifies {
+            font-size: 20px;
+            color: #4a5568;
+            margin-bottom: 25px;
+            font-weight: 300;
+        }
+
+        .recipient-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px;
+            font-weight: 600;
+            color: #2d3748;
+            margin: 30px 0;
+            position: relative;
+            display: inline-block;
+        }
+
+        .recipient-name::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .course-section {
+            margin: 40px 0;
+        }
+
+        .completion-text {
+            font-size: 18px;
+            color: #4a5568;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .course-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: #2d3748;
+            margin: 20px 0;
+        }
+
+        .date-section {
+            margin: 40px 0 50px;
+        }
+
+        .completion-date {
+            font-size: 16px;
+            color: #718096;
+            font-style: italic;
+        }
+
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 60px;
+            gap: 40px;
+        }
+
+        .signature-block {
+            flex: 1;
+            text-align: center;
+        }
+
+        .signature-line {
+            width: 180px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #cbd5e0, transparent);
+            margin: 0 auto 15px;
+        }
+
+        .signature-title {
+            font-size: 14px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .verification-section {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            text-align: center;
+        }
+
+        .qr-code {
+            width: 80px;
+            height: 80px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .verification-text {
+            font-size: 10px;
+            color: #a0aec0;
+        }
+
+        .decorative-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .decorative-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(45deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        }
+
+        .circle-1 {
+            width: 200px;
+            height: 200px;
+            top: -100px;
+            right: -100px;
+        }
+
+        .circle-2 {
+            width: 150px;
+            height: 150px;
+            bottom: -75px;
+            left: -75px;
+        }
+
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-family: 'Playfair Display', serif;
+            font-size: 120px;
+            font-weight: 700;
+            color: rgba(102, 126, 234, 0.03);
+            z-index: 0;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+<div class="certificate-container">
+    <div class="certificate-border"></div>
+
+    <div class="decorative-elements">
+        <div class="decorative-circle circle-1"></div>
+        <div class="decorative-circle circle-2"></div>
+        <div class="watermark">CERTIFIED</div>
+    </div>
+
+    <div class="certificate-content">
+        <div class="header">
+            <h1 class="certificate-title">Certificate of Completion</h1>
+            <p class="certificate-subtitle">Professional Achievement</p>
+        </div>
+
+        <div class="recipient-section">
+            <p class="this-certifies">This is to certify that</p>
+            <div class="recipient-name">{{.Name}}</div>
+        </div>
+
+        <div class="course-section">
+            <p class="completion-text">has successfully completed the comprehensive course</p>
+            <div class="course-name">{{.Course}}</div>
+        </div>
+
+        <div class="date-section">
+            <p class="completion-date">Completed on {{.Date}}</p>
+        </div>
+
+        <div class="signatures">
+            <div class="signature-block">
+                <div class="signature-line"></div>
+                <p class="signature-title">Director of Education</p>
+            </div>
+            <div class="signature-block">
+                <div class="signature-line"></div>
+                <p class="signature-title">Course Instructor</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="verification-section">
+        <img src="{{.QRImagePath}}" alt="Verification QR Code" class="qr-code">
+        <p class="verification-text">Scan to verify</p>
+    </div>
+</div>
+</body>
+</html>

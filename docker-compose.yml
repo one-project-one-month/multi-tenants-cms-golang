@@ -6,45 +6,88 @@ services:
     networks:
       - whole-system-network
     depends_on:
-      - postgres-cms
+      postgres-cms:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       - DB_HOST=postgres-cms
       - DB_PORT=5432
       - DB_NAME=cms_db
-      - DB_USER=cms_user
-      - DB_PASSWORD=cms_password
+      - DB_USER=postgres
+      - DB_PASSWORD=cms_password_123
+      - APP_ENV=development
+      - LOG_LEVEL=info
+      - LOG_FILE_PATH=/app/logs/app.log
+      - LOG_MAX_SIZE=100
+      - LOG_MAX_BACKUPS=3
+      - LOG_MAX_AGE=28
+      - LOG_COMPRESS=true
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=root
+      - LOG_CONSOLE=true
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
     ports:
       - "8080:8080"
+    restart: unless-stopped
 
-  lms-main-system:
-    build:
-      context: backend/lms-sys
-      dockerfile: Dockerfile
+  vault:
+    image: hashicorp/vault:1.15
+    container_name: vault
     networks:
       - whole-system-network
-    depends_on:
-      - postgres-lms
-    environment:
-      - DB_HOST=postgres-lms
-      - DB_PORT=5432
-      - DB_NAME=lms_db
-      - DB_USER=lms_user
-      - DB_PASSWORD=lms_password
     ports:
-      - "8081:8080"
+      - "8200:8200"
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=root
+      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+    volumes:
+      - ./vault-init.sh:/vault-init.sh
+      - ./rsa:/vault/keys
+    entrypoint: /bin/sh
+    command: -c "vault server -dev & sleep 15 && sh /vault-init.sh && tail -f /dev/null"
+    healthcheck:
+      test: ["CMD", "sh", "-c", "vault status || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks:
+      - whole-system-network
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres-cms:
     image: postgres:15-alpine
     environment:
       - POSTGRES_DB=cms_db
-      - POSTGRES_USER=cms_user
-      - POSTGRES_PASSWORD=cms_password
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=cms_password_123
     volumes:
       - postgres-cms:/var/lib/postgresql/data
     networks:
       - whole-system-network
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cms_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres-lms:
     image: postgres:15-alpine
@@ -57,8 +100,34 @@ services:
     networks:
       - whole-system-network
     ports:
-      - "5433:5432"
-  
+      - "5433:5432"  
+  email-service:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - NATS_URL=nats://nats:4222
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - FROM_ADDR=${FROM_ADDR}
+      - STREAM_NAME=email-stream
+      - SUBJECT_TO=email.send
+      - CONSUMER_NAME=email-consumer
+      - TEMPLATE_DIR=./templates
+      - SERVER_PORT=8080
+    depends_on:
+      - nats
+    restart: unless-stopped
+
+  nats:
+      image: nats:latest
+      ports:
+        - "4222:4222"
+      command: [ "-js", "-m", "8222" ]
+      restart: unless-stopped
+
   consul:
     image: consul:1.15
     container_name: consul
@@ -66,6 +135,11 @@ services:
       - "8500:8500"
     networks:
       - whole-system-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lms_user -d lms_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   whole-system-network:
@@ -75,4 +149,6 @@ volumes:
   postgres-cms:
     driver: local
   postgres-lms:
+    driver: local
+  redis-data:
     driver: local
