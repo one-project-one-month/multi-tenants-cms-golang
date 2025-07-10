@@ -101,6 +101,11 @@ services:
       - whole-system-network
     ports:
       - "5433:5432"  
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lms_user -d lms_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   email-service:
     build: .
     ports:
@@ -135,11 +140,6 @@ services:
       - "8500:8500"
     networks:
       - whole-system-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U lms_user -d lms_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
 networks:
   whole-system-network:
