@@ -1,0 +1,397 @@
+### Variables
+@baseUrl = http://localhost:8080
+@contentType = application/json
+
+### Register a new user
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+### Register a new user without role (should default to customer)
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Jane Smith",
+  "email": "jane.smith@example.com",
+  "password": "password123"
+}
+
+### Register with invalid email (should fail)
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Invalid User",
+  "email": "invalid-email",
+  "password": "password123"
+}
+
+### Register with short password (should fail)
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Short Pass",
+  "email": "shortpass@example.com",
+  "password": "123"
+}
+
+### Register with duplicate email (should fail)
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Duplicate User",
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+### Login with valid credentials - CAPTURE TOKENS
+
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+> {%
+    client.global.set("accessToken", response.body.access_token);
+    client.global.set("refreshToken", response.body.refresh_token);
+    client.global.set("userEmail", response.body.user.email);
+    client.global.set("userId", response.body.user.id);
+%}
+
+### Login with invalid credentials (should fail)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com",
+  "password": "wrongpassword"
+}
+
+### Login with non-existent user (should fail)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "nonexistent@example.com",
+  "password": "password123"
+}
+
+### Login with invalid email format (should fail)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "invalid-email",
+  "password": "password123"
+}
+
+### Login with missing fields (should fail)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com"
+}
+
+### Refresh token using captured refresh token
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+> {%
+    client.global.set("accessToken", response.body.access_token);
+    client.global.set("refreshToken", response.body.refresh_token);
+%}
+
+### Refresh token with invalid token (should fail)
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "invalid.token.here"
+}
+
+### Refresh token with access token instead of refresh token (should fail)
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "{{accessToken}}"
+}
+
+### Logout with both access and refresh tokens
+POST {{baseUrl}}/auth/logout
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+> {%
+    client.global.clear("accessToken");
+    client.global.clear("refreshToken");
+    client.global.clear("userEmail");
+    client.global.clear("userId");
+%}
+
+### Logout with only access token (from Authorization header)
+POST {{baseUrl}}/auth/logout
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+### Logout with only refresh token (in request body)
+POST {{baseUrl}}/auth/logout
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+### Logout without any tokens (should still succeed)
+POST {{baseUrl}}/auth/logout
+Content-Type: {{contentType}}
+
+### Test using revoked token (should fail after logout)
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+### === WORKFLOW TEST SEQUENCE ===
+
+### 1. Register a new test user
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Test User",
+  "email": "test@example.com",
+  "password": "testpass123"
+}
+
+### 2. Login with the test user - CAPTURE TOKENS
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "password": "testpass123"
+}
+
+> {%
+    client.global.set("testAccessToken", response.body.access_token);
+    client.global.set("testRefreshToken", response.body.refresh_token);
+    client.global.set("testUserEmail", response.body.user.email);
+    client.global.set("testUserId", response.body.user.id);
+%}
+
+### 3. Use the access token to access protected endpoint (if you have any)
+# GET {{baseUrl}}/protected-endpoint
+# Authorization: Bearer {{testAccessToken}}
+
+### 4. Refresh the token using the refresh token from login
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "{{testRefreshToken}}"
+}
+
+> {%
+    client.global.set("testAccessToken", response.body.access_token);
+    client.global.set("testRefreshToken", response.body.refresh_token);
+%}
+
+### 5. Logout using both tokens
+POST {{baseUrl}}/auth/logout
+Content-Type: {{contentType}}
+Authorization: Bearer {{testAccessToken}}
+
+{
+  "refresh_token": "{{testRefreshToken}}"
+}
+
+> {%
+    client.global.clear("testAccessToken");
+    client.global.clear("testRefreshToken");
+    client.global.clear("testUserEmail");
+    client.global.clear("testUserId");
+%}
+
+### 6. Try to use the revoked refresh token (should fail)
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "{{testRefreshToken}}"
+}
+
+### === AUTHENTICATED REQUESTS EXAMPLES ===
+
+### Get user profile (example protected endpoint)
+GET {{baseUrl}}/auth/profile
+Authorization: Bearer {{accessToken}}
+
+### Update user profile (example protected endpoint)
+PUT {{baseUrl}}/auth/profile
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Updated Name"
+}
+
+### === MULTIPLE USER TESTING ===
+
+### Login as Jane Smith - CAPTURE SEPARATE TOKENS
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "jane.smith@example.com",
+  "password": "password123"
+}
+
+> {%
+    client.global.set("janeAccessToken", response.body.access_token);
+    client.global.set("janeRefreshToken", response.body.refresh_token);
+%}
+
+### Use Jane's token for protected endpoint
+GET {{baseUrl}}/auth/profile
+Authorization: Bearer {{janeAccessToken}}
+
+### Refresh Jane's token
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "{{janeRefreshToken}}"
+}
+
+> {%
+    client.global.set("janeAccessToken", response.body.access_token);
+    client.global.set("janeRefreshToken", response.body.refresh_token);
+%}
+
+### Logout Jane
+POST {{baseUrl}}/auth/logout
+Content-Type: {{contentType}}
+Authorization: Bearer {{janeAccessToken}}
+
+{
+  "refresh_token": "{{janeRefreshToken}}"
+}
+
+> {%
+    client.global.clear("janeAccessToken");
+    client.global.clear("janeRefreshToken");
+%}
+
+### === EDGE CASES ===
+
+### Empty request body tests
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{}
+
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{}
+
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{}
+
+### Invalid JSON format
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com"
+  "password": "missing comma"
+}
+
+### Missing Content-Type header
+POST {{baseUrl}}/auth/login
+
+{
+  "email": "test@example.com",
+  "password": "testpass123"
+}
+
+### === TOKEN EXPIRATION TESTING ===
+
+### Wait for token to expire and test refresh
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+> {%
+    client.global.set("accessToken", response.body.access_token);
+    client.global.set("refreshToken", response.body.refresh_token);
+%}
+
+### Test expired access token (if you have short-lived tokens)
+GET {{baseUrl}}/auth/profile
+Authorization: Bearer {{accessToken}}
+
+### === CONCURRENT LOGIN TESTING ===
+
+### Login from different device (same user)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+> {%
+    client.global.set("device2AccessToken", response.body.access_token);
+    client.global.set("device2RefreshToken", response.body.refresh_token);
+%}
+
+### Test both tokens work
+GET {{baseUrl}}/auth/profile
+Authorization: Bearer {{accessToken}}
+
+GET {{baseUrl}}/auth/profile
+Authorization: Bearer {{device2AccessToken}}
+
+### Logout from device 2
+POST {{baseUrl}}/auth/logout
+Content-Type: {{contentType}}
+Authorization: Bearer {{device2AccessToken}}
+
+{
+  "refresh_token": "{{device2RefreshToken}}"
+}
+
+> {%
+    client.global.clear("device2AccessToken");
+    client.global.clear("device2RefreshToken");
+%}
