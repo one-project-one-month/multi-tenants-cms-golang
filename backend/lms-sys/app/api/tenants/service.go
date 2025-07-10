@@ -1,0 +1,25 @@
+package tenants
+
+import (
+	"github.com/multi-tenants-cms-golang/lms-sys/internal/db"
+	tbp "github.com/multi-tenants-cms-golang/lms-sys/protogen/tenants"
+	"github.com/sirupsen/logrus"
+)
+
+type TenantService struct {
+	tbp.UnimplementedTenantServiceServer
+	store   *db.Store
+	logger  *logrus.Logger
+}
+
+var _ tbp.TenantServiceServer = (*TenantService)(nil)
+
+func NewTenantService(
+	store *db.Store,
+	logger *logrus.Logger,
+) *TenantService {
+	return &TenantService{
+		store:   store,
+		logger:  logger,
+	}
+}

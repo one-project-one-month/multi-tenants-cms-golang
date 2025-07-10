@@ -53,8 +53,6 @@ func main() {
 	defer nc.Close()
 
 	emailCh := make(chan natss.EmailRequest, 100)
-
-	// Create email service
 	emailService, err := email.NewService(
 		logger,
 		cfg.SMTP.Host,

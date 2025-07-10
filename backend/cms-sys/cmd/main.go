@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
+	"github.com/multi-tenants-cms-golang/cms-sys/pkg/aws"
 	"gorm.io/gorm"
 	"os"
 	"os/signal"
@@ -23,10 +24,10 @@ import (
 )
 
 type DISection struct {
-	repo         repository.AuthRepository
-	srv          service.AuthService
-	handler      handler.AuthHandle
-	ownerHandler handler.OwnerHandle
+	repo               repository.AuthRepository
+	srv                service.AuthService
+	handler            handler.AuthHandle
+	ownerHandler       handler.OwnerHandle
 	pageRequestHandler handler.PageRequestHandle
 }
 
@@ -78,7 +79,7 @@ func main() {
 		if err != nil {
 			appLogger.WithError(err).Fatal("Failed to close Redis connection")
 		}
-  }()
+	}()
 	//if err := utils.InitJWTKeysFromVault(); err != nil {
 	//	log.Fatalf("Vault key init failed: %v", err)
 	//}
@@ -193,7 +194,11 @@ func DependencyInjectionSection(logger *logrus.Logger, db *gorm.DB) *DISection {
 	}
 	srv := service.NewService(logger, repo)
 	authHandler := handler.NewHandler(srv)
-
+	bucketName := utils.GetEnv("BUCKET_NAME", "")
+	s3, err := aws.NewS3Service(bucketName, logger)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to create S3 service")
+	}
 	// Owner
 	ownerRepo := repository.NewOwnerRepository(logger, db)
 	ownerService := service.NewOwnerService(logger, ownerRepo, repo)
@@ -202,13 +207,13 @@ func DependencyInjectionSection(logger *logrus.Logger, db *gorm.DB) *DISection {
 	// Page Request
 	pageRequestRepo := repository.NewPageRequestRepository(logger, db)
 	pageRequestSrv := service.NewPageRequestService(logger, pageRequestRepo)
-	pageRequestHandler := handler.NewPageRequestHandler(pageRequestSrv)
+	pageRequestHandler := handler.NewPageRequestHandler(pageRequestSrv, s3)
 
 	return &DISection{
-		repo:    repo,
-		srv:     srv,
-		handler: authHandler,
-		ownerHandler: ownerHandler,
+		repo:               repo,
+		srv:                srv,
+		handler:            authHandler,
+		ownerHandler:       ownerHandler,
 		pageRequestHandler: pageRequestHandler,
 	}
 }

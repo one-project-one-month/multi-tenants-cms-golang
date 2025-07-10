@@ -12,8 +12,17 @@ import (
 
 type Querier interface {
 	CreateNewTenant(ctx context.Context, arg CreateNewTenantParams) (Tenant, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (LmsUser, error)
+	DeleteUser(ctx context.Context, lmsUserID pgtype.UUID) error
 	GetTenantByID(ctx context.Context, tenantID pgtype.UUID) (Tenant, error)
 	GetTenantByNamespace(ctx context.Context, namespace string) (Tenant, error)
+	GetUser(ctx context.Context, lmsUserID pgtype.UUID) (LmsUser, error)
+	GetUserByEmail(ctx context.Context, lmsUserEmail string) (LmsUser, error)
+	GetUsersByRole(ctx context.Context, lmsRoleID pgtype.UUID) ([]LmsUser, error)
+	GetUsersByTenant(ctx context.Context, tenantID pgtype.UUID) ([]LmsUser, error)
+	ListUsers(ctx context.Context, arg ListUsersParams) ([]LmsUser, error)
+	UpdateUser(ctx context.Context, arg UpdateUserParams) (LmsUser, error)
+	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 }
 
 var _ Querier = (*Queries)(nil)
