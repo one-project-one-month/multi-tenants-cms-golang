@@ -19,5 +19,6 @@ COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /app/server /server
 
 EXPOSE 8082
+EXPOSE 8083
 
 CMD ["/server"]
