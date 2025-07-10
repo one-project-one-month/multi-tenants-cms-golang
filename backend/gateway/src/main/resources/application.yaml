@@ -1,0 +1,38 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-path: /actuator/health
+        health-check-interval: 15s
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: cms-service
+          uri: lb://cms-service
+          predicates:
+            - Path=/api/cms/**
+          filters:
+            - StripPrefix=2
+        - id: lms-service
+          uri: lb://lms-service
+          predicates:
+
+            - Path=/api/lms/**
+          filters:
+            - StripPrefix=2
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

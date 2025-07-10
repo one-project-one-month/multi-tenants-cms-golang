@@ -100,7 +100,7 @@ services:
     networks:
       - whole-system-network
     ports:
-      - "5433:5432"
+      - "5433:5432"  
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lms_user -d lms_db"]
       interval: 10s
@@ -132,6 +132,15 @@ services:
         - "4222:4222"
       command: [ "-js", "-m", "8222" ]
       restart: unless-stopped
+
+  consul:
+    image: consul:1.15
+    container_name: consul
+    ports:
+      - "8500:8500"
+    networks:
+      - whole-system-network
+
 networks:
   whole-system-network:
     driver: bridge
