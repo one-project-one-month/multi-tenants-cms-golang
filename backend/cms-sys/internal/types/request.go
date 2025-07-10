@@ -1,5 +1,7 @@
 package types
 
+import "mime/multipart"
+
 type LoginRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=6"`
@@ -41,12 +43,12 @@ type PaginateRequest struct {
 }
 
 type CreatePageRequest struct {
-	OwnerID    	string `json:"ownerId" validate:"required,uuid4"`
-	RequestType string `json:"requestType"`
-	Title       string `json:"title"`	
-	Description	string `json:"description"`
-	PageUrl     *string `json:"pageUrl"`
-	Logo		*string `json:"logo"`
+	OwnerID     string                `json:"ownerId" validate:"required,uuid4"`
+	RequestType string                `json:"requestType"`
+	Title       string                `json:"title"`
+	Description string                `json:"description"`
+	PageUrl     *string               `json:"pageUrl"`
+	LogoFile        *multipart.FileHeader `json:"logo"`
 }
 
 type OwnerDeleteRequest struct {

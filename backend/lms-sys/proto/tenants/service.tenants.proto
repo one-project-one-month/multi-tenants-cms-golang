@@ -1,0 +1,20 @@
+syntax = "proto3";
+package lms.tenants;
+option go_package = "github.com/multi-tenants-cms-golang/lms-sys/protogen/tenants";
+
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "google/api/annotations.proto";
+import "tenants/rpc_tenants_create.proto";
+
+service TenantService {
+  rpc CreateTenant(CreateTenantRequest) returns (CreateTenantResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/tenants";
+      body: "*";
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Create a new tenant";
+      summary: "Create Tenant";
+    };
+  }
+}

@@ -1,0 +1,14 @@
+syntax = "proto3";
+package lms.tenants;
+option go_package = "github.com/multi-tenants-cms-golang/lms-sys/protogen/tenants";
+
+import "google/protobuf/timestamp.proto";
+
+
+message  Tenants {
+ string tenants_id  = 1;
+ string  namespace = 2;
+ string cms_owner_id = 3;
+ google.protobuf.Timestamp created_at = 4;
+ bool   is_active = 5;
+}
