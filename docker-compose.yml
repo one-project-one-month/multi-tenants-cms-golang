@@ -28,7 +28,6 @@ services:
       start_period: 15s
     restart: unless-stopped
 
-
   cms-main-system:
     build:
       context: ./backend/cms-sys
@@ -76,93 +75,6 @@ services:
     ports:
       - "8081:8080"
     restart: unless-stopped
-
-#  lms-system:
-#    build:
-#      context: ./backend/lms-sys
-#      dockerfile: Dockerfile
-#    networks:
-#      - whole-system-network
-#    depends_on:
-#      postgres-lms:
-#        condition: service_healthy
-#      redis:
-#        condition: service_healthy
-#      consul:
-#        condition: service_healthy
-#    environment:
-#      # Database Configuration
-#      - DB_HOST=postgres-lms
-#      - DB_PORT=5432
-#      - DB_NAME=lms_db
-#      - DB_USER=lms_user
-#      - DB_PASSWORD=lms_password
-#      - DB_SSLMODE=disable
-#      # Path Configuration
-#      - MIGRATIONS_PATH=./migration
-#      - SCHEMA_PATH=./schema
-#      - QUERIES_PATH=./queries
-#      - GENERATED_PATH=./internal/db
-#      # Application Configuration
-#      - APP_PORT=8080
-#      - APP_ENV=development
-#      # Server Configuration
-#      - GRPC_SERVER_ADDRESS=0.0.0.0:8082
-#      - HTTP_SERVER_ADDRESS=0.0.0.0:8083
-#      # JWT Configuration
-#      - JWT_SECRET=your_jwt_secret_key_here_lms_system
-#      - JWT_EXPIRY=24h
-#      # Other Configuration
-#      - LOG_LEVEL=info
-#      - VAULT_ADDR=http://vault:8200
-#      - VAULT_TOKEN=root
-#      - REDIS_HOST=redis
-#      - REDIS_PORT=6379
-#      - REDIS_PASSWORD=
-#      - REDIS_DB=1
-#      # Consul Configuration (if LMS also uses Consul)
-#      - CONSUL_ENABLED=true
-#      - CONSUL_ADDRESS=consul:8500
-#      - CONSUL_DATACENTER=dc1
-#      - CONSUL_TOKEN=
-#      - CONSUL_SCHEME=http
-#      - CONSUL_SERVICE_ID=lms-api-1
-#      - CONSUL_SERVICE_NAME=lms-system-api
-#      - CONSUL_SERVICE_TAGS=lms,learning,api,v1,environment:development
-#      - CONSUL_CHECK_TTL=30s
-#    ports:
-#      - "9001:9001"  # gRPC server port
-#      - "8082:8082"  # HTTP gateway port
-#    restart: unless-stopped
-
-#  vault:
-#    image: hashicorp/vault:1.15
-#    container_name: vault
-#    networks:
-#      - whole-system-network
-#    depends_on:
-#      consul:
-#        condition: service_healthy
-#    ports:
-#      - "8200:8200"
-#    environment:
-#      - VAULT_DEV_ROOT_TOKEN_ID=root
-#      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
-#      # Configure Vault to use Consul as backend (optional)
-#      - VAULT_STORAGE_CONSUL_ADDRESS=consul:8500
-#      - VAULT_STORAGE_CONSUL_PATH=vault/
-#    volumes:
-#      - ./vault-init.sh:/vault-init.sh
-#      - ./rsa:/vault/keys
-#      - vault-data:/vault/data
-#    entrypoint: /bin/sh
-#    command: -c "vault server -dev & sleep 15 && sh /vault-init.sh && tail -f /dev/null"
-#    healthcheck:
-#      test: ["CMD", "sh", "-c", "vault status || exit 1"]
-#      interval: 15s
-#      timeout: 10s
-#      retries: 10
-#      start_period: 30s
 
   redis:
     image: redis:7-alpine
@@ -262,20 +174,6 @@ services:
       - "8222:8222"
     command: ["-js", "-m", "8222"]
     restart: unless-stopped
-
-#  # Consul UI (optional - for easier management)
-#  consul-ui:
-#    image: nginx:alpine
-#    container_name: consul-ui
-#    networks:
-#      - whole-system-network
-#    ports:
-#      - "8501:80"
-#    depends_on:
-#      - consul
-#    volumes:
-#      - ./nginx-consul.conf:/etc/nginx/nginx.conf:ro
-#    restart: unless-stopped
 
 networks:
   whole-system-network:
