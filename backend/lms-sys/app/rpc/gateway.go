@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	pb "github.com/multi-tenants-cms-golang/lms-sys/protogen/assignments"
+	cpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/courses"
 	tpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/tenants"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
@@ -45,7 +47,6 @@ func (g *Gateway) Start() error {
 		runtime.WithIncomingHeaderMatcher(g.headerMatcher),
 	)
 
-
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(25 * 1024 * 1024)), // 25MB
@@ -57,6 +58,10 @@ func (g *Gateway) Start() error {
 
 	if err := tpb.RegisterTenantServiceHandlerFromEndpoint(ctx, gwMux, g.grpcAddr, opts); err != nil {
 		return fmt.Errorf("failed to register tenant service gateway")
+	}
+
+	if err := cpb.RegisterCourseServiceHandlerFromEndpoint(ctx, gwMux, g.grpcAddr, opts); err != nil {
+		return fmt.Errorf("failed to register course service gateway")
 	}
 
 	statikFS, err := fs.New()
@@ -100,7 +105,7 @@ func (g *Gateway) Start() error {
 	}()
 
 	g.logger.Infof("Starting HTTP gateway on %s (gRPC backend: %s)", g.httpAddr, g.grpcAddr)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) && err != nil {
 		return fmt.Errorf("HTTP gateway start error: %w", err)
 	}
 

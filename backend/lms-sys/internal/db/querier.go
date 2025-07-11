@@ -11,9 +11,11 @@ import (
 )
 
 type Querier interface {
+	CreateNewCourse(ctx context.Context, courseTitle string) (Course, error)
 	CreateNewTenant(ctx context.Context, arg CreateNewTenantParams) (Tenant, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (LmsUser, error)
 	DeleteUser(ctx context.Context, lmsUserID pgtype.UUID) error
+	GetAllCourse(ctx context.Context) ([]Course, error)
 	GetTenantByID(ctx context.Context, tenantID pgtype.UUID) (Tenant, error)
 	GetTenantByNamespace(ctx context.Context, namespace string) (Tenant, error)
 	GetUser(ctx context.Context, lmsUserID pgtype.UUID) (LmsUser, error)

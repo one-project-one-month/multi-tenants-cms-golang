@@ -9,6 +9,9 @@
       "name": "AssignmentService"
     },
     {
+      "name": "CourseService"
+    },
+    {
       "name": "TenantService"
     }
   ],
@@ -50,6 +53,70 @@
         ],
         "tags": [
           "AssignmentService"
+        ]
+      }
+    },
+    "/lms/v1/course": {
+      "get": {
+        "summary": "Create Course",
+        "description": "Get Course",
+        "operationId": "CourseService_GetCourse",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/courseGetCourseResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "courseTitle",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CourseService"
+        ]
+      },
+      "post": {
+        "summary": "Create Course",
+        "description": "Create Course",
+        "operationId": "CourseService_CreateCourse",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/courseCreateCourseResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/courseCreateCourseRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CourseService"
         ]
       }
     },
@@ -133,6 +200,49 @@
       "properties": {
         "assignmentResponse": {
           "$ref": "#/definitions/assignmentAssignment"
+        }
+      }
+    },
+    "courseCourse": {
+      "type": "object",
+      "properties": {
+        "courseId": {
+          "type": "string"
+        },
+        "courseTitle": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "courseCreateCourseRequest": {
+      "type": "object",
+      "properties": {
+        "courseTitle": {
+          "type": "string"
+        }
+      }
+    },
+    "courseCreateCourseResponse": {
+      "type": "object",
+      "properties": {
+        "courseCreated": {
+          "$ref": "#/definitions/courseCourse"
+        }
+      }
+    },
+    "courseGetCourseResponse": {
+      "type": "object",
+      "properties": {
+        "courseTitle": {
+          "type": "string"
         }
       }
     },
