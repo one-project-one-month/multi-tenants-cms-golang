@@ -1,0 +1,16 @@
+syntax = "proto3";
+package lms.enrollment;
+option go_package = "github.com/multi-tenants-cms-golang/lms-sys/protogen/enrollment";
+
+import "enrollment/enrollment.proto";
+message EnrollCourseRequest {
+  string student_id = 1 ;
+  string course_id = 2;
+}
+
+message EnrollCourseResponse {
+  string enrollment_id = 1;
+  string student_id = 2;
+  string course_id = 3;
+  string enrollment_date =4;
+}
