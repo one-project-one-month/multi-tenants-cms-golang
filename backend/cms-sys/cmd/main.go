@@ -2,11 +2,15 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
 	"github.com/multi-tenants-cms-golang/cms-sys/pkg/aws"
 	"gorm.io/gorm"
+	"net"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -14,6 +18,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	loggMiddleware "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/hashicorp/consul/api"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/handler"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/repository"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/routes"
@@ -29,6 +34,145 @@ type DISection struct {
 	handler            handler.AuthHandle
 	ownerHandler       handler.OwnerHandle
 	pageRequestHandler handler.PageRequestHandle
+	consulClient       *api.Client
+}
+
+type ConsulConfig struct {
+	Address    string
+	Datacenter string
+	Token      string
+	Scheme     string
+	ServiceID  string
+	Name       string
+	Tags       []string
+	Port       int
+	CheckTTL   time.Duration
+	CheckHTTP  string
+}
+
+func NewConsulClient(config ConsulConfig, logger *logrus.Logger) (*api.Client, error) {
+	consulConfig := api.DefaultConfig()
+	consulConfig.Address = config.Address
+	consulConfig.Datacenter = config.Datacenter
+	consulConfig.Token = config.Token
+	consulConfig.Scheme = config.Scheme
+
+	client, err := api.NewClient(consulConfig)
+	if err != nil {
+		logger.WithError(err).Error("Failed to create Consul client")
+		return nil, err
+	}
+
+	logger.WithField("address", config.Address).Info("Consul client created successfully")
+	return client, nil
+}
+
+func RegisterService(client *api.Client, config ConsulConfig, logger *logrus.Logger) error {
+	localIP, err := getLocalIP()
+	if err != nil {
+		logger.WithError(err).Error("Failed to get local IP address")
+		return err
+	}
+
+	cmsService := &api.AgentServiceRegistration{
+		ID:      config.ServiceID,
+		Name:    config.Name,
+		Tags:    config.Tags,
+		Port:    config.Port,
+		Address: localIP,
+		Check: &api.AgentServiceCheck{
+			HTTP:                           config.CheckHTTP,
+			Interval:                       "10s",
+			Timeout:                        "5s",
+			DeregisterCriticalServiceAfter: "30s",
+		},
+		Meta: map[string]string{
+			"version":     "1.0.0",
+			"environment": utils.GetEnv("ENV", "development"),
+			"region":      utils.GetEnv("REGION", "us-east-1"),
+		},
+	}
+
+	err = client.Agent().ServiceRegister(cmsService)
+	if err != nil {
+		logger.WithError(err).Error("Failed to register service with Consul")
+		return err
+	}
+
+	logger.WithFields(logrus.Fields{
+		"service_id":   config.ServiceID,
+		"service_name": config.Name,
+		"address":      localIP,
+		"port":         config.Port,
+	}).Info("Service registered with Consul successfully")
+
+	return nil
+}
+
+func DeregisterService(client *api.Client, serviceID string, logger *logrus.Logger) error {
+	err := client.Agent().ServiceDeregister(serviceID)
+	if err != nil {
+		logger.WithError(err).Error("Failed to deregister service from Consul")
+		return err
+	}
+
+	logger.WithField("service_id", serviceID).Info("Service deregistered from Consul")
+	return nil
+}
+
+func getLocalIP() (string, error) {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return "", err
+	}
+	defer func(conn net.Conn) {
+		err := conn.Close()
+		if err != nil {
+
+		}
+	}(conn)
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP.String(), nil
+}
+
+func loadConsulConfig() ConsulConfig {
+	port, _ := strconv.Atoi(utils.GetEnv("PORT", "8080"))
+	checkTTL, _ := time.ParseDuration(utils.GetEnv("CONSUL_CHECK_TTL", "30s"))
+
+	tagsStr := utils.GetEnv("CONSUL_SERVICE_TAGS", "cms,multi-tenant,api")
+	var tags []string
+	if tagsStr != "" {
+		for _, tag := range strings.Split(tagsStr, ",") {
+			tags = append(tags, strings.TrimSpace(tag))
+		}
+	}
+
+	hostname, _ := os.Hostname()
+
+	return ConsulConfig{
+		Address:    utils.GetEnv("CONSUL_ADDRESS", "consul:8500"),
+		Datacenter: utils.GetEnv("CONSUL_DATACENTER", "dc1"),
+		Token:      utils.GetEnv("CONSUL_TOKEN", ""),
+		Scheme:     utils.GetEnv("CONSUL_SCHEME", "http"),
+		ServiceID:  utils.GetEnv("CONSUL_SERVICE_ID", fmt.Sprintf("cms-api-%s", hostname)),
+		Name:       utils.GetEnv("CONSUL_SERVICE_NAME", "cms-multi-tenant-api"),
+		Tags:       tags,
+		Port:       port,
+		CheckTTL:   checkTTL,
+		CheckHTTP:  fmt.Sprintf("http://%s:%d/health", hostname, port),
+	}
+}
+func startHealthUpdateRoutine(client *api.Client, serviceID string, logger *logrus.Logger) {
+	ticker := time.NewTicker(10 * time.Second)
+	go func() {
+		for range ticker.C {
+			err := client.Agent().UpdateTTL(serviceID+":ttl", "Service is healthy", api.HealthPassing)
+			if err != nil {
+				logger.WithError(err).Error("Failed to update service health check")
+			}
+		}
+	}()
 }
 
 func main() {
@@ -43,6 +187,18 @@ func main() {
 	})
 
 	appLogger.Info("Starting CMS Multi-Tenant System")
+
+	consulConfig := loadConsulConfig()
+	consulEnabled := utils.GetEnvAsBool("CONSUL_ENABLED", false)
+
+	var consulClient *api.Client
+	if consulEnabled {
+		var err error
+		consulClient, err = NewConsulClient(consulConfig, appLogger)
+		if err != nil {
+			appLogger.WithError(err).Fatal("Failed to create Consul client")
+		}
+	}
 
 	dbConfig := utils.DatabaseConfig{
 		Host:            utils.GetEnv("DB_HOST", "localhost"),
@@ -80,17 +236,7 @@ func main() {
 			appLogger.WithError(err).Fatal("Failed to close Redis connection")
 		}
 	}()
-	//if err := utils.InitJWTKeysFromVault(); err != nil {
-	//	log.Fatalf("Vault key init failed: %v", err)
-	//}
-	//
-	//uid := uuid.New()
-	//token, err := utils.GenerateAccessToken(uid, "user@example.com", "admin")
-	//if err != nil {
-	//	log.Fatalf("token generation failed: %v", err)
-	//}
 
-	//fmt.Println("JWT:", token)
 	healthChecker := utils.NewHealthChecker(dbConnection.DB, appLogger)
 
 	app := fiber.New(fiber.Config{
@@ -156,12 +302,46 @@ func main() {
 		})
 	})
 
-	di := DependencyInjectionSection(appLogger, dbConnection.DB)
+	// Add Consul health endpoint
+	app.Get("/health/consul", func(c *fiber.Ctx) error {
+		if !consulEnabled || consulClient == nil {
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+				"status":  "disabled",
+				"message": "Consul is not enabled",
+			})
+		}
+
+		// Check Consul connectivity
+		_, err := consulClient.Status().Leader()
+		if err != nil {
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+				"status": "unhealthy",
+				"error":  err.Error(),
+			})
+		}
+
+		return c.JSON(fiber.Map{
+			"status": "healthy",
+			"consul": "connected",
+		})
+	})
+
+	di := DependencyInjectionSection(appLogger, dbConnection.DB, consulClient)
 	routes.SetupRoutes(app, di.handler)
 	routes.SetupOwnerRoutes(app, di.ownerHandler)
 	routes.SetupPageRequestRoutes(app, di.pageRequestHandler)
 
 	port := utils.GetEnv("PORT", "8080")
+
+	// Register service with Consul before starting the server
+	if consulEnabled && consulClient != nil {
+		if err := RegisterService(consulClient, consulConfig, appLogger); err != nil {
+			appLogger.WithError(err).Error("Failed to register service with Consul")
+		} else {
+			// Start health update routine
+			startHealthUpdateRoutine(consulClient, consulConfig.ServiceID, appLogger)
+		}
+	}
 
 	go func() {
 		appLogger.WithField("port", port).Info("Server starting")
@@ -175,6 +355,11 @@ func main() {
 	<-quit
 
 	appLogger.Info("Shutting down server...")
+	if consulEnabled && consulClient != nil {
+		if err := DeregisterService(consulClient, consulConfig.ServiceID, appLogger); err != nil {
+			appLogger.WithError(err).Error("Failed to deregister service from Consul")
+		}
+	}
 
 	if err := app.Shutdown(); err != nil {
 		appLogger.WithError(err).Error("Server forced to shutdown")
@@ -187,7 +372,7 @@ func main() {
 	appLogger.Info("Server exited")
 }
 
-func DependencyInjectionSection(logger *logrus.Logger, db *gorm.DB) *DISection {
+func DependencyInjectionSection(logger *logrus.Logger, db *gorm.DB, consulClient *api.Client) *DISection {
 	repo := repository.NewRepo(logger, db)
 	if err := repo.CreateDefaultRoles(); err != nil {
 		logger.Fatalf("Failed to create default roles: %v", err)
@@ -199,12 +384,10 @@ func DependencyInjectionSection(logger *logrus.Logger, db *gorm.DB) *DISection {
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to create S3 service")
 	}
-	// Owner
 	ownerRepo := repository.NewOwnerRepository(logger, db)
 	ownerService := service.NewOwnerService(logger, ownerRepo, repo)
 	ownerHandler := handler.NewOwnerHandler(ownerService)
 
-	// Page Request
 	pageRequestRepo := repository.NewPageRequestRepository(logger, db)
 	pageRequestSrv := service.NewPageRequestService(logger, pageRequestRepo)
 	pageRequestHandler := handler.NewPageRequestHandler(pageRequestSrv, s3)
@@ -215,5 +398,6 @@ func DependencyInjectionSection(logger *logrus.Logger, db *gorm.DB) *DISection {
 		handler:            authHandler,
 		ownerHandler:       ownerHandler,
 		pageRequestHandler: pageRequestHandler,
+		consulClient:       consulClient,
 	}
 }
