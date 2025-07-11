@@ -15,7 +15,7 @@ import (
 func main() {
 	logger := logrus.New()
 	grpcServerAddress := utils.GetEnv("GRPC_SERVER_ADDRESS", ":9001")
-	gprcGatewayAddress := utils.GetEnv("GRPC_GATEWAY_ADDRESS", ":8081")
+	gprcGatewayAddress := utils.GetEnv("GRPC_GATEWAY_ADDRESS", ":8082")
 	dbConn := DatabaseConn(logger)
 	dbStore := db.NewStore(dbConn)
 	grpcServer := api.NewServer(dbStore, logger)

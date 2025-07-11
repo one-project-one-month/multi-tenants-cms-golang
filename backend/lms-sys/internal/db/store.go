@@ -4,9 +4,11 @@ import "github.com/jackc/pgx/v5/pgxpool"
 
 type Store struct {
 	*Queries
-	db *pgxpool.Pool
+	conn *pgxpool.Pool
 }
 
-func NewStore(db *pgxpool.Pool) *Store {
-	return &Store{db: db}
+func NewStore(conn *pgxpool.Pool) *Store {
+	return &Store{
+		conn: conn,
+	}
 }
