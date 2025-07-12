@@ -21,24 +21,24 @@ services:
       - consul-data:/consul/data
       - consul-config:/consul/config
     healthcheck:
-      test: [ "CMD", "consul", "members" ]
+      test: ["CMD", "consul", "members"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 15s
     restart: unless-stopped
 
-  gateway:
-    build:
-      context: ./backend/gateway
-      dockerfile: Dockerfile
-    networks:
-      - whole-system-network
-    ports:
-      - "8080:8080"
-    depends_on:
-      consul:
-        condition: service_healthy
+  # gateway:
+  #   build:
+  #     context: ./backend/gateway
+  #     dockerfile: Dockerfile
+  #   networks:
+  #     - whole-system-network
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     consul:
+  #       condition: service_healthy
 
   cms-main-system:
     build:

@@ -9,7 +9,6 @@ package course
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -115,7 +114,7 @@ var File_courses_rpc_courser_get_proto protoreflect.FileDescriptor
 const file_courses_rpc_courser_get_proto_rawDesc = "" +
 	"\n" +
 	"\x1dcourses/rpc_courser_get.proto\x12\n" +
-	"lms.course\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14courses/course.proto\"5\n" +
+	"lms.course\x1a\x14courses/course.proto\"5\n" +
 	"\x10GetCourseRequest\x12!\n" +
 	"\fcourse_title\x18\x01 \x01(\tR\vcourseTitle\"6\n" +
 	"\x11GetCourseResponse\x12!\n" +

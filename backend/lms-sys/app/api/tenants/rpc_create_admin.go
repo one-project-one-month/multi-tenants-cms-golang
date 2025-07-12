@@ -2,15 +2,15 @@ package tenants
 
 import (
 	"context"
-	"time"
+	db "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multi-tenants-cms-golang/lms-sys/internal/db"
+
+	tcv "github.com/multi-tenants-cms-golang/lms-sys/internal/convert/tenants"
 	tpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/tenants"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (t *TenantService) CreateTenant(ctx context.Context, req *tpb.CreateTenantRequest) (*tpb.CreateTenantResponse, error) {
@@ -43,22 +43,6 @@ func (t *TenantService) CreateTenant(ctx context.Context, req *tpb.CreateTenantR
 		return nil, status.Errorf(codes.Internal, "failed to create tenant: %v", err)
 	}
 
-	var createdAtPb *timestamppb.Timestamp
-	if tenant.CreatedAt.Valid {
-		createdAtPb = timestamppb.New(tenant.CreatedAt.Time)
-	} else {
-		createdAtPb = timestamppb.New(time.Time{})
-	}
+	return tcv.ConvertTenantsSQLTOProto(tenant), nil
 
-	tenantIDStr := uuid.UUID(tenant.TenantID.Bytes).String()
-	ownerIDStr := uuid.UUID(tenant.CmsOwnerID.Bytes).String()
-
-	return &tpb.CreateTenantResponse{
-		CreatedTenant: &tpb.Tenants{
-			TenantsId:  tenantIDStr,
-			Namespace:  tenant.Namespace,
-			CmsOwnerId: ownerIDStr,
-			CreatedAt:  createdAtPb,
-		},
-	}, nil
 }

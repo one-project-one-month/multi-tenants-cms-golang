@@ -1,7 +1,7 @@
 package tenants
 
 import (
-	database "github.com/multi-tenants-cms-golang/lms-sys/internal/db"
+	database "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	tbp "github.com/multi-tenants-cms-golang/lms-sys/protogen/tenants"
 	"github.com/sirupsen/logrus"
 )

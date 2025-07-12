@@ -13,6 +13,9 @@
     },
     {
       "name": "TenantService"
+    },
+    {
+      "name": "LMS_USER_SERVICE"
     }
   ],
   "consumes": [
@@ -151,6 +154,40 @@
         ],
         "tags": [
           "TenantService"
+        ]
+      }
+    },
+    "/lms/v1/users": {
+      "post": {
+        "summary": "Create LMS User",
+        "description": "Create a new LMS user",
+        "operationId": "LMS_USER_SERVICE_CreateLMSUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/usersCreateLMSUserResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/usersCreateLMSUserRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LMS_USER_SERVICE"
         ]
       }
     }
@@ -311,6 +348,69 @@
         },
         "isActive": {
           "type": "boolean"
+        }
+      }
+    },
+    "usersCreateLMSUserRequest": {
+      "type": "object",
+      "properties": {
+        "lmsEmail": {
+          "type": "string"
+        },
+        "lmsRoleId": {
+          "type": "string"
+        },
+        "tenantsId": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "phoneNumber": {
+          "type": "string"
+        }
+      }
+    },
+    "usersCreateLMSUserResponse": {
+      "type": "object",
+      "properties": {
+        "userResponse": {
+          "$ref": "#/definitions/usersUsers"
+        }
+      }
+    },
+    "usersUsers": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "lmsEmail": {
+          "type": "string"
+        },
+        "lmsRoleId": {
+          "type": "string"
+        },
+        "tenantsId": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "phoneNumber": {
+          "type": "string"
+        },
+        "registrationDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     }

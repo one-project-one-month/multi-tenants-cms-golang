@@ -1,0 +1,16 @@
+syntax = "proto3";
+package lms.users;
+option go_package = "github.com/multi-tenants-cms-golang/lms-sys/protogen/users";
+import "google/protobuf/timestamp.proto";
+
+message Users {
+    string id = 1;
+    string lms_email = 2;
+    string lms_role_id = 3;
+    string tenants_id = 4;
+    string address = 5;
+    string phone_number = 6;
+    google.protobuf.Timestamp registration_date = 7;
+    google.protobuf.Timestamp created_at = 8;
+    google.protobuf.Timestamp updated_at = 9;
+}
