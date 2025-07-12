@@ -13,7 +13,7 @@ spring:
           enabled: true
       routes:
         - id: cms-service
-          uri: lb://cms-service
+          uri: http://cms-main-system:8080
           predicates:
             - Path=/api/cms/**
           filters:

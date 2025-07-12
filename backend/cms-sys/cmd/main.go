@@ -32,7 +32,6 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-
 type dISection struct {
 	repo               repository.AuthRepository
 	srv                service.AuthService
@@ -80,22 +79,33 @@ func registerService(client *api.Client, config consulConfig, logger *logrus.Log
 		return err
 	}
 
+	allTags := config.Tags
+	traefikTags := []string{
+		"traefik.enable=true",
+		"traefik.http.routers.cms-api.rule=Host(`api.localhost`) && PathPrefix(`/api/v1`)",
+		"traefik.http.routers.cms-api.service=cms-multi-tenant-api",
+		fmt.Sprintf("traefik.http.services.cms-multi-tenant-api.loadbalancer.server.port=%d", config.Port),
+	}
+	allTags = append(allTags, traefikTags...)
+
 	cmsService := &api.AgentServiceRegistration{
-		ID:      config.ServiceID,
-		Name:    config.Name,
-		Tags:    config.Tags,
-		Port:    config.Port,
-		Address: localIP,
-		Check: &api.AgentServiceCheck{
-			HTTP:                           config.CheckHTTP,
-			Interval:                       "10s",
-			Timeout:                        "5s",
-			DeregisterCriticalServiceAfter: "30s",
-		},
-		Meta: map[string]string{
-			"traefik.http.routers.cms-api.rule":                                   "Host(`api.localhost`) && PathPrefix(`/api/v1`)",
-			"traefik.http.routers.cms-api.service":                                "cms-multi-tenant-api",
-			"traefik.http.services.cms-multi-tenant-api.loadbalancer.server.port": "8080",
+		ID:   config.ServiceID,
+		Name: config.Name,
+		Tags: allTags,
+		Port: config.Port,
+		//Address: localIP,
+		Checks: api.AgentServiceChecks{
+			{
+				HTTP:                           config.CheckHTTP,
+				Interval:                       "10s",
+				Timeout:                        "5s",
+				DeregisterCriticalServiceAfter: "30s",
+			},
+			{
+				CheckID:                        config.ServiceID + ":ttl", // Ensure this matches the update routine
+				TTL:                            config.CheckTTL.String(),
+				DeregisterCriticalServiceAfter: "1m",
+			},
 		},
 	}
 
@@ -413,7 +423,6 @@ func dependencyInjectionSection(
 	pageRequestSrv := service.NewPageRequestService(logger, pageRequestRepo)
 	pageRequestHandler := handler.NewPageRequestHandler(pageRequestSrv, s3)
 
-
 	// Page
 	pageRepo := repository.NewPageRepository(logger, db)
 	pageService := service.NewPageService(logger, pageRepo, pageRequestRepo, ownerRepo)
@@ -428,6 +437,5 @@ func dependencyInjectionSection(
 		pageRequestHandler: pageRequestHandler,
 		pageHandler:        pageHandler,
 		consulClient:       consulClient,
-
 	}
 }
