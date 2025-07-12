@@ -29,11 +29,11 @@ const (
 //	PageStatusArchived  PageStatus = "ARCHIVED"
 //)
 //
-//const (
-//	RequestStatusPending  RequestStatus = "PENDING"
-//	RequestStatusApproved RequestStatus = "APPROVED"
-//	RequestStatusRejected RequestStatus = "REJECTED"
-//)
+const (
+	RequestStatusPending  RequestStatus = "PENDING"
+	RequestStatusApproved RequestStatus = "APPROVED"
+	RequestStatusRejected RequestStatus = "REJECTED"
+)
 
 type CMSWholeSysRole struct {
 	RoleID   uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"role_id"`

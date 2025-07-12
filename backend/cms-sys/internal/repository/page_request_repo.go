@@ -12,6 +12,7 @@ type PageRequestRepository interface {
 	GetAllPageRequests(offset, limit int) ([]*types.PageRequest, error)
 	CountPageRequests() (int64, error)
 	GetById(id uuid.UUID) (*types.PageRequest, error)
+	UpdateStatus(id uuid.UUID, status types.RequestStatus) error
 }
 
 type PageRequestRepositoryImpl struct {
@@ -64,3 +65,14 @@ func (r *PageRequestRepositoryImpl) GetById(id uuid.UUID) (*types.PageRequest, e
 	return &pageRequest, nil
 }
 
+func (r *PageRequestRepositoryImpl) UpdateStatus(id uuid.UUID, status types.RequestStatus) error {
+    result := r.db.Model(&types.PageRequest{}).Where("request_id = ?", id).Update("status", status)
+    if result.Error != nil {
+        r.logger.WithError(result.Error).Error("Failed to update status of page request")
+        return result.Error
+    }
+    if result.RowsAffected == 0 {
+        return gorm.ErrRecordNotFound
+    }
+    return nil
+}
