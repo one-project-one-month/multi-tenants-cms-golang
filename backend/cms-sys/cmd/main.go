@@ -32,12 +32,14 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+
 type dISection struct {
 	repo               repository.AuthRepository
 	srv                service.AuthService
 	handler            handler.AuthHandle
 	ownerHandler       handler.OwnerHandle
 	pageRequestHandler handler.PageRequestHandle
+	pageHandler        handler.PageHandle
 	consulClient       *api.Client
 }
 
@@ -177,6 +179,7 @@ func startHealthUpdateRoutine(client *api.Client, serviceID string, logger *logr
 			}
 		}
 	}()
+
 }
 
 func main() {
@@ -341,6 +344,7 @@ func main() {
 	routes.SetupRoutes(app, di.handler)
 	routes.SetupOwnerRoutes(app, di.ownerHandler)
 	routes.SetupPageRequestRoutes(app, di.pageRequestHandler)
+	routes.SetupPageRoutes(app, di.pageHandler)
 
 	port := utils.GetEnv("PORT", "8080")
 
@@ -409,12 +413,21 @@ func dependencyInjectionSection(
 	pageRequestSrv := service.NewPageRequestService(logger, pageRequestRepo)
 	pageRequestHandler := handler.NewPageRequestHandler(pageRequestSrv, s3)
 
+
+	// Page
+	pageRepo := repository.NewPageRepository(logger, db)
+	pageService := service.NewPageService(logger, pageRepo, pageRequestRepo, ownerRepo)
+	pageHandler := handler.NewPageHandler(pageService)
+
 	return &dISection{
+
 		repo:               repo,
 		srv:                srv,
 		handler:            authHandler,
 		ownerHandler:       ownerHandler,
 		pageRequestHandler: pageRequestHandler,
+		pageHandler:        pageHandler,
 		consulClient:       consulClient,
+
 	}
 }
