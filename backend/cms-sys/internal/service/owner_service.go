@@ -104,31 +104,31 @@ func (os *OwnerServiceImpl) Update(id string, req types.OwnerUpdateRequest) (*ty
 }
 
 func (os *OwnerServiceImpl) GetAllOwners() ([]types.OwnerResponse, error) {
-    owners, err := os.repo.GetAllOwners()
-    if err != nil {
-        os.log.WithError(err).Error("Failed to get all owners")
-        return nil, errors.New("failed to retrieve owners")
-    }
+	owners, err := os.repo.GetAllOwners()
+	if err != nil {
+		os.log.WithError(err).Error("Failed to get all owners")
+		return nil, errors.New("failed to retrieve owners")
+	}
 
-    responses := make([]types.OwnerResponse, len(owners))
+	responses := make([]types.OwnerResponse, len(owners))
 
-    for i, owner := range owners {
-        var nameSpace string
-        if owner.CMSNameSpace != nil {
-            nameSpace = *owner.CMSNameSpace
-        }
+	for i, owner := range owners {
+		var nameSpace string
+		if owner.CMSNameSpace != nil {
+			nameSpace = *owner.CMSNameSpace
+		}
 
-        responses[i] = types.OwnerResponse{
-            ID:        owner.CMSUserID,
-            Name:      owner.CMSUserName,
-            Email:     owner.CMSUserEmail,
-            Role:      owner.CMSUserRole,
-            NameSpace: nameSpace,
-            Verified:  owner.Verified,
-        }
-    }
+		responses[i] = types.OwnerResponse{
+			ID:        owner.CMSUserID,
+			Name:      owner.CMSUserName,
+			Email:     owner.CMSUserEmail,
+			Role:      owner.CMSUserRole,
+			NameSpace: nameSpace,
+			Verified:  owner.Verified,
+		}
+	}
 
-    return responses, nil
+	return responses, nil
 }
 
 func (os *OwnerServiceImpl) GetOwnerByID(id string) (*types.OwnerResponse, error) {

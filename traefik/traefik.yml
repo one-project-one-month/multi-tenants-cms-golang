@@ -1,0 +1,30 @@
+# traefik/traefik.yml
+api:
+  dashboard: true
+  debug: true
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+providers:
+  consul:
+    endpoints:
+      - "consul:8500"
+    watch: true
+    exposedByDefault: false
+    defaultRule: "Host(`{{ normalize .Name }}.localhost`)"
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: your-email@example.com
+      storage: consul
+      keyType: EC256
+      httpChallenge:
+        entryPoint: web
+
+log:
+  level: INFO

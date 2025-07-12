@@ -11,5 +11,5 @@ func SetupOwnerRoutes(app *fiber.App, handler handler.OwnerHandle) {
 	ownerRoute.Put("/:id", handler.Update)
 	ownerRoute.Get("/", handler.GetAll)
 	ownerRoute.Get("/:id", handler.GetOwnerByID)
-	ownerRoute.Delete("/", handler.Delete) 
+	ownerRoute.Delete("/", handler.Delete)
 }

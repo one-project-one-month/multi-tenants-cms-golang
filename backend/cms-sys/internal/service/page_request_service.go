@@ -2,20 +2,20 @@ package service
 
 import (
 	"errors"
-	"math"
 	"github.com/google/uuid"
+	"math"
 	"strings"
 
+	"github.com/multi-tenants-cms-golang/cms-sys/internal/mapper"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/repository"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
 	"github.com/multi-tenants-cms-golang/cms-sys/pkg/utils"
-	"github.com/multi-tenants-cms-golang/cms-sys/internal/mapper"
 	"github.com/sirupsen/logrus"
 	"time"
 )
 
 type PageRequestService interface {
-	CreatePageRequest(req types.CreatePageRequest) (*types.PageRequestResponse, error)
+	CreatePageRequest(req types.CreatePageRequest, logourl *string) (*types.PageRequestResponse, error)
 	GetAllPageRequests(req *types.PaginateRequest) ([]*types.PageRequestResponse, *utils.Pagination, error)
 }
 
@@ -33,7 +33,7 @@ func NewPageRequestService(logger *logrus.Logger, repo repository.PageRequestRep
 	}
 }
 
-func (s *PageRequestServiceImpl) CreatePageRequest(req types.CreatePageRequest) (*types.PageRequestResponse, error) {
+func (s *PageRequestServiceImpl) CreatePageRequest(req types.CreatePageRequest, logoUrl *string) (*types.PageRequestResponse, error) {
 	ownerUUID, err := uuid.Parse(strings.TrimSpace(req.OwnerID))
 	if err != nil {
 		return nil, errors.New("invalid owner ID format")
@@ -46,7 +46,7 @@ func (s *PageRequestServiceImpl) CreatePageRequest(req types.CreatePageRequest) 
 		Title:       req.Title,
 		Description: &req.Description,
 		PageUrl:     req.PageUrl,
-		LogoUrl:     req.Logo, // ko swan will integrate with s3 later
+		LogoUrl:     logoUrl,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}

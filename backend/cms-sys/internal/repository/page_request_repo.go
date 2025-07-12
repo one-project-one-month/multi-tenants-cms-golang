@@ -54,6 +54,7 @@ func (r *PageRequestRepositoryImpl) CountPageRequests() (int64, error) {
 	return count, nil
 }
 
+
 func (r *PageRequestRepositoryImpl) GetById(id uuid.UUID) (*types.PageRequest, error) {
 	var pageRequest types.PageRequest
 	if err := r.db.Where("request_id = ?", id).First(&pageRequest).Error; err != nil {
@@ -62,3 +63,4 @@ func (r *PageRequestRepositoryImpl) GetById(id uuid.UUID) (*types.PageRequest, e
 	}
 	return &pageRequest, nil
 }
+
