@@ -12,6 +12,7 @@ func ToPageRequestResponse(model *types.PageRequest) *types.PageRequestResponse 
 		RequestType: model.RequestType,
 		Title:       model.Title,
 		Description: utils.SafeString(model.Description),
+		Status:      model.Status,
 		PageUrl:     model.PageUrl,
 		LogoUrl:     model.LogoUrl,
 		CreatedAt:   model.CreatedAt,

@@ -49,6 +49,7 @@ type PageRequestResponse struct {
 	RequestType string    `json:"requestType"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
+	Status		RequestStatus	`json:"status"`
 	PageUrl     *string   `json:"pageUrl"`
 	LogoUrl     *string   `json:"logoUrl"`
 	CreatedAt   time.Time `json:"createdAt"`

@@ -17,6 +17,7 @@ import (
 type PageRequestService interface {
 	CreatePageRequest(req types.CreatePageRequest, logourl *string) (*types.PageRequestResponse, error)
 	GetAllPageRequests(req *types.PaginateRequest) ([]*types.PageRequestResponse, *utils.Pagination, error)
+	ChangeStatus(req types.ChangeStatusPageRequest) error
 }
 
 type PageRequestServiceImpl struct {
@@ -87,4 +88,13 @@ func (s *PageRequestServiceImpl) GetAllPageRequests(req *types.PaginateRequest) 
 	}
 
 	return responses, pagination, nil
+}
+
+func (s *PageRequestServiceImpl) ChangeStatus(req types.ChangeStatusPageRequest) error {
+    requestUUID, err := uuid.Parse(req.RequestID)
+    if err != nil {
+        return errors.New("invalid request ID format")
+    }
+
+    return s.repo.UpdateStatus(requestUUID, req.Status)
 }

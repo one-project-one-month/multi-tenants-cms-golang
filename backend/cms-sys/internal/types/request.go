@@ -69,3 +69,8 @@ type EmailVerificationRequest struct {
 	Email string `json:"email" validate:"required,email"`
 	Code  string `json:"code" validate:"required,len=6,numeric"`
 }
+
+type ChangeStatusPageRequest struct {
+    RequestID string			`json:"requestId" validate:"required,uuid4"`
+    Status    RequestStatus		`json:"status" validate:"required"`
+}

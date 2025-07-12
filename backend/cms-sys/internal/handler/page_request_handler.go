@@ -13,6 +13,7 @@ import (
 type PageRequestHandle interface {
 	Create(c *fiber.Ctx) error
 	GetAll(c *fiber.Ctx) error
+	ChangeStatus(c *fiber.Ctx) error
 }
 
 type PageRequestHandler struct {
@@ -88,4 +89,26 @@ func (h *PageRequestHandler) GetAll(c *fiber.Ctx) error {
 	}
 
 	return utils.PaginatedSuccessResponse(c, "Page requests retrieved successfully", pageRequests, *pagination)
+}
+
+func (h *PageRequestHandler) ChangeStatus(c *fiber.Ctx) error {
+    var req types.ChangeStatusPageRequest
+
+    if err := c.BodyParser(&req); err != nil {
+        return utils.BadRequestResponse(c, "Invalid request body", err.Error())
+    }
+
+    if err := h.validator.Struct(req); err != nil {
+        return utils.BadRequestResponse(c, "Validation failed", err.Error())
+    }
+
+	if !utils.IsValidRequestStatus(req.Status) {
+		return utils.BadRequestResponse(c, "Invalid request status", "Status must be PENDING, APPROVED or REJECTED")
+	}
+
+    if err := h.service.ChangeStatus(req); err != nil {
+        return utils.InternalServerErrorResponse(c, "Failed to change page request status", err.Error())
+    }
+
+    return utils.SuccessResponse(c, "Page request status updated successfully", nil)
 }
