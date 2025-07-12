@@ -11,7 +11,13 @@ type AuthResponse struct {
 	RefreshToken string       `json:"refresh_token,omitempty"`
 	ExpiresAt    time.Time    `json:"expires_at,omitempty"`
 }
-
+type MFASetupResponse struct {
+	Secret      string `json:"secret"`
+	QRCodeURL   string `json:"qr_code_url"`
+	QRCodeImage string `json:"qr_code_image"` // Base64 encoded PNG
+	TokenID     uint   `json:"token_id"`
+	ManualEntry string `json:"manual_entry"`
+}
 type UserResponse struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
@@ -44,6 +50,6 @@ type PageRequestResponse struct {
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	PageUrl     *string   `json:"pageUrl"`
-	LogoUrl	 	*string   `json:"logoUrl"`
+	LogoUrl     *string   `json:"logoUrl"`
 	CreatedAt   time.Time `json:"createdAt"`
 }

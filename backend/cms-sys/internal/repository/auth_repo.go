@@ -15,6 +15,12 @@ type AuthRepository interface {
 	UpdateUser(user *types.CMSUser) error
 	DeleteUser(id uuid.UUID) error
 	EmailExists(email string) (bool, error)
+	GetActiveMFAToken(userID uuid.UUID) (*types.MFAToken, error)
+	UpdateUserMFAStatus(userID uuid.UUID, enabled bool) error
+	CreateMFAToken(token *types.MFAToken) error
+	GetMFAToken(id uint, id2 uuid.UUID) (*types.MFAToken, error)
+	UpdateMFAToken(token *types.MFAToken) error
+	UpdateUserVerificationStatus(id uuid.UUID, b bool) error
 }
 
 type Repo struct {
@@ -29,6 +35,45 @@ func NewRepo(logger *logrus.Logger, db *gorm.DB) *Repo {
 		logger: logger,
 		db:     db,
 	}
+}
+
+func (r *Repo) UpdateUserVerificationStatus(id uuid.UUID, b bool) error {
+	if err := r.db.Model(&types.CMSUser{}).Where("cms_user_id = ?", id).Update("verified", b).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user not found")
+		}
+		return err
+	}
+	return nil
+}
+func (r *Repo) UpdateMFAToken(token *types.MFAToken) error {
+	err := r.db.Model(&types.MFAToken{}).Where("user_id = ?", token.UserID).Updates(token).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("token with this user not found")
+		}
+		r.logger.WithError(err).Error("Failed to update token")
+		return err
+	}
+	return nil
+
+}
+func (r *Repo) GetMFAToken(id uint, tokenId uuid.UUID) (*types.MFAToken, error) {
+	var foundToken *types.MFAToken
+	if err := r.db.Model(&types.MFAToken{}).Where("user_id = ? AND token_id = ?", id, tokenId).First(foundToken).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("token not found")
+		}
+	}
+	return foundToken, nil
+}
+
+func (r *Repo) CreateMFAToken(token *types.MFAToken) error {
+	if err := r.db.Model(&types.MFAToken{}).Create(token).Error; err != nil {
+		r.logger.WithError(err).Error("Failed to create token")
+		return err
+	}
+	return nil
 }
 
 func (r *Repo) CreateUser(user *types.CMSUser) error {
@@ -126,4 +171,14 @@ func (r *Repo) CreateDefaultRoles() error {
 		}
 	}
 	return nil
+}
+
+func (r *Repo) GetActiveMFAToken(userID uuid.UUID) (*types.MFAToken, error) {
+	var mfaToken types.MFAToken
+	err := r.db.Where("user_id = ? AND expires_at IS NULL", userID).First(&mfaToken).Error
+	return &mfaToken, err
+}
+
+func (r *Repo) UpdateUserMFAStatus(userID uuid.UUID, enabled bool) error {
+	return r.db.Model(&types.CMSUser{}).Where("cms_user_id = ?", userID).Update("mfa_enabled", enabled).Error
 }

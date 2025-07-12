@@ -1,23 +1,20 @@
 FROM maven:3.9.6-eclipse-temurin-17-focal AS build
 
+# Update CA certificates and configure Maven
+RUN apt-get update && apt-get install -y ca-certificates && \
+    update-ca-certificates && \
+    mkdir -p /root/.m2 && \
+    echo '<settings><mirrors><mirror><id>aliyun</id><name>Aliyun Maven</name><url>https://maven.aliyun.com/repository/public</url><mirrorOf>central</mirrorOf></mirror></mirrors></settings>' > /root/.m2/settings.xml
+
 WORKDIR /app
-
 COPY pom.xml .
-COPY gateway/pom.xml ./gateway/
+RUN mvn -B dependency:go-offline
 
-RUN mvn -B -pl gateway -am dependency:go-offline
-
-COPY . .
-
-RUN mvn -B clean install -pl gateway -am
-
+COPY src ./src
+RUN mvn -B clean package -DskipTests
 
 FROM eclipse-temurin:17-jre-jammy
-
 WORKDIR /app
-
-COPY --from=build /app/gateway/target/*.jar ./app.jar
-
+COPY --from=build /app/target/*.jar ./app.jar
 EXPOSE 8080
-
 ENTRYPOINT ["java", "-jar", "app.jar"]

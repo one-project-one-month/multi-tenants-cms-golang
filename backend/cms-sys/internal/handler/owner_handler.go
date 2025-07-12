@@ -101,4 +101,3 @@ func (o OwnerHandler) Delete(c *fiber.Ctx) error {
 
 	return utils.SuccessResponse(c, "Owner(s) deleted", nil)
 }
-

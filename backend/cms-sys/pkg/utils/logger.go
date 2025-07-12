@@ -37,6 +37,7 @@ func NewLogger(config LogConfig) *logrus.Logger {
 			logrus.FieldKeyMsg:   "message",
 			logrus.FieldKeyFunc:  "caller",
 		},
+		PrettyPrint: true,
 	})
 
 	if config.FilePath != "" {
