@@ -1,0 +1,272 @@
+openapi: 3.0.1
+info:
+  title: assignments/assignment.proto
+  version: version not set
+servers:
+- url: /
+tags:
+- name: AssignmentService
+- name: CourseService
+- name: TenantService
+paths:
+  /lms/v1/assignment:
+    post:
+      description: Create Assignment
+      operationId: AssignmentService_CreateAssignment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/assignmentCreateAssignmentRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/assignmentCreateAssignmentResponse'
+          description: A successful response.
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rpcStatus'
+          description: An unexpected error response.
+      summary: Create Assignment
+      tags:
+      - AssignmentService
+      x-codegen-request-body-name: body
+  /lms/v1/course:
+    get:
+      description: Get Course
+      operationId: CourseService_GetCourse
+      parameters:
+      - in: query
+        name: courseTitle
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/courseGetCourseResponse'
+          description: A successful response.
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rpcStatus'
+          description: An unexpected error response.
+      summary: Create Course
+      tags:
+      - CourseService
+    post:
+      description: Create Course
+      operationId: CourseService_CreateCourse
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/courseCreateCourseRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/courseCreateCourseResponse'
+          description: A successful response.
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rpcStatus'
+          description: An unexpected error response.
+      summary: Create Course
+      tags:
+      - CourseService
+      x-codegen-request-body-name: body
+  /lms/v1/tenants:
+    post:
+      description: Create a new tenant
+      operationId: TenantService_CreateTenant
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/tenantsCreateTenantRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tenantsCreateTenantResponse'
+          description: A successful response.
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rpcStatus'
+          description: An unexpected error response.
+      summary: Create Tenant
+      tags:
+      - TenantService
+      x-codegen-request-body-name: body
+components:
+  schemas:
+    assignmentAssignment:
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        instruction: instruction
+        title: title
+        assignmentId: assignmentId
+        courseId: courseId
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        assignmentId:
+          type: string
+        courseId:
+          type: string
+        title:
+          type: string
+        instruction:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    assignmentCreateAssignmentRequest:
+      properties:
+        courseId:
+          type: string
+        title:
+          type: string
+        instructions:
+          type: string
+      type: object
+    assignmentCreateAssignmentResponse:
+      example:
+        assignmentResponse:
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          instruction: instruction
+          title: title
+          assignmentId: assignmentId
+          courseId: courseId
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        assignmentResponse:
+          $ref: '#/components/schemas/assignmentAssignment'
+      type: object
+    courseCourse:
+      example:
+        courseTitle: courseTitle
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        courseId: courseId
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        courseId:
+          type: string
+        courseTitle:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    courseCreateCourseRequest:
+      properties:
+        courseTitle:
+          type: string
+      type: object
+    courseCreateCourseResponse:
+      example:
+        courseCreated:
+          courseTitle: courseTitle
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          courseId: courseId
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        courseCreated:
+          $ref: '#/components/schemas/courseCourse'
+      type: object
+    courseGetCourseResponse:
+      example:
+        courseTitle: courseTitle
+      properties:
+        courseTitle:
+          type: string
+      type: object
+    protobufAny:
+      additionalProperties:
+        type: object
+      example:
+        '@type': '@type'
+      properties:
+        '@type':
+          type: string
+      type: object
+    rpcStatus:
+      example:
+        code: 0
+        details:
+        - '@type': '@type'
+        - '@type': '@type'
+        message: message
+      properties:
+        code:
+          format: int32
+          type: integer
+        message:
+          type: string
+        details:
+          items:
+            $ref: '#/components/schemas/protobufAny'
+          type: array
+      type: object
+    tenantsCreateTenantRequest:
+      properties:
+        namespace:
+          type: string
+        cmsOwnerId:
+          type: string
+      type: object
+    tenantsCreateTenantResponse:
+      example:
+        createdTenant:
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          tenantsId: tenantsId
+          namespace: namespace
+          isActive: true
+          cmsOwnerId: cmsOwnerId
+      properties:
+        createdTenant:
+          $ref: '#/components/schemas/tenantsTenants'
+      type: object
+    tenantsTenants:
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        tenantsId: tenantsId
+        namespace: namespace
+        isActive: true
+        cmsOwnerId: cmsOwnerId
+      properties:
+        tenantsId:
+          type: string
+        namespace:
+          type: string
+        cmsOwnerId:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        isActive:
+          type: boolean
+      type: object
+x-original-swagger-version: "2.0"

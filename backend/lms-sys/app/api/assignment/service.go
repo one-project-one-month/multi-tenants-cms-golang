@@ -1,7 +1,7 @@
 package assignment
 
 import (
-	database "github.com/multi-tenants-cms-golang/lms-sys/internal/db"
+	database "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	atp "github.com/multi-tenants-cms-golang/lms-sys/protogen/assignments"
 	"github.com/sirupsen/logrus"
 )

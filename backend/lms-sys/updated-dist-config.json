@@ -1,0 +1,93 @@
+{
+    "CallerReference": "98619a20-073d-4166-a2ef-83669d1d69c7",
+    "DefaultRootObject": "",
+    "Origins": {
+        "Quantity": 1,
+        "Items": [
+            {
+                "Id": "swan-htet-aung-phyo-static-site-101.s3.us-east-1.amazonaws.com-mc5ez1kua6q",
+                "DomainName": "swan-htet-aung-phyo-static-site-101.s3.us-east-1.amazonaws.com",
+                "OriginPath": "",
+                "CustomHeaders": {
+                    "Quantity": 0
+                },
+                "S3OriginConfig": {
+                    "OriginAccessIdentity": ""
+                },
+                "ConnectionAttempts": 3,
+                "ConnectionTimeout": 10,
+                "OriginShield": {
+                    "Enabled": false
+                },
+                "OriginAccessControlId": "E3HW729X6SS0J7"
+            }
+        ]
+    },
+    "OriginGroups": {
+        "Quantity": 0
+    },
+    "DefaultCacheBehavior": {
+        "TargetOriginId": "swan-htet-aung-phyo-static-site-101.s3.us-east-1.amazonaws.com-mc5ez1kua6q",
+        "TrustedKeyGroups": {
+            "Enabled": false,
+            "Quantity": 0
+        },
+        "ViewerProtocolPolicy": "allow-all",
+        "AllowedMethods": {
+            "Quantity": 2,
+            "Items": [
+                "HEAD",
+                "GET"
+            ],
+            "CachedMethods": {
+                "Quantity": 2,
+                "Items": [
+                    "HEAD",
+                    "GET"
+                ]
+            }
+        },
+        "Compress": true,
+        "LambdaFunctionAssociations": {
+            "Quantity": 0
+        },
+        "FunctionAssociations": {
+            "Quantity": 0
+        },
+        "FieldLevelEncryptionId": "",
+        "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+        "GrpcConfig": {
+            "Enabled": false
+        }
+    },
+    "CacheBehaviors": {
+        "Quantity": 0
+    },
+    "CustomErrorResponses": {
+        "Quantity": 0
+    },
+    "Comment": "",
+    "Logging": {
+        "Enabled": false,
+        "IncludeCookies": false,
+        "Bucket": "",
+        "Prefix": ""
+    },
+    "Enabled": true,
+    "ViewerCertificate": {
+        "CloudFrontDefaultCertificate": true,
+        "SSLSupportMethod": "sni-only",
+        "MinimumProtocolVersion": "TLSv1",
+        "CertificateSource": "cloudfront"
+    },
+    "Restrictions": {
+        "GeoRestriction": {
+            "RestrictionType": "none",
+            "Quantity": 0
+        }
+    },
+    "WebACLId": "",
+    "HttpVersion": "http2",
+    "TenantConfig": {},
+    "ConnectionMode": "tenant-only"
+}

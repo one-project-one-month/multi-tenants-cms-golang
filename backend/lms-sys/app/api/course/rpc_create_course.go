@@ -3,6 +3,7 @@ package course
 import (
 	"context"
 
+	ccv "github.com/multi-tenants-cms-golang/lms-sys/internal/convert/course"
 	cpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/courses"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -14,17 +15,10 @@ func (cs *CoursesService) CreateCourse(ctx context.Context, req *cpb.CreateCours
 	}
 	dbCtx := context.Background()
 
-	_, err := cs.store.CreateNewCourse(dbCtx, req.CourseTitle)
+	dbc, err := cs.store.CreateNewCourse(dbCtx, req.CourseTitle)
 	if err != nil {
 		return nil, err
 	}
 
-	return &cpb.CreateCourseResponse{
-		CourseCreated: &cpb.Course{
-			CourseId:    "fasdokn f;ads",
-			CourseTitle: "cin sdffdsafads",
-			CreatedAt:   nil,
-			UpdatedAt:   nil,
-		},
-	}, status.Errorf(codes.Unimplemented, "method CreateCourse not implemented")
+	return ccv.ConvertCourseProto(dbc), nil
 }

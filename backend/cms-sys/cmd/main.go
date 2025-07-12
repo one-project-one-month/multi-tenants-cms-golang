@@ -3,11 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
-	"github.com/multi-tenants-cms-golang/cms-sys/pkg/aws"
-	"github.com/nats-io/nats.go"
-	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
 	"log"
 	"net"
 	"os"
@@ -16,6 +11,12 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
+	"github.com/multi-tenants-cms-golang/cms-sys/pkg/aws"
+	"github.com/nats-io/nats.go"
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -90,9 +91,9 @@ func registerService(client *api.Client, config consulConfig, logger *logrus.Log
 			DeregisterCriticalServiceAfter: "30s",
 		},
 		Meta: map[string]string{
-			"version":     "1.0.0",
-			"environment": utils.GetEnv("ENV", "development"),
-			"region":      utils.GetEnv("REGION", "us-east-1"),
+			"traefik.http.routers.cms-api.rule":                                   "Host(`api.localhost`) && PathPrefix(`/api/v1`)",
+			"traefik.http.routers.cms-api.service":                                "cms-multi-tenant-api",
+			"traefik.http.services.cms-multi-tenant-api.loadbalancer.server.port": "8080",
 		},
 	}
 

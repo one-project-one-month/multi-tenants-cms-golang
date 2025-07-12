@@ -1,7 +1,7 @@
 package course
 
 import (
-	"github.com/multi-tenants-cms-golang/lms-sys/internal/db"
+	"github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	cpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/courses"
 	"github.com/sirupsen/logrus"
 )
