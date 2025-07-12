@@ -28,17 +28,19 @@ services:
       start_period: 15s
     restart: unless-stopped
 
-  # gateway:
-  #   build:
-  #     context: ./backend/gateway
-  #     dockerfile: Dockerfile
-  #   networks:
-  #     - whole-system-network
-  #   ports:
-  #     - "8080:8080"
-  #   depends_on:
-  #     consul:
-  #       condition: service_healthy
+  gateway:
+    build:
+      context: ./backend/gateway
+      dockerfile: Dockerfile
+    networks:
+      - whole-system-network
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      consul:
+        condition: service_healthy
 
   cms-main-system:
     build:
@@ -81,9 +83,10 @@ services:
       - CONSUL_TOKEN=
       - CONSUL_SCHEME=http
       - CONSUL_SERVICE_ID=cms-api-1
-      - CONSUL_SERVICE_NAME=cms-multi-tenant-api
+      - CONSUL_SERVICE_NAME=cms-service
       - CONSUL_SERVICE_TAGS=cms,multi-tenant,api,v1,environment:development
       - CONSUL_CHECK_TTL=30s
+      - CONSUL_CHECK_ID=service-check-cms-api-1
       - PORT=8080
     ports:
       - "8081:8080"
@@ -149,7 +152,7 @@ services:
     networks:
       - whole-system-network
     ports:
-      - "8080:8080"
+      - "8082:8080"
     environment:
       - NATS_URL=nats://nats:4222
       - SMTP_HOST=smtp.gmail.com
