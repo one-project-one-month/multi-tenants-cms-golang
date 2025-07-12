@@ -137,4 +137,3 @@ func (r *OwnerRepositoryImpl) ForceDeleteOwner(id string) error {
 		return nil
 	})
 }
-

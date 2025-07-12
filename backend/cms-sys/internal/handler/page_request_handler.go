@@ -59,7 +59,7 @@ func (h *PageRequestHandler) Create(c *fiber.Ctx) error {
 		logoURL = uploadedURL
 	}
 
-	pageRequestResponse, err := h.service.CreatePageRequest(req,logoURL)
+	pageRequestResponse, err := h.service.CreatePageRequest(req, logoURL)
 	if err != nil {
 		return utils.InternalServerErrorResponse(c, "Failed to create page request", err.Error())
 	}

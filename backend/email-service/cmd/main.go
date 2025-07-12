@@ -3,40 +3,54 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/multi-tenants-cms-golang/email-service/utils"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/hashicorp/consul/api"
+	"github.com/nats-io/nats.go"
+	"go.uber.org/zap"
 
 	"github.com/multi-tenants-cms-golang/email-service/config"
 	"github.com/multi-tenants-cms-golang/email-service/internal/email"
 	"github.com/multi-tenants-cms-golang/email-service/internal/health"
 	natss "github.com/multi-tenants-cms-golang/email-service/internal/nats"
-	"github.com/nats-io/nats.go"
-	"go.uber.org/zap"
 )
+
+type consulConfig struct {
+	Address    string
+	Datacenter string
+	Token      string
+	Scheme     string
+	ServiceID  string
+	Name       string
+	Tags       []string
+	Port       int
+	CheckTTL   time.Duration
+	CheckHTTP  string
+}
 
 func main() {
 	logger, err := zap.NewProduction()
 	if err != nil {
 		panic(err)
 	}
-	defer func(logger *zap.Logger) {
-		err := logger.Sync()
-		if err != nil {
-			panic(err.Error())
-		}
-	}(logger)
+	defer logger.Sync()
 
 	cfg, err := config.Load()
 	if err != nil {
 		logger.Fatal("failed to load configuration", zap.Error(err))
 	}
 
-	// Connect to NATS
 	nc, err := nats.Connect(cfg.NATS.URL,
 		nats.ReconnectWait(time.Second),
 		nats.MaxReconnects(-1),
@@ -66,7 +80,6 @@ func main() {
 		logger.Fatal("failed to create email service", zap.Error(err))
 	}
 
-	// Create NATS consumer
 	natsConsumer, err := natss.NewConsumer(
 		nc,
 		logger,
@@ -79,13 +92,26 @@ func main() {
 		logger.Fatal("failed to create NATS consumer", zap.Error(err))
 	}
 
-	// Create contexts
+	consulCfg := loadConsulConfig()
+	consulClient, err := api.NewClient(&api.Config{
+		Address:    consulCfg.Address,
+		Datacenter: consulCfg.Datacenter,
+		Token:      consulCfg.Token,
+		Scheme:     consulCfg.Scheme,
+	})
+	if err != nil {
+		logger.Fatal("failed to create Consul client", zap.Error(err))
+	}
+
+	if err := registerService(consulClient, consulCfg, logger); err != nil {
+		logger.Fatal("failed to register service with Consul", zap.Error(err))
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	var wg sync.WaitGroup
 
-	// Start worker goroutines
 	workerCount := runtime.NumCPU()
 	logger.Info("starting email workers", zap.Int("count", workerCount))
 
@@ -118,7 +144,6 @@ func main() {
 		}(i)
 	}
 
-	// Start NATS consumer
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -127,7 +152,6 @@ func main() {
 		}
 	}()
 
-	// Start health server
 	healthServer := health.NewServer(cfg.Server.Port, logger)
 	wg.Add(1)
 	go func() {
@@ -137,26 +161,27 @@ func main() {
 		}
 	}()
 
-	// Wait for shutdown signal
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	<-sigCh
 
 	logger.Info("shutdown signal received, starting graceful shutdown")
 
-	// Create shutdown context
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), cfg.Server.ShutdownTimeout)
 	defer shutdownCancel()
 
-	// Stop health server
 	if err := healthServer.Stop(shutdownCtx); err != nil {
 		logger.Error("failed to stop health server gracefully", zap.Error(err))
 	}
 
-	// Cancel main context to stop all goroutines
 	cancel()
-
 	close(emailCh)
+
+	defer func() {
+		if err := deregisterService(consulClient, consulCfg.ServiceID, logger); err != nil {
+			logger.Error("failed to deregister service from Consul", zap.Error(err))
+		}
+	}()
 
 	done := make(chan struct{})
 	go func() {
@@ -172,4 +197,93 @@ func main() {
 	}
 
 	logger.Info("shutdown complete")
+}
+
+func loadConsulConfig() consulConfig {
+	port, _ := strconv.Atoi(utils.GetEnv("PORT", "8080"))
+	checkTTL, _ := time.ParseDuration(utils.GetEnv("CONSUL_CHECK_TTL", "30s"))
+
+	tagsStr := utils.GetEnv("CONSUL_SERVICE_TAGS", "cms,multi-tenant,api")
+	var tags []string
+	if tagsStr != "" {
+		for _, tag := range strings.Split(tagsStr, ",") {
+			tags = append(tags, strings.TrimSpace(tag))
+		}
+	}
+
+	hostname, _ := os.Hostname()
+
+	return consulConfig{
+		Address:    utils.GetEnv("CONSUL_ADDRESS", "consul:8500"),
+		Datacenter: utils.GetEnv("CONSUL_DATACENTER", "dc1"),
+		Token:      utils.GetEnv("CONSUL_TOKEN", ""),
+		Scheme:     utils.GetEnv("CONSUL_SCHEME", "http"),
+		ServiceID:  utils.GetEnv("CONSUL_SERVICE_ID", fmt.Sprintf("cms-api-%s", hostname)),
+		Name:       utils.GetEnv("CONSUL_SERVICE_NAME", "cms-multi-tenant-api"),
+		Tags:       tags,
+		Port:       port,
+		CheckTTL:   checkTTL,
+		CheckHTTP:  fmt.Sprintf("http://%s:%d/health", hostname, port),
+	}
+}
+
+func getLocalIP() (string, error) {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return "", fmt.Errorf("failed to get local IP: %w", err)
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP.String(), nil
+}
+
+func registerService(client *api.Client, config consulConfig, logger *zap.Logger) error {
+	localIP, err := getLocalIP()
+	if err != nil {
+		logger.Error("failed to get local IP address", zap.Error(err))
+		return err
+	}
+
+	service := &api.AgentServiceRegistration{
+		ID:      config.ServiceID,
+		Name:    config.Name,
+		Tags:    config.Tags,
+		Port:    config.Port,
+		Address: localIP,
+		Check: &api.AgentServiceCheck{
+			HTTP:                           config.CheckHTTP,
+			Interval:                       "10s",
+			Timeout:                        "5s",
+			DeregisterCriticalServiceAfter: "30s",
+		},
+		Meta: map[string]string{
+			"version":     "1.0.0",
+			"environment": utils.GetEnv("ENV", "development"),
+			"region":      utils.GetEnv("REGION", "us-east-1"),
+		},
+	}
+
+	if err := client.Agent().ServiceRegister(service); err != nil {
+		logger.Error("failed to register service with Consul", zap.Error(err))
+		return err
+	}
+
+	logger.Info("service registered with Consul",
+		zap.String("service_id", config.ServiceID),
+		zap.String("service_name", config.Name),
+		zap.String("address", localIP),
+		zap.Int("port", config.Port))
+
+	return nil
+}
+
+func deregisterService(client *api.Client, serviceID string, logger *zap.Logger) error {
+	if err := client.Agent().ServiceDeregister(serviceID); err != nil {
+		logger.Error("failed to deregister service from Consul", zap.Error(err))
+		return err
+	}
+
+	logger.Info("service deregistered from Consul", zap.String("service_id", serviceID))
+	return nil
 }

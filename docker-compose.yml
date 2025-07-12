@@ -28,6 +28,18 @@ services:
       start_period: 15s
     restart: unless-stopped
 
+  gateway:
+    build:
+      context: ./backend/gateway
+      dockerfile: Dockerfile
+    networks:
+      - whole-system-network
+    ports:
+      - "8080:8080"
+    depends_on:
+      consul:
+        condition: service_healthy
+
   cms-main-system:
     build:
       context: ./backend/cms-sys
@@ -42,6 +54,7 @@ services:
       consul:
         condition: service_healthy
     environment:
+      - NATS_URL=nats://nats:4222
       - DB_HOST=postgres-cms
       - DB_PORT=5432
       - DB_NAME=cms_db
@@ -175,6 +188,19 @@ services:
     command: ["-js", "-m", "8222"]
     restart: unless-stopped
 
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8083:8080"
+    networks:
+      - whole-system-network
+    restart: unless-stopped
+    environment:
+      - DOZZLE_LEVEL=info
+      - DOZZLE_TAIL=300
 networks:
   whole-system-network:
     driver: bridge

@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
 	"github.com/multi-tenants-cms-golang/cms-sys/pkg/aws"
+	"github.com/nats-io/nats.go"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
+	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -28,7 +31,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-type DISection struct {
+type dISection struct {
 	repo               repository.AuthRepository
 	srv                service.AuthService
 	handler            handler.AuthHandle
@@ -37,7 +40,7 @@ type DISection struct {
 	consulClient       *api.Client
 }
 
-type ConsulConfig struct {
+type consulConfig struct {
 	Address    string
 	Datacenter string
 	Token      string
@@ -50,7 +53,7 @@ type ConsulConfig struct {
 	CheckHTTP  string
 }
 
-func NewConsulClient(config ConsulConfig, logger *logrus.Logger) (*api.Client, error) {
+func newConsulClient(config consulConfig, logger *logrus.Logger) (*api.Client, error) {
 	consulConfig := api.DefaultConfig()
 	consulConfig.Address = config.Address
 	consulConfig.Datacenter = config.Datacenter
@@ -67,7 +70,7 @@ func NewConsulClient(config ConsulConfig, logger *logrus.Logger) (*api.Client, e
 	return client, nil
 }
 
-func RegisterService(client *api.Client, config ConsulConfig, logger *logrus.Logger) error {
+func registerService(client *api.Client, config consulConfig, logger *logrus.Logger) error {
 	localIP, err := getLocalIP()
 	if err != nil {
 		logger.WithError(err).Error("Failed to get local IP address")
@@ -109,7 +112,7 @@ func RegisterService(client *api.Client, config ConsulConfig, logger *logrus.Log
 	return nil
 }
 
-func DeregisterService(client *api.Client, serviceID string, logger *logrus.Logger) error {
+func deregisterService(client *api.Client, serviceID string, logger *logrus.Logger) error {
 	err := client.Agent().ServiceDeregister(serviceID)
 	if err != nil {
 		logger.WithError(err).Error("Failed to deregister service from Consul")
@@ -136,7 +139,7 @@ func getLocalIP() (string, error) {
 	return localAddr.IP.String(), nil
 }
 
-func loadConsulConfig() ConsulConfig {
+func loadConsulConfig() consulConfig {
 	port, _ := strconv.Atoi(utils.GetEnv("PORT", "8080"))
 	checkTTL, _ := time.ParseDuration(utils.GetEnv("CONSUL_CHECK_TTL", "30s"))
 
@@ -150,7 +153,7 @@ func loadConsulConfig() ConsulConfig {
 
 	hostname, _ := os.Hostname()
 
-	return ConsulConfig{
+	return consulConfig{
 		Address:    utils.GetEnv("CONSUL_ADDRESS", "consul:8500"),
 		Datacenter: utils.GetEnv("CONSUL_DATACENTER", "dc1"),
 		Token:      utils.GetEnv("CONSUL_TOKEN", ""),
@@ -194,7 +197,7 @@ func main() {
 	var consulClient *api.Client
 	if consulEnabled {
 		var err error
-		consulClient, err = NewConsulClient(consulConfig, appLogger)
+		consulClient, err = newConsulClient(consulConfig, appLogger)
 		if err != nil {
 			appLogger.WithError(err).Fatal("Failed to create Consul client")
 		}
@@ -239,6 +242,15 @@ func main() {
 
 	healthChecker := utils.NewHealthChecker(dbConnection.DB, appLogger)
 
+	if err := utils.InitNats(); err != nil {
+		log.Fatalf("Failed to initialize NATS: %v", err)
+	}
+	defer func() {
+		err := utils.CloseNats()
+		if err != nil {
+			appLogger.WithError(err).Fatal("Failed to close NATS")
+		}
+	}()
 	app := fiber.New(fiber.Config{
 		AppName: "CMS Multi-Tenant System ",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -302,7 +314,6 @@ func main() {
 		})
 	})
 
-	// Add Consul health endpoint
 	app.Get("/health/consul", func(c *fiber.Ctx) error {
 		if !consulEnabled || consulClient == nil {
 			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
@@ -311,7 +322,6 @@ func main() {
 			})
 		}
 
-		// Check Consul connectivity
 		_, err := consulClient.Status().Leader()
 		if err != nil {
 			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
@@ -326,7 +336,7 @@ func main() {
 		})
 	})
 
-	di := DependencyInjectionSection(appLogger, dbConnection.DB, consulClient)
+	di := dependencyInjectionSection(appLogger, dbConnection.DB, consulClient, utils.GetRedisClient(), utils.GetNatsConnection())
 	routes.SetupRoutes(app, di.handler)
 	routes.SetupOwnerRoutes(app, di.ownerHandler)
 	routes.SetupPageRequestRoutes(app, di.pageRequestHandler)
@@ -335,7 +345,7 @@ func main() {
 
 	// Register service with Consul before starting the server
 	if consulEnabled && consulClient != nil {
-		if err := RegisterService(consulClient, consulConfig, appLogger); err != nil {
+		if err := registerService(consulClient, consulConfig, appLogger); err != nil {
 			appLogger.WithError(err).Error("Failed to register service with Consul")
 		} else {
 			// Start health update routine
@@ -356,7 +366,7 @@ func main() {
 
 	appLogger.Info("Shutting down server...")
 	if consulEnabled && consulClient != nil {
-		if err := DeregisterService(consulClient, consulConfig.ServiceID, appLogger); err != nil {
+		if err := deregisterService(consulClient, consulConfig.ServiceID, appLogger); err != nil {
 			appLogger.WithError(err).Error("Failed to deregister service from Consul")
 		}
 	}
@@ -372,12 +382,18 @@ func main() {
 	appLogger.Info("Server exited")
 }
 
-func DependencyInjectionSection(logger *logrus.Logger, db *gorm.DB, consulClient *api.Client) *DISection {
+func dependencyInjectionSection(
+	logger *logrus.Logger,
+	db *gorm.DB,
+	consulClient *api.Client,
+	redisClient *redis.Client,
+	natsConn *nats.Conn,
+) *dISection {
 	repo := repository.NewRepo(logger, db)
 	if err := repo.CreateDefaultRoles(); err != nil {
 		logger.Fatalf("Failed to create default roles: %v", err)
 	}
-	srv := service.NewService(logger, repo)
+	srv := service.NewService(logger, repo, redisClient, natsConn)
 	authHandler := handler.NewHandler(srv)
 	bucketName := utils.GetEnv("BUCKET_NAME", "")
 	s3, err := aws.NewS3Service(bucketName, logger)
@@ -392,7 +408,7 @@ func DependencyInjectionSection(logger *logrus.Logger, db *gorm.DB, consulClient
 	pageRequestSrv := service.NewPageRequestService(logger, pageRequestRepo)
 	pageRequestHandler := handler.NewPageRequestHandler(pageRequestSrv, s3)
 
-	return &DISection{
+	return &dISection{
 		repo:               repo,
 		srv:                srv,
 		handler:            authHandler,
