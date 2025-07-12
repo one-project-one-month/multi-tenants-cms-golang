@@ -1,4 +1,4 @@
-# Content Management System (CMS) - Complete Repository Architecture
+# Content Management System (CMS) - Complete Repository Architecture 
 
 <div align="center">
 <img src="https://img.shields.io/badge/Go-1.24-00ADD8?style=for-the-badge&logo=go&logoColor=white"/>
