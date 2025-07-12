@@ -23,11 +23,12 @@ import (
 )
 
 type DISection struct {
-	repo         repository.AuthRepository
-	srv          service.AuthService
-	handler      handler.AuthHandle
-	ownerHandler handler.OwnerHandle
+	repo               repository.AuthRepository
+	srv                service.AuthService
+	handler            handler.AuthHandle
+	ownerHandler       handler.OwnerHandle
 	pageRequestHandler handler.PageRequestHandle
+	pageHandler        handler.PageHandle
 }
 
 func main() {
@@ -78,7 +79,7 @@ func main() {
 		if err != nil {
 			appLogger.WithError(err).Fatal("Failed to close Redis connection")
 		}
-  }()
+	}()
 	//if err := utils.InitJWTKeysFromVault(); err != nil {
 	//	log.Fatalf("Vault key init failed: %v", err)
 	//}
@@ -159,6 +160,7 @@ func main() {
 	routes.SetupRoutes(app, di.handler)
 	routes.SetupOwnerRoutes(app, di.ownerHandler)
 	routes.SetupPageRequestRoutes(app, di.pageRequestHandler)
+	routes.SetupPageRoutes(app, di.pageHandler)
 
 	port := utils.GetEnv("PORT", "8080")
 
@@ -204,11 +206,16 @@ func DependencyInjectionSection(logger *logrus.Logger, db *gorm.DB) *DISection {
 	pageRequestSrv := service.NewPageRequestService(logger, pageRequestRepo)
 	pageRequestHandler := handler.NewPageRequestHandler(pageRequestSrv)
 
+	// Page
+	pageRepo := repository.NewPageRepository(logger, db)
+	pageService := service.NewPageService(logger, pageRepo, pageRequestRepo, ownerRepo)
+	pageHandler := handler.NewPageHandler(pageService)
 	return &DISection{
-		repo:    repo,
-		srv:     srv,
-		handler: authHandler,
-		ownerHandler: ownerHandler,
+		repo:               repo,
+		srv:                srv,
+		handler:            authHandler,
+		ownerHandler:       ownerHandler,
 		pageRequestHandler: pageRequestHandler,
+		pageHandler:        pageHandler,
 	}
 }
