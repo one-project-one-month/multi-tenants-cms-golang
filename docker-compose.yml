@@ -180,6 +180,37 @@ services:
       - consul
     restart: unless-stopped
 
+  lms-main-system:
+    build:
+      context: ./backend/lms-sys
+      dockerfile: Dockerfile
+    networks:
+      - whole-system-network
+    depends_on:
+      postgres-lms:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
+    environment:
+      - DB_SOURCE=postgresql://lms_user:lms_password@postgres-lms:5433/lms_db?sslmode=disable
+      - GRPC_SERVER_ADDRESS=0.0.0.0:9090
+      - HTTP_SERVER_ADDRESS=0.0.0.0:8080
+      - CONSUL_ENABLED=true
+      - CONSUL_ADDRESS=consul:8500
+      - CONSUL_DATACENTER=dc1
+      - CONSUL_TOKEN=
+      - CONSUL_SCHEME=http
+      - CONSUL_SERVICE_ID=lms-api-1
+      - CONSUL_SERVICE_NAME=lms-service
+      - CONSUL_SERVICE_TAGS=lms,multi-tenant,api,v1,environment:development
+      - CONSUL_CHECK_TTL=30s
+      - CONSUL_CHECK_ID=service-check-lms-api-1
+      - PORT=8080
+    ports:
+      - "8084:8080"
+      - "9090:9090"
+    restart: unless-stopped
+
   nats:
     image: nats:latest
     container_name: nats
