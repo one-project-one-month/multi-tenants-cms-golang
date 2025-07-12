@@ -120,7 +120,6 @@ temp/
 
 # Java (if used)
 *.class
-*.jar
 *.war
 *.ear
 .gradle/
