@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/multi-tenants-cms-golang/cms-sys/pkg/aws"
 
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/service"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
@@ -17,19 +18,30 @@ type PageRequestHandle interface {
 type PageRequestHandler struct {
 	service   service.PageRequestService
 	validator *validator.Validate
+	s3Service *aws.S3Service
 }
 
 var _ PageRequestHandle = (*PageRequestHandler)(nil)
 
-func NewPageRequestHandler(service service.PageRequestService) PageRequestHandle {
+func NewPageRequestHandler(
+	service service.PageRequestService,
+	s3 *aws.S3Service,
+) PageRequestHandle {
 	return &PageRequestHandler{
 		service:   service,
 		validator: validator.New(),
+		s3Service: s3,
 	}
 }
 
 func (h *PageRequestHandler) Create(c *fiber.Ctx) error {
 	var req types.CreatePageRequest
+	if form, err := c.MultipartForm(); err != nil {
+		if files := form.File["logo"]; len(files) > 0 {
+			req.LogoFile = files[0]
+		}
+	}
+
 	if err := c.BodyParser(&req); err != nil {
 		return utils.BadRequestResponse(c, "Invalid request body", err.Error())
 	}
@@ -38,7 +50,16 @@ func (h *PageRequestHandler) Create(c *fiber.Ctx) error {
 		return utils.BadRequestResponse(c, "Validation failed", err.Error())
 	}
 
-	pageRequestResponse, err := h.service.CreatePageRequest(req)
+	var logoURL *string
+	if req.LogoFile != nil {
+		uploadedURL, err := h.s3Service.UploadFile(req.LogoFile)
+		if err != nil {
+			return utils.InternalServerErrorResponse(c, "Failed to upload logo", err.Error())
+		}
+		logoURL = uploadedURL
+	}
+
+	pageRequestResponse, err := h.service.CreatePageRequest(req, logoURL)
 	if err != nil {
 		return utils.InternalServerErrorResponse(c, "Failed to create page request", err.Error())
 	}

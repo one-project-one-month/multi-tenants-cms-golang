@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activate Your Account</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .button {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .button:hover {
+            background-color: #218838;
+        }
+        .code-box {
+            background-color: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+        .alert-info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .security-info {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="logo">{{.Data.company_name | default "Your Company"}}</div>
+        <h1>Welcome to {{.Data.company_name | default "Your Company"}}!</h1>
+    </div>
+
+    <div class="content">
+        <h2>Hi {{.Data.username}},</h2>
+
+        <p>Thank you for signing up! We're excited to have you on board. To complete your registration and start using your account, please verify your email address.</p>
+
+        <div class="alert-info">
+            <strong>Account Details:</strong><br>
+            Email: {{.To}}<br>
+            Registration Date: {{.Data.registration_date}}<br>
+            Account Type: {{.Data.account_type | default "Standard"}}
+        </div>
+
+        <!-- Option 1: Activation Button -->
+        {{if .Data.activation_url}}
+        <div style="text-align: center;">
+            <a href="{{.Data.activation_url}}" class="button">
+                ✓ Activate My Account
+            </a>
+        </div>
+
+        <p>Can't click the button? Copy and paste this link into your browser:</p>
+        <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-radius: 4px;">
+            {{.Data.activation_url}}
+        </p>
+        {{end}}
+
+        <!-- Option 2: Activation Code -->
+        {{if .Data.activation_code}}
+        <p>Alternatively, you can use this activation code:</p>
+        <div class="code-box">
+            {{.Data.activation_code}}
+        </div>
+        <p>Enter this code on the activation page: <a href="{{.Data.activation_page_url}}">{{.Data.activation_page_url}}</a></p>
+        {{end}}
+
+        <div class="security-info">
+            <strong>Security Note:</strong><br>
+            • This activation link will expire in {{.Data.expiry_hours | default "24"}} hours<br>
+            • If you didn't create this account, please ignore this email<br>
+            • For security reasons, never share your activation link with others
+        </div>
+
+        <h3>What's Next?</h3>
+        <p>Once your account is activated, you'll be able to:</p>
+        <ul>
+            <li>Access your personalized dashboard</li>
+            <li>Update your profile and preferences</li>
+            <li>Start using all available features</li>
+            <li>Connect with our support team if needed</li>
+        </ul>
+
+        <p>If you have any questions or need assistance, our support team is here to help!</p>
+
+        <p>Best regards,<br>
+            The {{.Data.company_name | default "Your Company"}} Team</p>
+    </div>
+
+    <div class="footer">
+        <p>© 2025 {{.Data.company_name | default "Your Company"}}. All rights reserved.</p>
+        <p>
+            Need help? <a href="{{.Data.support_url | default "#"}}">Contact Support</a> |
+            <a href="{{.Data.terms_url | default "#"}}">Terms of Service</a> |
+            <a href="{{.Data.privacy_url | default "#"}}">Privacy Policy</a>
+        </p>
+        <p style="font-size: 12px; color: #999;">
+            This email was sent to {{.To}}. If you received this email by mistake, please ignore it.
+        </p>
+    </div>
+</div>
+</body>
+</html>

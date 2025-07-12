@@ -6,10 +6,10 @@ import (
 )
 
 type Product struct {
-	ProductID   uuid.UUID `json:"product_id" db:"product_id"`
-	ProductName string    `json:"product_name" db:"product_name"`
-	Description string    `json:"description" db:"description"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+	ProductID   uuid.UUID `json:"product_id" database:"product_id"`
+	ProductName string    `json:"product_name" database:"product_name"`
+	Description string    `json:"description" database:"description"`
+	CreatedAt   time.Time `json:"created_at" database:"created_at"`
 }
 
 // ProductESDoc ElasticsearchDocument for search indexing

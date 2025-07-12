@@ -1,7 +1,50 @@
 services:
+  consul:
+    image: hashicorp/consul:1.17
+    container_name: consul
+    networks:
+      - whole-system-network
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+      - CONSUL_CLIENT_INTERFACE=eth0
+    command: >
+      consul agent -dev
+      -client=0.0.0.0
+      -bind=0.0.0.0
+      -datacenter=dc1
+      -ui
+      -log-level=INFO
+    volumes:
+      - consul-data:/consul/data
+      - consul-config:/consul/config
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: ./backend/gateway
+      dockerfile: Dockerfile
+    networks:
+      - whole-system-network
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      consul:
+        condition: service_healthy
+
   cms-main-system:
     build:
-      context: backend/cms-sys
+      context: ./backend/cms-sys
       dockerfile: Dockerfile
     networks:
       - whole-system-network
@@ -10,7 +53,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      consul:
+        condition: service_healthy
     environment:
+      - NATS_URL=nats://nats:4222
       - DB_HOST=postgres-cms
       - DB_PORT=5432
       - DB_NAME=cms_db
@@ -30,31 +76,21 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=
       - REDIS_DB=0
+      # Consul Configuration
+      - CONSUL_ENABLED=true
+      - CONSUL_ADDRESS=consul:8500
+      - CONSUL_DATACENTER=dc1
+      - CONSUL_TOKEN=
+      - CONSUL_SCHEME=http
+      - CONSUL_SERVICE_ID=cms-api-1
+      - CONSUL_SERVICE_NAME=cms-service
+      - CONSUL_SERVICE_TAGS=cms,multi-tenant,api,v1,environment:development
+      - CONSUL_CHECK_TTL=30s
+      - CONSUL_CHECK_ID=service-check-cms-api-1
+      - PORT=8080
     ports:
-      - "8080:8080"
+      - "8081:8080"
     restart: unless-stopped
-
-  vault:
-    image: hashicorp/vault:1.15
-    container_name: vault
-    networks:
-      - whole-system-network
-    ports:
-      - "8200:8200"
-    environment:
-      - VAULT_DEV_ROOT_TOKEN_ID=root
-      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
-    volumes:
-      - ./vault-init.sh:/vault-init.sh
-      - ./rsa:/vault/keys
-    entrypoint: /bin/sh
-    command: -c "vault server -dev & sleep 15 && sh /vault-init.sh && tail -f /dev/null"
-    healthcheck:
-      test: ["CMD", "sh", "-c", "vault status || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 30s
 
   redis:
     image: redis:7-alpine
@@ -73,6 +109,7 @@ services:
 
   postgres-cms:
     image: postgres:15-alpine
+    container_name: postgres-cms
     environment:
       - POSTGRES_DB=cms_db
       - POSTGRES_USER=postgres
@@ -91,6 +128,7 @@ services:
 
   postgres-lms:
     image: postgres:15-alpine
+    container_name: postgres-lms
     environment:
       - POSTGRES_DB=lms_db
       - POSTGRES_USER=lms_user
@@ -107,6 +145,65 @@ services:
       timeout: 5s
       retries: 5
 
+  email-service:
+    build:
+      context: ./backend/email-service
+      dockerfile: Dockerfile
+    networks:
+      - whole-system-network
+    ports:
+      - "8082:8080"
+    environment:
+      - NATS_URL=nats://nats:4222
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - FROM_ADDR=${FROM_ADDR}
+      - STREAM_NAME=email-stream
+      - SUBJECT_TO=email.send
+      - CONSUMER_NAME=email-consumer
+      - TEMPLATE_DIR=./templates
+      - SERVER_PORT=8080
+      # Consul Configuration (if email service also uses Consul)
+      - CONSUL_ENABLED=true
+      - CONSUL_ADDRESS=consul:8500
+      - CONSUL_DATACENTER=dc1
+      - CONSUL_TOKEN=
+      - CONSUL_SCHEME=http
+      - CONSUL_SERVICE_ID=email-service-1
+      - CONSUL_SERVICE_NAME=email-service
+      - CONSUL_SERVICE_TAGS=email,messaging,service,v1,environment:development
+      - CONSUL_CHECK_TTL=30s
+    depends_on:
+      - nats
+      - consul
+    restart: unless-stopped
+
+  nats:
+    image: nats:latest
+    container_name: nats
+    networks:
+      - whole-system-network
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["-js", "-m", "8222"]
+    restart: unless-stopped
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8083:8080"
+    networks:
+      - whole-system-network
+    restart: unless-stopped
+    environment:
+      - DOZZLE_LEVEL=info
+      - DOZZLE_TAIL=300
 networks:
   whole-system-network:
     driver: bridge
@@ -117,4 +214,10 @@ volumes:
   postgres-lms:
     driver: local
   redis-data:
+    driver: local
+  consul-data:
+    driver: local
+  consul-config:
+    driver: local
+  vault-data:
     driver: local
