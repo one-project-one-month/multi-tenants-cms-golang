@@ -6,7 +6,7 @@ import (
 )
 
 func SetupOwnerRoutes(app *fiber.App, handler handler.OwnerHandle) {
-	ownerRoute := app.Group("/owners")
+	ownerRoute := app.Group("cms/owners")
 	ownerRoute.Post("/", handler.Create)
 	ownerRoute.Put("/:id", handler.Update)
 	ownerRoute.Get("/", handler.GetAll)
