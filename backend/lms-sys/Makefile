@@ -29,38 +29,38 @@ help: ## Show this help message
 	@echo "Usage: make [target]"
 	@echo "Targets:"
 	@awk "BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)"
-
-create-env: ## Create .env file from .env.example
-	@if [ ! -f .env ]; then \
-		if [ -f .env.example ]; then \
-			cp .env.example .env; \
-			echo ".env file created from .env.example! Please update it with your actual values."; \
-		else \
-			echo "Creating basic .env file..."; \
-			echo "DB_HOST=localhost" > .env; \
-			echo "DB_PORT=5433" >> .env; \
-			echo "DB_NAME=lms_db" >> .env; \
-			echo "DB_USER=lms_user" >> .env; \
-			echo "DB_PASSWORD=lms_password" >> .env; \
-			echo "DB_SSLMODE=disable" >> .env; \
-			echo "" >> .env; \
-			echo "MIGRATIONS_PATH=./migration" >> .env; \
-			echo "SCHEMA_PATH=./schema" >> .env; \
-			echo "QUERIES_PATH=./queries" >> .env; \
-			echo "GENERATED_PATH=./internal/db" >> .env; \
-			echo "" >> .env; \
-			echo "APP_PORT=8080" >> .env; \
-			echo "APP_ENV=development" >> .env; \
-			echo "" >> .env; \
-			echo "JWT_SECRET=your_jwt_secret_key_here" >> .env; \
-			echo "JWT_EXPIRY=24h" >> .env; \
-			echo "" >> .env; \
-			echo "LOG_LEVEL=info" >> .env; \
-			echo ".env file created! Please update it with your actual values."; \
-		fi; \
-	else \
-		echo ".env file already exists!"; \
-	fi
+#
+#create-env: ## Create .env file from .env.example
+#	@if [ ! -f .env ]; then \
+#		if [ -f .env.example ]; then \
+#			cp .env.example .env; \
+#			echo ".env file created from .env.example! Please update it with your actual values."; \
+#		else \
+#			echo "Creating basic .env file..."; \
+#			echo "DB_HOST=localhost" > .env; \
+#			echo "DB_PORT=5433" >> .env; \
+#			echo "DB_NAME=lms_db" >> .env; \
+#			echo "DB_USER=lms_user" >> .env; \
+#			echo "DB_PASSWORD=lms_password" >> .env; \
+#			echo "DB_SSLMODE=disable" >> .env; \
+#			echo "" >> .env; \
+#			echo "MIGRATIONS_PATH=./migration" >> .env; \
+#			echo "SCHEMA_PATH=./schema" >> .env; \
+#			echo "QUERIES_PATH=./queries" >> .env; \
+#			echo "GENERATED_PATH=./internal/db" >> .env; \
+#			echo "" >> .env; \
+#			echo "APP_PORT=8080" >> .env; \
+#			echo "APP_ENV=development" >> .env; \
+#			echo "" >> .env; \
+#			echo "JWT_SECRET=your_jwt_secret_key_here" >> .env; \
+#			echo "JWT_EXPIRY=24h" >> .env; \
+#			echo "" >> .env; \
+#			echo "LOG_LEVEL=info" >> .env; \
+#			echo ".env file created! Please update it with your actual values."; \
+#		fi; \
+#	else \
+#		echo ".env file already exists!"; \
+#	fi
 
 check-env: ## Check if .env file exists and validate required variables
 	@echo "Checking .env file..."

@@ -21,7 +21,6 @@ spring:
         - id: lms-service
           uri: lb://lms-service
           predicates:
-
             - Path=/api/lms/**
           filters:
             - StripPrefix=2

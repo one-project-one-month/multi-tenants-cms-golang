@@ -37,6 +37,9 @@ func NewPageRequestHandler(
 func (h *PageRequestHandler) Create(c *fiber.Ctx) error {
 	var req types.CreatePageRequest
 	if form, err := c.MultipartForm(); err != nil {
+		if form == nil {
+			return utils.BadRequestResponse(c, "Invalid request body", err.Error())
+		}
 		if files := form.File["logo"]; len(files) > 0 {
 			req.LogoFile = files[0]
 		}

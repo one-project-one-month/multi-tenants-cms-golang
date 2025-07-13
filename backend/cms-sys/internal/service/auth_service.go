@@ -488,6 +488,7 @@ func (s *Service) generateEmailVerificationCode() (string, error) {
 	numberCode := fmt.Sprintf("%06d", code)
 	return numberCode, nil
 }
+
 func (s *Service) IsMFAEnabled(userID uuid.UUID) (bool, error) {
 	user, err := s.repo.GetUserByID(userID)
 	if err != nil {

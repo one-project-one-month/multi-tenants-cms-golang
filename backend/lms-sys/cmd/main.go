@@ -7,7 +7,7 @@ import (
 	"github.com/multi-tenants-cms-golang/lms-sys/app"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/api"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/rpc"
-	"github.com/multi-tenants-cms-golang/lms-sys/internal/db"
+	"github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils"
 	"github.com/sirupsen/logrus"
 )

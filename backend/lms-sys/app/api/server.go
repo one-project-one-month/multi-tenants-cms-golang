@@ -4,7 +4,7 @@ import (
 	asv "github.com/multi-tenants-cms-golang/lms-sys/app/api/assignment"
 	csv "github.com/multi-tenants-cms-golang/lms-sys/app/api/course"
 	tsv "github.com/multi-tenants-cms-golang/lms-sys/app/api/tenants"
-	db "github.com/multi-tenants-cms-golang/lms-sys/internal/db"
+	db "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	pb "github.com/multi-tenants-cms-golang/lms-sys/protogen/assignments"
 	cpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/courses"
 	tpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/tenants"
@@ -45,7 +45,6 @@ func (s *Server) Run() error {
 	assignmentService := asv.NewAssignmentsService(s.store, s.logger)
 	tenantService := tsv.NewTenantService(s.store, s.logger)
 	courseService := csv.NewCoursesService(s.store, s.logger)
-
 	// Register services with gRPC server
 	pb.RegisterAssignmentServiceServer(grpcServer, assignmentService)
 	tpb.RegisterTenantServiceServer(grpcServer, tenantService)

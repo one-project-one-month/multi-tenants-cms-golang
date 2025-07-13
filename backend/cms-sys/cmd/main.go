@@ -352,6 +352,7 @@ func main() {
 
 	di := dependencyInjectionSection(appLogger, dbConnection.DB, consulClient, utils.GetRedisClient(), utils.GetNatsConnection())
 	routes.SetupRoutes(app, di.handler)
+	routes.DummyRoutes(app)
 	routes.SetupOwnerRoutes(app, di.ownerHandler)
 	routes.SetupPageRequestRoutes(app, di.pageRequestHandler)
 	routes.SetupPageRoutes(app, di.pageHandler)
