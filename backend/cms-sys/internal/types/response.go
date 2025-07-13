@@ -53,3 +53,9 @@ type PageRequestResponse struct {
 	LogoUrl     *string   `json:"logoUrl"`
 	CreatedAt   time.Time `json:"createdAt"`
 }
+
+// FileUploadResponse represents the response from the file service
+type FileUploadResponse struct {
+	Message string      `json:"message"`
+	File    interface{} `json:"file"`
+}
