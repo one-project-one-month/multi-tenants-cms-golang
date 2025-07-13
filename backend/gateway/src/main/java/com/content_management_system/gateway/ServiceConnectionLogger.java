@@ -2,112 +2,96 @@ package com.content_management_system.gateway;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
-import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 public class ServiceConnectionLogger {
 
-    private static final Logger log = LoggerFactory.getLogger(ServiceConnectionLogger.class);
+    private static final Logger logger = LoggerFactory.getLogger(ServiceConnectionLogger.class);
     private final DiscoveryClient discoveryClient;
-    private final AtomicBoolean isCmsServiceConnected = new AtomicBoolean(false);
-    private static final String CMS_SERVICE_NAME = "cms-service";
-    private static final String LMS_SERVICE_NAME = "lms-service";
-    private final AtomicBoolean isLmsServiceConnected = new AtomicBoolean(false);
-    private static final String CMS_MAIN_SERVICE_NAME = "cms-main-system";
-    private final AtomicBoolean isCmsMainServiceConnected = new AtomicBoolean(false);
-    private final LoadBalancerClient loadBalancerClient;
+    private final RestTemplate restTemplate;
 
+    private static final String DEFAULT_HEALTH_PATH = "/actuator/health";
 
-    public ServiceConnectionLogger(
-        final DiscoveryClient discoveryClient,
-        final LoadBalancerClient loadBalancerClient
-    ) {
+    @Autowired
+    public ServiceConnectionLogger(final DiscoveryClient discoveryClient) {
         this.discoveryClient = discoveryClient;
-        this.loadBalancerClient = loadBalancerClient;
+        this.restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    public void onApplicationReady(final ApplicationReadyEvent event) {
-        CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(this::checkServiceConnections);
+    public void onApplicationReady() {
+        logger.info("✅ Application is ready. Performing initial health check in 10 seconds...");
+        new Thread(() -> {
+            try {
+                Thread.sleep(10000);
+                this.checkServiceConnections();
+            } catch (InterruptedException e) {
+                logger.error("Initial health check delay was interrupted", e);
+                Thread.currentThread().interrupt();
+            }
+        }).start();
     }
 
     @Scheduled(fixedDelay = 30000)
     public void checkServiceConnections() {
-        final List<String> services = discoveryClient.getServices();
+        logger.info("🔎 Scheduled task running: Checking service connections...");
 
-        for (String serviceName : services) {
-            try {
-                final ServiceInstance instance = loadBalancerClient.choose(serviceName);
-                if (instance != null) {
-                    final String uri = instance.getUri().toString();
-
-                    final RestTemplate restTemplate = new RestTemplate();
-                    restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
-
-                    try {
-                        final ResponseEntity<String> response = restTemplate.getForEntity(
-                                uri + "/health", String.class);
-
-                        if (response.getStatusCode().is2xxSuccessful()) {
-                            log.info("Successfully discovered and connected to '{}' at {}",
-                                    serviceName, uri);
-                        } else {
-                            log.warn("Service '{}' at {} returned status: {}",
-                                    serviceName, uri, response.getStatusCode());
-                        }
-                    } catch (final Exception e) {
-                        log.error("Failed to connect to '{}' at {}: {}",
-                                serviceName, uri, e.getMessage());
-                    }
-                } else {
-                    log.warn("No instances found for service '{}'", serviceName);
-                }
-            } catch (final Exception e) {
-                log.error("Error checking service '{}': {}", serviceName, e.getMessage());
-            }
+        final List<String> services = this.discoveryClient.getServices();
+        if (CollectionUtils.isEmpty(services)) {
+            logger.warn("No services found in Consul discovery. Will retry on the next cycle.");
+            return;
         }
-    }
 
-    @Scheduled(fixedRate = 10000)
-    public void checkServiceStatus() {
-        checkIndividualService(CMS_SERVICE_NAME, isCmsServiceConnected);
-        checkIndividualService(LMS_SERVICE_NAME, isLmsServiceConnected);
-        checkIndividualService(CMS_MAIN_SERVICE_NAME, isCmsMainServiceConnected);
-    }
+        logger.info("Found {} services: {}", services.size(), services);
 
-    private void checkIndividualService(String serviceName, AtomicBoolean isConnected) {
-        try {
-            List<ServiceInstance> instances = discoveryClient.getInstances(serviceName);
-            if (!instances.isEmpty()) {
-                if (isConnected.compareAndSet(false, true)) {
-                    ServiceInstance instance = instances.get(0);
-                    log.info("Successfully discovered and connected to '{}' at {}:{}",
-                            serviceName, instance.getHost(), instance.getPort());
-                }
+        services.forEach(serviceId -> {
+            final List<ServiceInstance> instances = this.discoveryClient.getInstances(serviceId);
+            if (instances.isEmpty()) {
+                logger.warn("Service '{}' has no registered instances.", serviceId);
             } else {
-                if (isConnected.compareAndSet(true, false)) {
-                    log.warn("Connection lost with '{}'. Service is no longer discovered.", serviceName);
-                }
+                instances.forEach(this::checkInstanceHealth);
+            }
+        });
+    }
+
+    private void checkInstanceHealth(final ServiceInstance instance) {
+        String healthPath = instance.getMetadata().get("health-check-path");
+
+        if (!StringUtils.hasText(healthPath)) {
+            healthPath = DEFAULT_HEALTH_PATH;
+        }
+
+        if (!healthPath.startsWith("/")) {
+            healthPath = "/" + healthPath;
+        }
+
+        final String healthCheckUrl = instance.getUri() + healthPath;
+        final String serviceId = instance.getServiceId();
+
+        try {
+            final ResponseEntity<String> response = this.restTemplate.getForEntity(healthCheckUrl, String.class);
+            if (response.getStatusCode().is2xxSuccessful()) {
+                logger.info("✔️ Successfully connected to '{}' at {}", serviceId, healthCheckUrl);
+            } else {
+                logger.error("❌ Failed to connect to '{}' at {}. Status: {}, Response: {}",
+                        serviceId, healthCheckUrl, response.getStatusCode(), response.getBody());
             }
         } catch (Exception e) {
-            log.error("Error during service discovery check for '{}'", serviceName, e);
-            if (isConnected.compareAndSet(true, false)) {
-                log.warn("Connection status with '{}' set to disconnected due to an error.", serviceName);
-            }
+            logger.error("❌ Error connecting to '{}' at {}: {}", serviceId, healthCheckUrl, e.getMessage());
         }
     }
 }

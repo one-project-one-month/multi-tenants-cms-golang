@@ -94,9 +94,12 @@ func registerService(client *api.Client, config consulConfig, logger *logrus.Log
 		Tags:    allTags,
 		Port:    config.Port,
 		Address: localIP,
+		Meta: map[string]string{
+			"health-check-path": "/cms/health",
+		},
 		Checks: api.AgentServiceChecks{
 			{
-				HTTP:                           fmt.Sprintf("http://%s:%d/health", localIP, config.Port),
+				HTTP:                           fmt.Sprintf("http://%s:%d/cms/health", localIP, config.Port),
 				Interval:                       "10s",
 				Timeout:                        "5s",
 				DeregisterCriticalServiceAfter: "30s",
@@ -120,6 +123,7 @@ func registerService(client *api.Client, config consulConfig, logger *logrus.Log
 		"service_name": config.Name,
 		"address":      localIP,
 		"port":         config.Port,
+		"metadata":     "health-check-path=/cms/health",
 	}).Info("Service registered with Consul successfully")
 
 	return nil
@@ -312,7 +316,9 @@ func main() {
 		})
 	})
 
-	app.Get("/health", func(c *fiber.Ctx) error {
+	cmsGroup := app.Group("/cms")
+
+	cmsGroup.Get("/health", func(c *fiber.Ctx) error {
 		health := healthChecker.CheckHealth()
 
 		statusCode := fiber.StatusOK
@@ -323,7 +329,7 @@ func main() {
 		return c.Status(statusCode).JSON(health)
 	})
 
-	app.Get("/health/database", func(c *fiber.Ctx) error {
+	cmsGroup.Get("/health/database", func(c *fiber.Ctx) error {
 		stats := dbConnection.GetStats()
 		return c.JSON(fiber.Map{
 			"status": "healthy",
@@ -331,7 +337,7 @@ func main() {
 		})
 	})
 
-	app.Get("/health/consul", func(c *fiber.Ctx) error {
+	cmsGroup.Get("/health/consul", func(c *fiber.Ctx) error {
 		if !consulEnabled || consulClient == nil {
 			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
 				"status":  "disabled",
