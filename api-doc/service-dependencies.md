@@ -9,7 +9,7 @@
 | `redis`           | Container | `redis:7-alpine`          | `6379`             | –                                 | –        | Redis for caching                   |
 | `postgres-cms`    | Container | `postgres:15-alpine`      | `5432`             | –                                 | –        | PostgreSQL DB for CMS               |
 | `postgres-lms`    | Container | `postgres:15-alpine`      | `5433` (host)      | –                                 | –        | PostgreSQL DB for LMS (optional)    |
-| `email-service`   | Built     | `./backend/email-service` | `8082`             | `nats`, `consul`                  | Java 17  | Email service with SMTP + NATS      |
+| `email-service`   | Built     | `./backend/email-service` | `8082`             | `nats`, `consul`                  | Go 1.24  | Email service with SMTP + NATS      |
 | `nats`            | Container | `nats:latest`             | `4222`, `8222`     | –                                 | –        | Message broker (JetStream enabled)  |
 | `dozzle`          | Container | `amir20/dozzle:latest`    | `8083`             | –                                 | –        | Real-time Docker logs viewer        |
 
