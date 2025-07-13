@@ -1,0 +1,284 @@
+services:
+  consul:
+    image: hashicorp/consul:1.17
+    container_name: consul
+    networks:
+      - whole-system-network
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+      - CONSUL_CLIENT_INTERFACE=eth0
+    command: >
+      consul agent -dev
+      -client=0.0.0.0
+      -bind=0.0.0.0
+      -datacenter=dc1
+      -ui
+      -log-level=INFO
+    volumes:
+      - consul-data:/consul/data
+      - consul-config:/consul/config
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: ./backend/gateway
+      dockerfile: Dockerfile
+    networks:
+      - whole-system-network
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+    depends_on:
+      consul:
+        condition: service_healthy
+
+  cms-main-system:
+    build:
+      context: ./backend/cms-sys
+      dockerfile: Dockerfile
+    networks:
+      - whole-system-network
+    depends_on:
+      postgres-cms:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
+    environment:
+      - NATS_URL=${NATS_URL}
+      - DB_HOST=postgres-cms
+      - DB_PORT=5432
+      - DB_NAME=${POSTGRES_CMS_DB}
+      - DB_USER=${POSTGRES_CMS_USER}
+      - DB_PASSWORD=${POSTGRES_CMS_PASSWORD}
+      - APP_ENV=${APP_ENV}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - LOG_FILE_PATH=${LOG_FILE_PATH}
+      - LOG_MAX_SIZE=${LOG_MAX_SIZE}
+      - LOG_MAX_BACKUPS=${LOG_MAX_BACKUPS}
+      - LOG_MAX_AGE=${LOG_MAX_AGE}
+      - LOG_COMPRESS=${LOG_COMPRESS}
+      - VAULT_ADDR=${VAULT_ADDR}
+      - VAULT_TOKEN=${VAULT_TOKEN}
+      - LOG_CONSOLE=${LOG_CONSOLE}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_DB=${REDIS_DB}
+      - CONSUL_ENABLED=${CONSUL_ENABLED}
+      - CONSUL_ADDRESS=${CONSUL_ADDRESS}
+      - CONSUL_DATACENTER=${CONSUL_DATACENTER}
+      - CONSUL_SCHEME=${CONSUL_SCHEME}
+      - CONSUL_SERVICE_ID=cms-api-1
+      - CONSUL_SERVICE_NAME=cms-service
+      - CONSUL_SERVICE_TAGS=${CMS_SERVICE_TAGS}
+      - CONSUL_CHECK_TTL=30s
+      - CONSUL_CHECK_ID=service-check-cms-api-1
+      - PORT=${CMS_PORT}
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks:
+      - whole-system-network
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  file-service:
+    build:
+      context: ./backend/file-service
+      dockerfile: Dockerfile
+    networks:
+      - whole-system-network
+    depends_on:
+      consul:
+        condition: service_healthy
+    environment:
+      - TOKEN=${GITHUB_TOKEN}
+      - GITHUB_OWNER=${GITHUB_OWNER}
+      - GITHUB_REPO=${GITHUB_REPO}
+      - PORT=${FILE_SERVICE_PORT}
+      - CONSUL_ENABLED=${CONSUL_ENABLED}
+      - CONSUL_ADDRESS=${CONSUL_ADDRESS}
+      - CONSUL_DATACENTER=${CONSUL_DATACENTER}
+      - CONSUL_TOKEN=${CONSUL_TOKEN}
+      - CONSUL_SCHEME=${CONSUL_SCHEME}
+      - CONSUL_SERVICE_ID=file-service-1
+      - CONSUL_SERVICE_NAME=file-service
+      - CONSUL_SERVICE_TAGS=${FILE_SERVICE_TAGS}
+      - CONSUL_CHECK_TTL=30s
+      - CONSUL_CHECK_ID=service-check-file-service-1
+      - LOG_LEVEL=${LOG_LEVEL}
+      - LOG_CONSOLE=${LOG_CONSOLE}
+      - APP_ENV=${APP_ENV}
+    expose:
+      - ${FILE_SERVICE_PORT}
+    restart: unless-stopped
+
+  postgres-cms:
+    image: postgres:15-alpine
+    container_name: postgres-cms
+    environment:
+      - POSTGRES_DB=${POSTGRES_CMS_DB}
+      - POSTGRES_USER=${POSTGRES_CMS_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_CMS_PASSWORD}
+    volumes:
+      - postgres-cms:/var/lib/postgresql/data
+    networks:
+      - whole-system-network
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_CMS_USER} -d ${POSTGRES_CMS_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-lms:
+    image: postgres:15-alpine
+    container_name: postgres-lms
+    environment:
+      - POSTGRES_DB=${POSTGRES_LMS_DB}
+      - POSTGRES_USER=${POSTGRES_LMS_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_LMS_PASSWORD}
+    volumes:
+      - postgres-lms:/var/lib/postgresql/data
+    networks:
+      - whole-system-network
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_LMS_USER} -d ${POSTGRES_LMS_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  email-service:
+    build:
+      context: ./backend/email-service
+      dockerfile: Dockerfile
+    networks:
+      - whole-system-network
+    ports:
+      - "8082:8080"
+    environment:
+      - NATS_URL=${NATS_URL}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - FROM_EMAIL=${FROM_EMAIL}
+      - FROM_NAME=${FROM_NAME}
+      - ENVIRONMENT=${APP_ENV}
+      - FROM_ADDR=${FROM_ADDR}
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - STREAM_NAME=${STREAM_NAME}
+      - SUBJECT_TO=${SUBJECT_TO}
+      - CONSUMER_NAME=${CONSUMER_NAME}
+      - TEMPLATE_DIR=${TEMPLATE_DIR}
+      - SERVER_PORT=${EMAIL_SERVICE_PORT}
+      - CONSUL_ENABLED=${CONSUL_ENABLED}
+      - CONSUL_ADDRESS=${CONSUL_ADDRESS}
+      - CONSUL_DATACENTER=${CONSUL_DATACENTER}
+      - CONSUL_TOKEN=${CONSUL_TOKEN}
+      - CONSUL_SCHEME=${CONSUL_SCHEME}
+      - CONSUL_SERVICE_ID=email-service-1
+      - CONSUL_SERVICE_NAME=email-service
+      - CONSUL_SERVICE_TAGS=${EMAIL_SERVICE_TAGS}
+      - CONSUL_CHECK_TTL=30s
+    depends_on:
+      - nats
+      - consul
+    restart: unless-stopped
+
+  lms-main-system:
+    build:
+      context: ./backend/lms-sys
+      dockerfile: Dockerfile
+    networks:
+      - whole-system-network
+    depends_on:
+      postgres-lms:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
+    environment:
+      - DB_SOURCE=postgresql://${POSTGRES_LMS_USER}:${POSTGRES_LMS_PASSWORD}@postgres-lms:5433/${POSTGRES_LMS_DB}?sslmode=disable
+      - GRPC_SERVER_ADDRESS=0.0.0.0:${LMS_GRPC_PORT}
+      - HTTP_SERVER_ADDRESS=0.0.0.0:${LMS_HTTP_PORT}
+      - CONSUL_ENABLED=${CONSUL_ENABLED}
+      - CONSUL_ADDRESS=${CONSUL_ADDRESS}
+      - CONSUL_DATACENTER=${CONSUL_DATACENTER}
+      - CONSUL_SCHEME=${CONSUL_SCHEME}
+      - CONSUL_SERVICE_ID=lms-api-1
+      - CONSUL_SERVICE_NAME=lms-service
+      - CONSUL_SERVICE_TAGS=${LMS_SERVICE_TAGS}
+      - CONSUL_CHECK_TTL=30s
+      - CONSUL_CHECK_ID=service-check-lms-api-1
+      - PORT=${LMS_HTTP_PORT}
+    ports:
+      - "8084:8080"
+      - "9090:9090"
+    restart: unless-stopped
+
+  nats:
+    image: nats:latest
+    container_name: nats
+    networks:
+      - whole-system-network
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["-js", "-m", "8222"]
+    restart: unless-stopped
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8083:8080"
+    networks:
+      - whole-system-network
+    restart: unless-stopped
+    environment:
+      - DOZZLE_LEVEL=${DOZZLE_LEVEL}
+      - DOZZLE_TAIL=${DOZZLE_TAIL}
+
+networks:
+  whole-system-network:
+    driver: bridge
+
+volumes:
+  postgres-cms:
+    driver: local
+  postgres-lms:
+    driver: local
+  redis-data:
+    driver: local
+  consul-data:
+    driver: local
+  consul-config:
+    driver: local
+  vault-data:
+    driver: local

@@ -1,0 +1,80 @@
+services:
+  application-a:
+    build:
+      context: service-a
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    networks:
+      - application-suite
+    environment:
+      - PORT=5000
+    depends_on:
+      - nats
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  application-b:
+    build:
+      context: service-b
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    networks:
+      - application-suite
+    environment:
+      - NATS_URL=nats://nats:4222
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+    depends_on:
+      - nats
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: cms_db
+      POSTGRES_USER: cms_user
+      POSTGRES_PASSWORD: cms_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - application-suite
+    healthcheck:
+      test: ["CMD-SHELL","pd_isready -U cms_user  -d cms_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+  nats:
+    image: nats:latest
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: "--http_port 8222"
+    networks:
+      - application-suite
+networks:
+  application-suite:
+    driver: bridge
+volumes:
+  postgres_data:

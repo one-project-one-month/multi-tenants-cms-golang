@@ -1,0 +1,32 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    consul:
+      enabled: false
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: cms-service
+          uri: http://cms-main-system:8080
+          predicates:
+            - Path=/api/cms/**
+          filters:
+            - StripPrefix=2
+        - id: lms-service
+          uri: lb://lms-service
+          predicates:
+            - Path=/api/lms/**
+          filters:
+            - StripPrefix=2
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
