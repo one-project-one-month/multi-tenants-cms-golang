@@ -89,20 +89,20 @@ func registerService(client *api.Client, config consulConfig, logger *logrus.Log
 	allTags = append(allTags, traefikTags...)
 
 	cmsService := &api.AgentServiceRegistration{
-		ID:   config.ServiceID,
-		Name: config.Name,
-		Tags: allTags,
-		Port: config.Port,
-		//Address: localIP,
+		ID:      config.ServiceID,
+		Name:    config.Name,
+		Tags:    allTags,
+		Port:    config.Port,
+		Address: localIP,
 		Checks: api.AgentServiceChecks{
 			{
-				HTTP:                           config.CheckHTTP,
+				HTTP:                           fmt.Sprintf("http://%s:%d/health", localIP, config.Port),
 				Interval:                       "10s",
 				Timeout:                        "5s",
 				DeregisterCriticalServiceAfter: "30s",
 			},
 			{
-				CheckID:                        config.ServiceID + ":ttl", // Ensure this matches the update routine
+				CheckID:                        config.ServiceID + ":ttl",
 				TTL:                            config.CheckTTL.String(),
 				DeregisterCriticalServiceAfter: "1m",
 			},
@@ -153,7 +153,7 @@ func getLocalIP() (string, error) {
 }
 
 func loadConsulConfig() consulConfig {
-	port, _ := strconv.Atoi(utils.GetEnv("PORT", "8080"))
+	port, _ := strconv.Atoi(utils.GetEnv("PORT", "8081"))
 	checkTTL, _ := time.ParseDuration(utils.GetEnv("CONSUL_CHECK_TTL", "30s"))
 
 	tagsStr := utils.GetEnv("CONSUL_SERVICE_TAGS", "cms,multi-tenant,api")
@@ -164,19 +164,22 @@ func loadConsulConfig() consulConfig {
 		}
 	}
 
-	hostname, _ := os.Hostname()
+	localIP, err := getLocalIP()
+	if err != nil {
+		localIP, _ = os.Hostname()
+	}
 
 	return consulConfig{
 		Address:    utils.GetEnv("CONSUL_ADDRESS", "consul:8500"),
 		Datacenter: utils.GetEnv("CONSUL_DATACENTER", "dc1"),
 		Token:      utils.GetEnv("CONSUL_TOKEN", ""),
 		Scheme:     utils.GetEnv("CONSUL_SCHEME", "http"),
-		ServiceID:  utils.GetEnv("CONSUL_SERVICE_ID", fmt.Sprintf("cms-api-%s", hostname)),
-		Name:       utils.GetEnv("CONSUL_SERVICE_NAME", "cms-multi-tenant-api"),
+		ServiceID:  utils.GetEnv("CONSUL_SERVICE_ID", fmt.Sprintf("cms-api-%s", localIP)),
+		Name:       utils.GetEnv("CONSUL_SERVICE_NAME", "cms-service"),
 		Tags:       tags,
 		Port:       port,
 		CheckTTL:   checkTTL,
-		CheckHTTP:  fmt.Sprintf("http://%s:%d/health", hostname, port),
+		CheckHTTP:  fmt.Sprintf("http://%s:%d/health", localIP, port),
 	}
 }
 func startHealthUpdateRoutine(client *api.Client, serviceID string, logger *logrus.Logger) {
@@ -370,7 +373,7 @@ func main() {
 
 	go func() {
 		appLogger.WithField("port", port).Info("Server starting")
-		if err := app.Listen(":" + port); err != nil {
+		if err := app.Listen("0.0.0.0:" + port); err != nil {
 			appLogger.WithError(err).Fatal("Server failed to start")
 		}
 	}()
