@@ -85,7 +85,6 @@ func main() {
 
 	log.Println("Email service started. Waiting for messages...")
 
-	// Process messages
 	_, err = consumer.Consume(func(msg jetstream.Msg) {
 		log.Printf("Received message on subject: %s", msg.Subject())
 
@@ -96,7 +95,6 @@ func main() {
 			return
 		}
 
-		// Send email
 		if err := sendEmail(smtpClient, fromAddr, emailReq); err != nil {
 			log.Printf("Failed to send email: %v", err)
 			msg.Nak()
@@ -110,7 +108,6 @@ func main() {
 		log.Fatalf("Consume failed: %v", err)
 	}
 
-	// Keep service running
 	select {}
 }
 

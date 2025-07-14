@@ -107,7 +107,7 @@ services:
 
   file-service:
     build:
-      context: ./backend/file-service/file-service
+      context: backend/file-service
       dockerfile: Dockerfile
     networks:
       - whole-system-network
@@ -124,11 +124,11 @@ services:
       - CONSUL_DATACENTER=${CONSUL_DATACENTER}
       - CONSUL_TOKEN=${CONSUL_TOKEN}
       - CONSUL_SCHEME=${CONSUL_SCHEME}
-      - CONSUL_SERVICE_ID=file-service-1
-      - CONSUL_SERVICE_NAME=file-service
+      - CONSUL_SERVICE_ID=sss-1
+      - CONSUL_SERVICE_NAME=sss
       - CONSUL_SERVICE_TAGS=${FILE_SERVICE_TAGS}
       - CONSUL_CHECK_TTL=30s
-      - CONSUL_CHECK_ID=service-check-file-service-1
+      - CONSUL_CHECK_ID=service-check-sss-1
       - LOG_LEVEL=${LOG_LEVEL}
       - LOG_CONSOLE=${LOG_CONSOLE}
       - APP_ENV=${APP_ENV}

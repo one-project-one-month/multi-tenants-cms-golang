@@ -1,0 +1,291 @@
+# =============================================================================
+# ENVIRONMENT CONFIGURATION
+# =============================================================================
+APP_ENV=development
+SPRING_PROFILES_ACTIVE=docker
+
+# =============================================================================
+# DATABASE CONFIGURATION
+# =============================================================================
+# CMS Database
+POSTGRES_CMS_DB=cms_db
+POSTGRES_CMS_USER=postgres
+POSTGRES_CMS_PASSWORD=cms_password_123
+
+# LMS Database
+POSTGRES_LMS_DB=lms_db
+POSTGRES_LMS_USER=lms_user
+POSTGRES_LMS_PASSWORD=lms_password
+
+# =============================================================================
+# REDIS CONFIGURATION
+# =============================================================================
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+
+# =============================================================================
+# CONSUL SERVICE DISCOVERY CONFIGURATION
+# =============================================================================
+CONSUL_ENABLED=true
+CONSUL_ADDRESS=consul:8500
+CONSUL_DATACENTER=dc1
+CONSUL_SCHEME=http
+CONSUL_TOKEN=
+
+# =============================================================================
+# VAULT CONFIGURATION
+# =============================================================================
+VAULT_ADDR=http://vault:8200
+VAULT_TOKEN=root
+
+# =============================================================================
+# NATS MESSAGING CONFIGURATION
+# =============================================================================
+NATS_URL=nats://nats:4222
+STREAM_NAME=email.notification
+SUBJECT_TO=email.send
+CONSUMER_NAME=email-consumer
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+LOG_LEVEL=info
+LOG_CONSOLE=true
+LOG_FILE_PATH=/app/logs/app.log
+LOG_MAX_SIZE=100
+LOG_MAX_BACKUPS=3
+LOG_MAX_AGE=28
+LOG_COMPRESS=true
+
+# =============================================================================
+# SERVICE PORTS
+# =============================================================================
+CMS_PORT=8080
+EMAIL_SERVICE_PORT=8080
+LMS_HTTP_PORT=8080
+LMS_GRPC_PORT=9090
+FILE_SERVICE_PORT=9009
+
+# =============================================================================
+# API KEYS AND SECRETS
+# =============================================================================
+# GitHub Configuration
+GITHUB_TOKEN=your_github_token_here
+GITHUB_OWNER=s
+GITHUB_REPO=o
+
+# SendGrid Configuration
+SENDGRID_API_KEY=your_sendgrid_api_key_here
+
+# Resend Configuration
+RESEND_API_KEY=your_resend_api_key_here
+
+# =============================================================================
+# EMAIL SERVICE CONFIGURATION
+# =============================================================================
+FROM_EMAIL=swanhtetaungp@gmail.com
+FROM_NAME=Swan
+FROM_ADDR=swanhtetaungp@gmail.com
+EMAIL_PROVIDER=resend
+TEMPLATE_DIR=./templates
+
+# SMTP Configuration (Required by Go config)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=swanhtetaungp@gmail.com
+SMTP_PASSWORD=igkjacrxwvisbmac
+FROM_ADDR=swanhtetaungp@gmail.com
+
+# Alternative SMTP providers (uncomment as needed)
+# For Outlook/Hotmail:
+# SMTP_HOST=smtp-mail.outlook.com
+# SMTP_PORT=587
+# SMTP_USER=your-email@outlook.com
+# SMTP_PASSWORD=your-password
+
+# For custom SMTP server:
+# SMTP_HOST=mail.yourdomain.com
+# SMTP_PORT=587
+# SMTP_USER=noreply@yourdomain.com
+# SMTP_PASSWORD=your-password
+
+# For development with MailHog:
+# SMTP_HOST=mailhog
+# SMTP_PORT=1025
+# SMTP_USER=test
+# SMTP_PASSWORD=test
+
+# =============================================================================
+# SERVICE DISCOVERY TAGS
+# =============================================================================
+CMS_SERVICE_TAGS=cms,multi-tenant,api,v1,environment:development
+EMAIL_SERVICE_TAGS=email,messaging,service,v1,environment:development
+FILE_SERVICE_TAGS=file,storage,service,v1,environment:development
+LMS_SERVICE_TAGS=lms,multi-tenant,api,v1,environment:development
+
+# =============================================================================
+# CONSUL SERVICE IDs AND NAMES
+# =============================================================================
+# CMS Service
+CMS_SERVICE_ID=cms-api-1
+CMS_SERVICE_NAME=cms-service
+CMS_CHECK_TTL=30s
+CMS_CHECK_ID=service-check-cms-api-1
+
+# Email Service
+EMAIL_SERVICE_ID=email-service-1
+EMAIL_SERVICE_NAME=email-service
+EMAIL_CHECK_TTL=30s
+
+# File Service
+FILE_SERVICE_ID=file-service-1
+FILE_SERVICE_NAME=file-service
+FILE_CHECK_TTL=30s
+FILE_CHECK_ID=service-check-file-service-1
+
+# LMS Service
+LMS_SERVICE_ID=lms-api-1
+LMS_SERVICE_NAME=lms-service
+LMS_CHECK_TTL=30s
+LMS_CHECK_ID=service-check-lms-api-1
+
+# =============================================================================
+# DOZZLE LOGGING UI CONFIGURATION
+# =============================================================================
+DOZZLE_LEVEL=info
+DOZZLE_TAIL=300
+
+# =============================================================================
+# CONSUL BIND CONFIGURATION
+# =============================================================================
+CONSUL_BIND_INTERFACE=eth0
+CONSUL_CLIENT_INTERFACE=eth0
+
+# =============================================================================
+# DATABASE CONNECTION STRINGS
+# =============================================================================
+# LMS Database Connection String
+LMS_DB_SOURCE=postgresql://${POSTGRES_LMS_USER}:${POSTGRES_LMS_PASSWORD}@postgres-lms:5433/${POSTGRES_LMS_DB}?sslmode=disable
+
+# CMS Database Connection Details
+CMS_DB_HOST=postgres-cms
+CMS_DB_PORT=5432
+
+# =============================================================================
+# GRPC AND HTTP SERVER ADDRESSES
+# =============================================================================
+LMS_GRPC_SERVER_ADDRESS=0.0.0.0:9090
+LMS_HTTP_SERVER_ADDRESS=0.0.0.0:8080
+
+# =============================================================================
+# DEVELOPMENT/TESTING OVERRIDES
+# =============================================================================
+# Set to 'true' for development, 'false' for production
+DEBUG_MODE=true
+
+# =============================================================================
+# SECURITY CONFIGURATION
+# =============================================================================
+# JWT Secret (if used)
+JWT_SECRET=your_jwt_secret_here_make_it_long_and_secure_32_chars_minimum
+
+# Encryption key (if used)
+ENCRYPTION_KEY=your_encryption_key_here_32_characters_long
+
+# =============================================================================
+# MONITORING AND HEALTH CHECKS
+# =============================================================================
+HEALTH_CHECK_INTERVAL=10s
+HEALTH_CHECK_TIMEOUT=5s
+HEALTH_CHECK_RETRIES=5
+HEALTH_CHECK_START_PERIOD=15s
+
+# =============================================================================
+# EXTERNAL SERVICE ENDPOINTS
+# =============================================================================
+# Add any external service URLs here
+EXTERNAL_API_URL=https://api.example.com
+EXTERNAL_API_KEY=your_external_api_key_here
+
+# =============================================================================
+# BACKUP AND STORAGE CONFIGURATION
+# =============================================================================
+BACKUP_ENABLED=true
+BACKUP_SCHEDULE=0 2 * * *
+STORAGE_PATH=/app/storage
+
+# =============================================================================
+# ADDITIONAL EMAIL CONFIGURATION
+# =============================================================================
+# Email retry configuration
+EMAIL_RETRY_ATTEMPTS=3
+EMAIL_RETRY_DELAY=5s
+EMAIL_QUEUE_SIZE=1000
+
+# Email rate limiting
+EMAIL_RATE_LIMIT_PER_MINUTE=60
+EMAIL_RATE_LIMIT_PER_HOUR=1000
+
+# =============================================================================
+# DEVELOPMENT TOOLS
+# =============================================================================
+# MailHog for development email testing
+MAILHOG_ENABLED=false
+MAILHOG_WEB_PORT=8025
+MAILHOG_SMTP_PORT=1025
+
+# Hot reload for development
+HOT_RELOAD_ENABLED=true
+HOT_RELOAD_PATHS=./backend
+
+# =============================================================================
+# CORS CONFIGURATION
+# =============================================================================
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
+CORS_ALLOWED_METHODS=GET,POST,PUT,DELETE,OPTIONS
+CORS_ALLOWED_HEADERS=Content-Type,Authorization,X-Requested-With
+CORS_ALLOW_CREDENTIALS=true
+
+# =============================================================================
+# FILE UPLOAD CONFIGURATION
+# =============================================================================
+MAX_FILE_SIZE=10MB
+ALLOWED_FILE_TYPES=jpg,jpeg,png,gif,pdf,doc,docx,txt
+UPLOAD_PATH=/app/uploads
+
+# =============================================================================
+# RATE LIMITING CONFIGURATION
+# =============================================================================
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_REQUESTS_PER_MINUTE=100
+RATE_LIMIT_BURST_SIZE=10
+
+# =============================================================================
+# CACHE CONFIGURATION
+# =============================================================================
+CACHE_TTL=3600
+CACHE_ENABLED=true
+CACHE_PREFIX=multi_tenant_cms
+
+# =============================================================================
+# TIMEZONE CONFIGURATION
+# =============================================================================
+TZ=UTC
+DEFAULT_TIMEZONE=UTC
+
+# =============================================================================
+# PRODUCTION OVERRIDES (uncomment for production)
+# =============================================================================
+# APP_ENV=production
+# DEBUG_MODE=false
+# LOG_LEVEL=warn
+# CORS_ALLOWED_ORIGINS=https://yourdomain.com
+# SMTP_HOST=smtp.yourdomain.com
+# SMTP_PORT=587
+# SMTP_USER=noreply@yourdomain.com
+# SMTP_PASSWORD=your_production_smtp_password
+# FROM_ADDR=noreply@yourdomain.com
+# FROM_EMAIL=noreply@yourdomain.com
+# FROM_NAME=Your Production App
