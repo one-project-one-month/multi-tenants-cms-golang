@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "@typespec/compiler": "^1.1.0",
+    "@typespec/http": "^1.1.0",
+    "@typespec/json-schema": "^1.1.0",
+    "@typespec/openapi3": "^1.1.0",
+    "@typespec/protobuf": "^0.71.0",
+    "@typespec/rest": "^0.71.0"
+  }
+}

@@ -237,8 +237,12 @@ func (h *Handler) UpdateUserProfile(c *fiber.Ctx) error {
 }
 
 func (h *Handler) SetupMFA(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(uuid.UUID)
+	userID := c.Params("userid")
 
+	uuidUserID, err := uuid.Parse(userID)
+	if err != nil {
+		return utils.BadRequestResponse(c, "Invalid user ID format", err.Error())
+	}
 	//mfaEnabled, err := h.service.IsMFAEnabled(userID)
 	//if err != nil {
 	//	return utils.InternalServerErrorResponse(c, "Failed to check MFA status", err.Error())
@@ -248,7 +252,7 @@ func (h *Handler) SetupMFA(c *fiber.Ctx) error {
 	//	return utils.ConflictResponse(c, "MFA is already enabled for this account", nil)
 	//}
 
-	mfaSetup, err := h.service.GenerateMFATokenSecret(userID)
+	mfaSetup, err := h.service.GenerateMFATokenSecret(uuidUserID)
 	if err != nil {
 		return utils.InternalServerErrorResponse(c, "Failed to setup MFA", err.Error())
 	}
@@ -270,9 +274,13 @@ func (h *Handler) VerifyMFASetup(c *fiber.Ctx) error {
 		return utils.BadRequestResponse(c, "Validation failed", err.Error())
 	}
 
-	userID := c.Locals("userID").(uuid.UUID)
+	userID := c.Params("userid")
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return utils.BadRequestResponse(c, "Invalid user ID format", err.Error())
+	}
 
-	if err := h.service.VerifyMFASetup(userID, req.TokenID, req.Code); err != nil {
+	if err := h.service.VerifyMFASetup(userUUID, req.TokenID, req.Code); err != nil {
 		switch err.Error() {
 		case "mfa token expired":
 			return utils.BadRequestResponse(c, "MFA setup token has expired. Please restart the setup process.", nil)

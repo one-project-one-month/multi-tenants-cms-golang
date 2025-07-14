@@ -1,0 +1,34 @@
+POST  {{url}}/cms/auth/register
+Content-Type: application/json
+
+{
+  "name": "{{name}}",
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "role": "{{role}}"
+}
+
+
+###
+POST  {{url}}/cms/auth/mfa/setup/{{userid}}
+Content-Type: application/json
+
+
+###
+POST {{url}}/cms/auth/mfa/verify/{{userid}}
+Content-Type: application/json
+
+{
+  "token_id": 2,
+  "code": "083432"
+}
+
+###
+POST {{url}}/cms/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "mfa_code": "765589"
+}

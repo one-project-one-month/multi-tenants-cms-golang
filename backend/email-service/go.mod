@@ -5,7 +5,7 @@ go 1.24
 require (
 	github.com/hashicorp/consul/api v1.32.1
 	github.com/nats-io/nats.go v1.43.0
-	github.com/sirupsen/logrus v1.4.2
+	github.com/pkg/errors v0.9.1
 	github.com/wneessen/go-mail v0.6.2
 	go.uber.org/zap v1.27.0
 )
@@ -22,7 +22,6 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
-	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
