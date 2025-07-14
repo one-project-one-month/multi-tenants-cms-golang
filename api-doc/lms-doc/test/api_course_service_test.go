@@ -1,5 +1,5 @@
 /*
-assignments/assignment.proto
+assignment/assignment.proto
 
 Testing CourseServiceAPIService
 
@@ -11,10 +11,10 @@ package openapi
 
 import (
 	"context"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func Test_openapi_CourseServiceAPIService(t *testing.T) {
@@ -24,7 +24,7 @@ func Test_openapi_CourseServiceAPIService(t *testing.T) {
 
 	t.Run("Test CourseServiceAPIService CourseServiceCreateCourse", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		resp, httpRes, err := apiClient.CourseServiceAPI.CourseServiceCreateCourse(context.Background()).Execute()
 
@@ -36,7 +36,7 @@ func Test_openapi_CourseServiceAPIService(t *testing.T) {
 
 	t.Run("Test CourseServiceAPIService CourseServiceGetCourse", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		resp, httpRes, err := apiClient.CourseServiceAPI.CourseServiceGetCourse(context.Background()).Execute()
 

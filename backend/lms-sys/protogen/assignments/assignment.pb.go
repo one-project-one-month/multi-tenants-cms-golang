@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v5.29.3
-// source: assignments/assignment.proto
+// source: assignment/assignment.proto
 
 package assignments
 

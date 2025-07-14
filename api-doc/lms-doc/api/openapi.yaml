@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  title: assignments/assignment.proto
+  title: assignment/assignment.proto
   version: version not set
 servers:
 - url: /

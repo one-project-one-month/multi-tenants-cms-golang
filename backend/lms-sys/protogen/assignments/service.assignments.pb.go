@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v5.29.3
-// source: assignments/service.assignments.proto
+// source: assignment/service.assignment.proto
 
 package assignments
 
@@ -26,7 +26,7 @@ var File_assignments_service_assignments_proto protoreflect.FileDescriptor
 
 const file_assignments_service_assignments_proto_rawDesc = "" +
 	"\n" +
-	"%assignments/service.assignments.proto\x12\x0elms.assignment\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a!assignments/rpc_assignments.proto2\xc3\x01\n" +
+	"%assignment/service.assignment.proto\x12\x0elms.assignment\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a!assignment/rpc_assignments.proto2\xc3\x01\n" +
 	"\x11AssignmentService\x12\xad\x01\n" +
 	"\x10CreateAssignment\x12'.lms.assignment.CreateAssignmentRequest\x1a(.lms.assignment.CreateAssignmentResponse\"F\x92A&\x12\x11Create Assignment\x1a\x11Create Assignment\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/lms/v1/assignmentBBZ@github.com/multi-tenants-cms-golang/lms-sys/protogen/assignmentsb\x06proto3"
 

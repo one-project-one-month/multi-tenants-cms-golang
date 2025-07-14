@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v5.29.3
-// source: assignments/rpc_assignments.proto
+// source: assignment/rpc_assignments.proto
 
 package assignments
 
@@ -129,7 +129,7 @@ var File_assignments_rpc_assignments_proto protoreflect.FileDescriptor
 
 const file_assignments_rpc_assignments_proto_rawDesc = "" +
 	"\n" +
-	"!assignments/rpc_assignments.proto\x12\x0elms.assignment\x1a\x1cassignments/assignment.proto\"p\n" +
+	"!assignment/rpc_assignments.proto\x12\x0elms.assignment\x1a\x1cassignments/assignment.proto\"p\n" +
 	"\x17CreateAssignmentRequest\x12\x1b\n" +
 	"\tcourse_id\x18\x01 \x01(\tR\bcourseId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\"\n" +

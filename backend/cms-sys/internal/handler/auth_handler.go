@@ -298,6 +298,11 @@ func (h *Handler) VerifyMFASetup(c *fiber.Ctx) error {
 
 func (h *Handler) LoginWithMFA(c *fiber.Ctx) error {
 	var req types.MFALoginRequest
+	userId := c.Params("userid")
+	userUUID, err := uuid.Parse(userId)
+	if err != nil {
+		return utils.BadRequestResponse(c, "Invalid user ID format", err.Error())
+	}
 	if err := c.BodyParser(&req); err != nil {
 		return utils.BadRequestResponse(c, "Invalid request body", err.Error())
 	}
@@ -306,14 +311,14 @@ func (h *Handler) LoginWithMFA(c *fiber.Ctx) error {
 		return utils.BadRequestResponse(c, "Validation failed", err.Error())
 	}
 
-	user, err := h.service.VerifyCredentials(req.Email, req.Password)
-	if err != nil {
-		return utils.UnauthorizedResponse(c, "Invalid email or password")
-	}
-
-	if !user.Verified {
-		return utils.UnauthorizedResponse(c, "Please verify your email before logging in")
-	}
+	//user, err := h.service.VerifyCredentials(req.Email, req.Password)
+	//if err != nil {
+	//	return utils.UnauthorizedResponse(c, "Invalid email or password")
+	//}
+	//
+	//if !user.Verified {
+	//	return utils.UnauthorizedResponse(c, "Please verify your email before logging in")
+	//}
 
 	//mfaEnabled, err := h.service.IsMFAEnabled(user.CMSUserID)
 	//if err != nil {
@@ -328,7 +333,7 @@ func (h *Handler) LoginWithMFA(c *fiber.Ctx) error {
 		return utils.BadRequestResponse(c, "MFA verification code is required", nil)
 	}
 
-	authResponse, err := h.service.VerifyMFALogin(user.CMSUserID, req.MFACode)
+	authResponse, err := h.service.VerifyMFALogin(userUUID, req.MFACode)
 	if err != nil {
 		switch err.Error() {
 		case "mfa token is invalid":
