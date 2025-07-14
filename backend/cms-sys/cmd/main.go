@@ -14,7 +14,6 @@ import (
 
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
 	"github.com/multi-tenants-cms-golang/cms-sys/pkg/aws"
-	"github.com/nats-io/nats.go"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
@@ -245,7 +244,7 @@ func main() {
 		appLogger.WithError(err).Fatal("Failed to initialize database connection")
 	}
 
-	err := dbConnection.DB.AutoMigrate(&types.CMSWholeSysRole{}, &types.CMSUser{}, &types.CMSCusPurchase{}, &types.UserPageRequest{}, &types.Page{}, &types.PageRequest{})
+	err := dbConnection.DB.AutoMigrate(&types.CMSWholeSysRole{}, &types.CMSUser{}, &types.MFAToken{}, &types.CMSCusPurchase{}, &types.UserPageRequest{}, &types.Page{}, &types.PageRequest{})
 	if err != nil {
 		appLogger.WithError(err).Fatal("Failed to migrate database")
 		return
@@ -266,12 +265,12 @@ func main() {
 	if err := utils.InitNats(); err != nil {
 		log.Fatalf("Failed to initialize NATS: %v", err)
 	}
-	defer func() {
-		err := utils.CloseNats()
-		if err != nil {
-			appLogger.WithError(err).Fatal("Failed to close NATS")
-		}
-	}()
+	//defer func() {
+	//	err := utils.CloseNats()
+	//	if err != nil {
+	//		appLogger.WithError(err).Fatal("Failed to close NATS")
+	//	}
+	//}()
 	app := fiber.New(fiber.Config{
 		AppName: "CMS Multi-Tenant System ",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -359,7 +358,7 @@ func main() {
 		})
 	})
 
-	di := dependencyInjectionSection(appLogger, dbConnection.DB, consulClient, utils.GetRedisClient(), utils.GetNatsConnection())
+	di := dependencyInjectionSection(appLogger, dbConnection.DB, consulClient, utils.GetRedisClient())
 	routes.SetupRoutes(app, di.handler)
 	routes.SetupOwnerRoutes(app, di.ownerHandler)
 	routes.SetupPageRequestRoutes(app, di.pageRequestHandler)
@@ -411,13 +410,12 @@ func dependencyInjectionSection(
 	db *gorm.DB,
 	consulClient *api.Client,
 	redisClient *redis.Client,
-	natsConn *nats.Conn,
 ) *dISection {
 	repo := repository.NewRepo(logger, db)
 	if err := repo.CreateDefaultRoles(); err != nil {
 		logger.Fatalf("Failed to create default roles: %v", err)
 	}
-	srv := service.NewService(logger, repo, redisClient, natsConn)
+	srv := service.NewService(logger, repo, redisClient)
 	authHandler := handler.NewHandler(srv)
 	bucketName := utils.GetEnv("BUCKET_NAME", "")
 	s3, err := aws.NewS3Service(bucketName, logger)

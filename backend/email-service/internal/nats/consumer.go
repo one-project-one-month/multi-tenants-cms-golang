@@ -84,6 +84,8 @@ func (c *Consumer) Start(ctx context.Context) error {
 		zap.String("consumer", c.consumerName))
 
 	consCtx, err := c.cons.Consume(func(msg jetstream.Msg) {
+		c.logger.Debug("Received NATS message",
+			zap.String("data", string(msg.Data())))
 		var req EmailRequest
 		if err := json.Unmarshal(msg.Data(), &req); err != nil {
 			c.logger.Error("failed to unmarshal email request",

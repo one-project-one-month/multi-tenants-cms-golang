@@ -6,13 +6,13 @@ import (
 )
 
 func SetupRoutes(app *fiber.App, handler handler.AuthHandle) {
-	auth := app.Group("cms/auth")
+	auth := app.Group("/cms/auth")
 	auth.Post("/login", handler.LoginWithMFA)
 	auth.Post("/register", handler.Register)
 	auth.Post("/logout", handler.Logout)
 	auth.Post("/refresh", handler.Refresh)
 	auth.Post("/me", handler.GetMe)
 	auth.Put("/profile/:id", handler.UpdateUserProfile)
-	auth.Post("/mfa/setup", handler.SetupMFA)
-	auth.Post("/mfa/verify", handler.VerifyMFASetup)
+	auth.Post("/mfa/setup/:userid", handler.SetupMFA)
+	auth.Post("/mfa/verify/:userid", handler.VerifyMFASetup)
 }

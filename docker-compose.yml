@@ -107,7 +107,7 @@ services:
 
   file-service:
     build:
-      context: ./backend/file-service
+      context: ./backend/file-service/file-service
       dockerfile: Dockerfile
     networks:
       - whole-system-network
@@ -185,6 +185,11 @@ services:
     environment:
       - NATS_URL=${NATS_URL}
       - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=swanhtetaungp@gmail.com
+      - SMTP_PASSWORD=igkjacrxwvisbmac
+      - FROM_ADDR=swanhtetaungp@gmail.com
       - FROM_EMAIL=${FROM_EMAIL}
       - FROM_NAME=${FROM_NAME}
       - ENVIRONMENT=${APP_ENV}

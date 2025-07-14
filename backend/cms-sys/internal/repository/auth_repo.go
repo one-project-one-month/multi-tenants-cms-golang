@@ -47,27 +47,28 @@ func (r *Repo) UpdateUserVerificationStatus(id uuid.UUID, b bool) error {
 	return nil
 }
 func (r *Repo) UpdateMFAToken(token *types.MFAToken) error {
-	err := r.db.Model(&types.MFAToken{}).Where("user_id = ?", token.UserID).Updates(token).Error
+	err := r.db.Model(&types.MFAToken{}).Where("token_id = ? AND user_id = ?", token.TokenID, token.UserID).Updates(token).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("token with this user not found")
+			return errors.New("token not found")
 		}
 		r.logger.WithError(err).Error("Failed to update token")
 		return err
 	}
 	return nil
-
 }
-func (r *Repo) GetMFAToken(id uint, tokenId uuid.UUID) (*types.MFAToken, error) {
-	var foundToken *types.MFAToken
-	if err := r.db.Model(&types.MFAToken{}).Where("user_id = ? AND token_id = ?", id, tokenId).First(foundToken).Error; err != nil {
+
+func (r *Repo) GetMFAToken(tokenID uint, userID uuid.UUID) (*types.MFAToken, error) {
+	var mfaToken types.MFAToken
+	err := r.db.Where("token_id = ? AND user_id = ?", tokenID, userID).First(&mfaToken).Error
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("token not found")
+			return nil, errors.New("mfa token not found")
 		}
+		return nil, err
 	}
-	return foundToken, nil
+	return &mfaToken, nil
 }
-
 func (r *Repo) CreateMFAToken(token *types.MFAToken) error {
 	if err := r.db.Model(&types.MFAToken{}).Create(token).Error; err != nil {
 		r.logger.WithError(err).Error("Failed to create token")

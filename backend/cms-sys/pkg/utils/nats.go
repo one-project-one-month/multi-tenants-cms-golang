@@ -1,85 +1,189 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/nats-io/nats.go"
 )
 
-var natsClient *nats.Conn
+var (
+	natsClient  *nats.Conn
+	js          nats.JetStreamContext
+	initOnce    sync.Once
+	initialized bool
+)
 
-// InitNats initializes the NATS connection
+// InitNats initializes NATS connection and JetStream with proper stream handling
 func InitNats() error {
-	natsUrl := GetEnv("NATS_URL", "nats://localhost:4222")
+	var initErr error
+	initOnce.Do(func() {
+		natsUrl := GetEnv("NATS_URL", "nats://localhost:4222")
 
-	opts := []nats.Option{
-		nats.Name("cms-sys"),
-		nats.MaxReconnects(10),
-		nats.ReconnectWait(2 * time.Second),
-		nats.Timeout(5 * time.Second),
-		nats.DisconnectErrHandler(func(nc *nats.Conn, err error) {
-			log.Printf("NATS disconnected: %v", err)
-		}),
-		nats.ReconnectHandler(func(nc *nats.Conn) {
-			log.Println("NATS reconnected")
-		}),
-		nats.ClosedHandler(func(nc *nats.Conn) {
-			log.Println("NATS connection closed")
-		}),
+		opts := []nats.Option{
+			nats.Name("EMAIL_SERVICE"),
+			nats.MaxReconnects(-1),
+			nats.ReconnectWait(2 * time.Second),
+			nats.Timeout(10 * time.Second),
+			nats.PingInterval(30 * time.Second),
+			nats.DisconnectErrHandler(func(nc *nats.Conn, err error) {
+				log.Printf("NATS disconnected: %v", err)
+			}),
+			nats.ReconnectHandler(func(nc *nats.Conn) {
+				log.Println("NATS reconnected")
+				if js, err := nc.JetStream(); err == nil {
+					initJetStream(js)
+				}
+			}),
+		}
+
+		// Connect to NATS
+		nc, err := nats.Connect(natsUrl, opts...)
+		if err != nil {
+			initErr = fmt.Errorf("failed to connect to NATS: %w", err)
+			return
+		}
+
+		// Initialize JetStream
+		js, err = nc.JetStream(nats.PublishAsyncMaxPending(256))
+		if err != nil {
+			initErr = fmt.Errorf("failed to initialize JetStream: %w", err)
+			nc.Close()
+			return
+		}
+
+		natsClient = nc
+		initialized = true
+
+		// Initialize streams with conflict resolution
+		if err := initJetStream(js); err != nil {
+			initErr = fmt.Errorf("failed to initialize streams: %w", err)
+			return
+		}
+
+		log.Println("NATS and JetStream successfully initialized")
+	})
+
+	return initErr
+}
+
+// initJetStream safely initializes streams handling conflicts
+func initJetStream(js nats.JetStreamContext) error {
+
+	streamConfig := &nats.StreamConfig{
+		Name:      "EMAILS",
+		Subjects:  []string{"email.verification", "email.notification"},
+		Retention: nats.WorkQueuePolicy,
+		Storage:   nats.FileStorage,
+		MaxAge:    24 * time.Hour,
 	}
 
-	nc, err := nats.Connect(natsUrl, opts...)
+	// Check if stream exists
+	_, err := js.StreamInfo("EMAILS")
+	if err == nil {
+		// Stream exists, try to update it
+		_, err = js.UpdateStream(streamConfig)
+		if err != nil {
+			return fmt.Errorf("failed to update existing stream: %w", err)
+		}
+		log.Println("Updated existing EMAILS stream configuration")
+		return nil
+	}
+
+	// Stream doesn't exist, create it
+	_, err = js.AddStream(streamConfig)
 	if err != nil {
-		log.Printf("Failed to connect to NATS: %v", err)
+		return fmt.Errorf("failed to create new stream: %w", err)
+	}
+
+	log.Println("Created new EMAILS stream")
+	return nil
+}
+
+// GetJetStream safely returns the JetStream context
+func GetJetStream() (nats.JetStreamContext, error) {
+	if !initialized {
+		return nil, fmt.Errorf("JetStream not initialized")
+	}
+	return js, nil
+}
+
+// GetNatsConnection returns the core NATS connection
+func GetNatsConnection() (*nats.Conn, error) {
+	if !initialized {
+		return nil, fmt.Errorf("NATS not initialized")
+	}
+	return natsClient, nil
+}
+
+// PublishMessage publishes a message to NATS with JetStream
+func PublishMessage(subject string, data []byte) error {
+	if !initialized {
+		return fmt.Errorf("NATS not initialized")
+	}
+
+	js, err := GetJetStream()
+	if err != nil {
 		return err
 	}
 
-	natsClient = nc
-	log.Println("Successfully connected to NATS")
-	return nil
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err = js.Publish(subject, data, nats.Context(ctx))
+	return err
 }
 
-// GetNatsConnection returns the NATS connection
-func GetNatsConnection() *nats.Conn {
-	return natsClient
-}
+// PublishMessageAsync publishes a message asynchronously with confirmation
+//func PublishMessageAsync(subject string, data []byte, ackHandler func(*nats.PubAck, error)) error {
+//	if !initialized {
+//		return fmt.Errorf("NATS not initialized")
+//	}
+//
+//	js, err := GetJetStream()
+//	if err != nil {
+//		return err
+//	}
+//
+//	_, err = js.PublishAsync(subject, data, ackHandler)
+//	return err
+//}
 
-// PublishMessage publishes a message to NATS
-func PublishMessage(subject string, data []byte) error {
-	if natsClient == nil {
-		return fmt.Errorf("NATS client is not initialized")
+// Subscribe creates a JetStream subscription
+func Subscribe(subject string, handler func(*nats.Msg)) (*nats.Subscription, error) {
+	if !initialized {
+		return nil, fmt.Errorf("NATS not initialized")
 	}
 
-	if !natsClient.IsConnected() {
-		return fmt.Errorf("NATS is not connected")
+	js, err := GetJetStream()
+	if err != nil {
+		return nil, err
 	}
 
-	return natsClient.Publish(subject, data)
+	return js.Subscribe(subject, handler,
+		nats.Durable("email-service"),
+		nats.ManualAck(),
+		nats.AckExplicit(),
+		nats.DeliverAll(),
+		nats.MaxDeliver(5),
+	)
 }
 
-// IsNatsConnected checks if NATS is connected
-func IsNatsConnected() bool {
-	if natsClient == nil {
-		return false
-	}
-	return natsClient.IsConnected()
+// IsConnected checks if NATS is connected
+func IsConnected() bool {
+	return initialized && natsClient != nil && natsClient.IsConnected()
 }
 
-// CloseNats closes the NATS connection
-func CloseNats() error {
+func Close() error {
 	if natsClient != nil {
+		if err := natsClient.Drain(); err != nil {
+			return fmt.Errorf("failed to drain NATS connection: %w", err)
+		}
 		natsClient.Close()
-		log.Println("NATS connection closed")
-	}
-	return nil
-}
-
-// DrainNats drains the NATS connection
-func DrainNats() error {
-	if natsClient != nil {
-		return natsClient.Drain()
+		initialized = false
 	}
 	return nil
 }
