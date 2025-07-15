@@ -14,6 +14,7 @@ import (
 	pb "github.com/multi-tenants-cms-golang/lms-sys/protogen/assignments"
 	cpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/courses"
 	tpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/tenants"
+	mpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/modules"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
@@ -62,6 +63,10 @@ func (g *Gateway) Start() error {
 
 	if err := cpb.RegisterCourseServiceHandlerFromEndpoint(ctx, gwMux, g.grpcAddr, opts); err != nil {
 		return fmt.Errorf("failed to register course service gateway")
+	}
+
+	if err := mpb.RegisterModuleServiceHandlerFromEndpoint(ctx, gwMux, g.grpcAddr, opts); err != nil {
+		return fmt.Errorf("failed to register module service gateway")
 	}
 
 	statikFS, err := fs.New()
