@@ -1,0 +1,20 @@
+syntax = "proto3";
+package lms.assignment;
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/assignment";
+
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "google/api/annotations.proto";
+import "assignment/rpc_assignments.proto";
+
+service  AssignmentService {
+  rpc CreateAssignment(CreateAssignmentRequest) returns (CreateAssignmentResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/assignment";
+      body: "*";
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Create Assignment";
+      summary: "Create Assignment";
+    };
+  }
+}

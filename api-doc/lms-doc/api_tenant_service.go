@@ -67,7 +67,7 @@ func (a *TenantServiceAPIService) TenantServiceCreateTenantExecute(r ApiTenantSe
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/lms/v1/tenants"
+	localVarPath := localBasePath + "/lms/v1/tenant"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}

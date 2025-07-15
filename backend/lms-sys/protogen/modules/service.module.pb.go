@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v6.30.2
-// source: modules/service.module.proto
+// source: module/service.module.proto
 
 package modules
 
@@ -27,37 +27,37 @@ var File_modules_service_module_proto protoreflect.FileDescriptor
 
 const file_modules_service_module_proto_rawDesc = "" +
 	"\n" +
-	"\x1cmodules/service.module.proto\x12\vlms.modules\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fmodules/rpc_create_module.proto\x1a modules/rpc_delete_modules.proto\x1a\x1cmodules/rpc_get_module.proto\x1a\x1emodules/rpc_list_modules.proto\x1a\x1fmodules/rpc_update_module.proto2\x9c\x06\n" +
+	"\x1cmodules/service.module.proto\x12\vlms.module\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fmodules/rpc_create_module.proto\x1a module/rpc_delete_modules.proto\x1a\x1cmodules/rpc_get_module.proto\x1a\x1emodules/rpc_list_modules.proto\x1a\x1fmodules/rpc_update_module.proto2\x9c\x06\n" +
 	"\rModuleService\x12\x96\x01\n" +
-	"\fCreateModule\x12 .lms.modules.CreateModuleRequest\x1a!.lms.modules.CreateModuleResponse\"A\x92A$\x12\rCreate module\x1a\x13Create a new module\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/lms/v1/modules\x12\xa8\x01\n" +
-	"\fUpdateModule\x12 .lms.modules.UpdateModuleRequest\x1a!.lms.modules.UpdateModuleResponse\"S\x92A*\x12\rUpdate module\x1a\x19Update an existing module\x82\xd3\xe4\x93\x02 :\x01*\x1a\x1b/lms/v1/modules/{module_id}\x12\xa8\x01\n" +
-	"\rDeleteModules\x12!.lms.modules.DeleteModulesRequest\x1a\".lms.modules.DeleteModulesResponse\"P\x92A3\x12\x0eDelete modules\x1a!Delete single or multiple modules\x82\xd3\xe4\x93\x02\x14:\x01**\x0f/lms/v1/modules\x12\x8a\x01\n" +
-	"\vListModules\x12\x16.google.protobuf.Empty\x1a .lms.modules.ListModulesResponse\"A\x92A'\x12\x0fGet all modules\x1a\x14List/Get all modules\x82\xd3\xe4\x93\x02\x11\x12\x0f/lms/v1/modules\x12\x8e\x01\n" +
-	"\tGetModule\x12\x1d.lms.modules.GetModuleRequest\x1a\x1e.lms.modules.GetModuleResponse\"B\x92A\x1c\x12\fGet a module\x1a\fGet a module\x82\xd3\xe4\x93\x02\x1d\x12\x1b/lms/v1/modules/{module_id}B>Z<github.com/multi-tenants-cms-golang/lms-sys/protogen/modulesb\x06proto3"
+	"\fCreateModule\x12 .lms.module.CreateModuleRequest\x1a!.lms.module.CreateModuleResponse\"A\x92A$\x12\rCreate module\x1a\x13Create a new module\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/lms/v1/module\x12\xa8\x01\n" +
+	"\fUpdateModule\x12 .lms.module.UpdateModuleRequest\x1a!.lms.module.UpdateModuleResponse\"S\x92A*\x12\rUpdate module\x1a\x19Update an existing module\x82\xd3\xe4\x93\x02 :\x01*\x1a\x1b/lms/v1/module/{module_id}\x12\xa8\x01\n" +
+	"\rDeleteModules\x12!.lms.module.DeleteModulesRequest\x1a\".lms.module.DeleteModulesResponse\"P\x92A3\x12\x0eDelete module\x1a!Delete single or multiple module\x82\xd3\xe4\x93\x02\x14:\x01**\x0f/lms/v1/module\x12\x8a\x01\n" +
+	"\vListModules\x12\x16.google.protobuf.Empty\x1a .lms.module.ListModulesResponse\"A\x92A'\x12\x0fGet all module\x1a\x14List/Get all module\x82\xd3\xe4\x93\x02\x11\x12\x0f/lms/v1/module\x12\x8e\x01\n" +
+	"\tGetModule\x12\x1d.lms.module.GetModuleRequest\x1a\x1e.lms.module.GetModuleResponse\"B\x92A\x1c\x12\fGet a module\x1a\fGet a module\x82\xd3\xe4\x93\x02\x1d\x12\x1b/lms/v1/module/{module_id}B>Z<github.com/multi-tenant-cms-golang/lms-sys/protogen/modulesb\x06proto3"
 
 var file_modules_service_module_proto_goTypes = []any{
-	(*CreateModuleRequest)(nil),   // 0: lms.modules.CreateModuleRequest
-	(*UpdateModuleRequest)(nil),   // 1: lms.modules.UpdateModuleRequest
-	(*DeleteModulesRequest)(nil),  // 2: lms.modules.DeleteModulesRequest
+	(*CreateModuleRequest)(nil),   // 0: lms.module.CreateModuleRequest
+	(*UpdateModuleRequest)(nil),   // 1: lms.module.UpdateModuleRequest
+	(*DeleteModulesRequest)(nil),  // 2: lms.module.DeleteModulesRequest
 	(*emptypb.Empty)(nil),         // 3: google.protobuf.Empty
-	(*GetModuleRequest)(nil),      // 4: lms.modules.GetModuleRequest
-	(*CreateModuleResponse)(nil),  // 5: lms.modules.CreateModuleResponse
-	(*UpdateModuleResponse)(nil),  // 6: lms.modules.UpdateModuleResponse
-	(*DeleteModulesResponse)(nil), // 7: lms.modules.DeleteModulesResponse
-	(*ListModulesResponse)(nil),   // 8: lms.modules.ListModulesResponse
-	(*GetModuleResponse)(nil),     // 9: lms.modules.GetModuleResponse
+	(*GetModuleRequest)(nil),      // 4: lms.module.GetModuleRequest
+	(*CreateModuleResponse)(nil),  // 5: lms.module.CreateModuleResponse
+	(*UpdateModuleResponse)(nil),  // 6: lms.module.UpdateModuleResponse
+	(*DeleteModulesResponse)(nil), // 7: lms.module.DeleteModulesResponse
+	(*ListModulesResponse)(nil),   // 8: lms.module.ListModulesResponse
+	(*GetModuleResponse)(nil),     // 9: lms.module.GetModuleResponse
 }
 var file_modules_service_module_proto_depIdxs = []int32{
-	0, // 0: lms.modules.ModuleService.CreateModule:input_type -> lms.modules.CreateModuleRequest
-	1, // 1: lms.modules.ModuleService.UpdateModule:input_type -> lms.modules.UpdateModuleRequest
-	2, // 2: lms.modules.ModuleService.DeleteModules:input_type -> lms.modules.DeleteModulesRequest
-	3, // 3: lms.modules.ModuleService.ListModules:input_type -> google.protobuf.Empty
-	4, // 4: lms.modules.ModuleService.GetModule:input_type -> lms.modules.GetModuleRequest
-	5, // 5: lms.modules.ModuleService.CreateModule:output_type -> lms.modules.CreateModuleResponse
-	6, // 6: lms.modules.ModuleService.UpdateModule:output_type -> lms.modules.UpdateModuleResponse
-	7, // 7: lms.modules.ModuleService.DeleteModules:output_type -> lms.modules.DeleteModulesResponse
-	8, // 8: lms.modules.ModuleService.ListModules:output_type -> lms.modules.ListModulesResponse
-	9, // 9: lms.modules.ModuleService.GetModule:output_type -> lms.modules.GetModuleResponse
+	0, // 0: lms.module.ModuleService.CreateModule:input_type -> lms.module.CreateModuleRequest
+	1, // 1: lms.module.ModuleService.UpdateModule:input_type -> lms.module.UpdateModuleRequest
+	2, // 2: lms.module.ModuleService.DeleteModules:input_type -> lms.module.DeleteModulesRequest
+	3, // 3: lms.module.ModuleService.ListModules:input_type -> google.protobuf.Empty
+	4, // 4: lms.module.ModuleService.GetModule:input_type -> lms.module.GetModuleRequest
+	5, // 5: lms.module.ModuleService.CreateModule:output_type -> lms.module.CreateModuleResponse
+	6, // 6: lms.module.ModuleService.UpdateModule:output_type -> lms.module.UpdateModuleResponse
+	7, // 7: lms.module.ModuleService.DeleteModules:output_type -> lms.module.DeleteModulesResponse
+	8, // 8: lms.module.ModuleService.ListModules:output_type -> lms.module.ListModulesResponse
+	9, // 9: lms.module.ModuleService.GetModule:output_type -> lms.module.GetModuleResponse
 	5, // [5:10] is the sub-list for method output_type
 	0, // [0:5] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

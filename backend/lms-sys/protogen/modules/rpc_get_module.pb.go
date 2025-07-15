@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v6.30.2
-// source: modules/rpc_get_module.proto
+// source: module/rpc_get_module.proto
 
 package modules
 
@@ -113,11 +113,11 @@ var File_modules_rpc_get_module_proto protoreflect.FileDescriptor
 
 const file_modules_rpc_get_module_proto_rawDesc = "" +
 	"\n" +
-	"\x1cmodules/rpc_get_module.proto\x12\vlms.modules\x1a\x14modules/module.proto\"/\n" +
+	"\x1cmodules/rpc_get_module.proto\x12\vlms.module\x1a\x14modules/module.proto\"/\n" +
 	"\x10GetModuleRequest\x12\x1b\n" +
 	"\tmodule_id\x18\x01 \x01(\tR\bmoduleId\"@\n" +
 	"\x11GetModuleResponse\x12+\n" +
-	"\x06module\x18\x01 \x01(\v2\x13.lms.modules.ModuleR\x06moduleB>Z<github.com/multi-tenants-cms-golang/lms-sys/protogen/modulesb\x06proto3"
+	"\x06module\x18\x01 \x01(\v2\x13.lms.module.ModuleR\x06moduleB>Z<github.com/multi-tenant-cms-golang/lms-sys/protogen/modulesb\x06proto3"
 
 var (
 	file_modules_rpc_get_module_proto_rawDescOnce sync.Once
@@ -133,12 +133,12 @@ func file_modules_rpc_get_module_proto_rawDescGZIP() []byte {
 
 var file_modules_rpc_get_module_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_modules_rpc_get_module_proto_goTypes = []any{
-	(*GetModuleRequest)(nil),  // 0: lms.modules.GetModuleRequest
-	(*GetModuleResponse)(nil), // 1: lms.modules.GetModuleResponse
-	(*Module)(nil),            // 2: lms.modules.Module
+	(*GetModuleRequest)(nil),  // 0: lms.module.GetModuleRequest
+	(*GetModuleResponse)(nil), // 1: lms.module.GetModuleResponse
+	(*Module)(nil),            // 2: lms.module.Module
 }
 var file_modules_rpc_get_module_proto_depIdxs = []int32{
-	2, // 0: lms.modules.GetModuleResponse.module:type_name -> lms.modules.Module
+	2, // 0: lms.module.GetModuleResponse.module:type_name -> lms.module.Module
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name

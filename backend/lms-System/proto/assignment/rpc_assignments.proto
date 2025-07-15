@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package  lms.assignment;
+
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/assignment";
+
+import "assignment/assignment.proto";
+
+message CreateAssignmentRequest {
+  string course_id = 1;
+  string title = 2;
+  string instructions = 3;
+}
+
+
+message  CreateAssignmentResponse {
+  Assignment assignment_response = 1;
+}

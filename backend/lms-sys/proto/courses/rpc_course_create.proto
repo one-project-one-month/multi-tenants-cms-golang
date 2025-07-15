@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package  lms.course;
 
-option go_package = "github.com/multi-tenants-cms-golang/lms-sys/protogen/course";
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/course";
 
 
 import "courses/course.proto";

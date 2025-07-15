@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.30.2
-// source: modules/service.module.proto
+// source: module/service.module.proto
 
 package modules
 
@@ -20,11 +20,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ModuleService_CreateModule_FullMethodName  = "/lms.modules.ModuleService/CreateModule"
-	ModuleService_UpdateModule_FullMethodName  = "/lms.modules.ModuleService/UpdateModule"
-	ModuleService_DeleteModules_FullMethodName = "/lms.modules.ModuleService/DeleteModules"
-	ModuleService_ListModules_FullMethodName   = "/lms.modules.ModuleService/ListModules"
-	ModuleService_GetModule_FullMethodName     = "/lms.modules.ModuleService/GetModule"
+	ModuleService_CreateModule_FullMethodName  = "/lms.module.ModuleService/CreateModule"
+	ModuleService_UpdateModule_FullMethodName  = "/lms.module.ModuleService/UpdateModule"
+	ModuleService_DeleteModules_FullMethodName = "/lms.module.ModuleService/DeleteModules"
+	ModuleService_ListModules_FullMethodName   = "/lms.module.ModuleService/ListModules"
+	ModuleService_GetModule_FullMethodName     = "/lms.module.ModuleService/GetModule"
 )
 
 // ModuleServiceClient is the client API for ModuleService service.
@@ -245,7 +245,7 @@ func _ModuleService_GetModule_Handler(srv interface{}, ctx context.Context, dec 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ModuleService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "lms.modules.ModuleService",
+	ServiceName: "lms.module.ModuleService",
 	HandlerType: (*ModuleServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -270,5 +270,5 @@ var ModuleService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "modules/service.module.proto",
+	Metadata: "module/service.module.proto",
 }

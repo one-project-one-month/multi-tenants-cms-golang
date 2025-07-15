@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v6.30.2
-// source: modules/module.proto
+// source: module/module.proto
 
 package modules
 
@@ -110,7 +110,7 @@ var File_modules_module_proto protoreflect.FileDescriptor
 
 const file_modules_module_proto_rawDesc = "" +
 	"\n" +
-	"\x14modules/module.proto\x12\vlms.modules\x1a\x1fgoogle/protobuf/timestamp.proto\"\xfb\x01\n" +
+	"\x14modules/module.proto\x12\vlms.module\x1a\x1fgoogle/protobuf/timestamp.proto\"\xfb\x01\n" +
 	"\x06Module\x12\x1b\n" +
 	"\tmodule_id\x18\x01 \x01(\tR\bmoduleId\x12\x1f\n" +
 	"\vmodule_name\x18\x02 \x01(\tR\n" +
@@ -120,7 +120,7 @@ const file_modules_module_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB>Z<github.com/multi-tenants-cms-golang/lms-sys/protogen/modulesb\x06proto3"
+	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB>Z<github.com/multi-tenant-cms-golang/lms-sys/protogen/modulesb\x06proto3"
 
 var (
 	file_modules_module_proto_rawDescOnce sync.Once
@@ -136,12 +136,12 @@ func file_modules_module_proto_rawDescGZIP() []byte {
 
 var file_modules_module_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_modules_module_proto_goTypes = []any{
-	(*Module)(nil),                // 0: lms.modules.Module
+	(*Module)(nil),                // 0: lms.module.Module
 	(*timestamppb.Timestamp)(nil), // 1: google.protobuf.Timestamp
 }
 var file_modules_module_proto_depIdxs = []int32{
-	1, // 0: lms.modules.Module.created_at:type_name -> google.protobuf.Timestamp
-	1, // 1: lms.modules.Module.updated_at:type_name -> google.protobuf.Timestamp
+	1, // 0: lms.module.Module.created_at:type_name -> google.protobuf.Timestamp
+	1, // 1: lms.module.Module.updated_at:type_name -> google.protobuf.Timestamp
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name

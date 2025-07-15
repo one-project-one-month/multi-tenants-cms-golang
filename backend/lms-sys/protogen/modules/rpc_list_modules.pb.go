@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v6.30.2
-// source: modules/rpc_list_modules.proto
+// source: module/rpc_list_modules.proto
 
 package modules
 
@@ -23,7 +23,7 @@ const (
 
 type ListModulesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Modules       []*Module              `protobuf:"bytes,1,rep,name=modules,proto3" json:"modules,omitempty"`
+	Modules       []*Module              `protobuf:"bytes,1,rep,name=module,proto3" json:"module,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -69,9 +69,9 @@ var File_modules_rpc_list_modules_proto protoreflect.FileDescriptor
 
 const file_modules_rpc_list_modules_proto_rawDesc = "" +
 	"\n" +
-	"\x1emodules/rpc_list_modules.proto\x12\vlms.modules\x1a\x14modules/module.proto\"D\n" +
+	"\x1emodules/rpc_list_modules.proto\x12\vlms.module\x1a\x14modules/module.proto\"D\n" +
 	"\x13ListModulesResponse\x12-\n" +
-	"\amodules\x18\x01 \x03(\v2\x13.lms.modules.ModuleR\amodulesB>Z<github.com/multi-tenants-cms-golang/lms-sys/protogen/modulesb\x06proto3"
+	"\amodule\x18\x01 \x03(\v2\x13.lms.module.ModuleR\amodulesB>Z<github.com/multi-tenant-cms-golang/lms-sys/protogen/modulesb\x06proto3"
 
 var (
 	file_modules_rpc_list_modules_proto_rawDescOnce sync.Once
@@ -87,11 +87,11 @@ func file_modules_rpc_list_modules_proto_rawDescGZIP() []byte {
 
 var file_modules_rpc_list_modules_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_modules_rpc_list_modules_proto_goTypes = []any{
-	(*ListModulesResponse)(nil), // 0: lms.modules.ListModulesResponse
-	(*Module)(nil),              // 1: lms.modules.Module
+	(*ListModulesResponse)(nil), // 0: lms.module.ListModulesResponse
+	(*Module)(nil),              // 1: lms.module.Module
 }
 var file_modules_rpc_list_modules_proto_depIdxs = []int32{
-	1, // 0: lms.modules.ListModulesResponse.modules:type_name -> lms.modules.Module
+	1, // 0: lms.module.ListModulesResponse.module:type_name -> lms.module.Module
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name

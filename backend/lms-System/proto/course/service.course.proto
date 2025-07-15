@@ -1,0 +1,33 @@
+syntax = "proto3";
+package lms.course;
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/course";
+
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "google/api/annotations.proto";
+import "course/rpc_course_create.proto";
+import "course/rpc_courser_get.proto";
+
+service CourseService {
+  rpc CreateCourse(CreateCourseRequest) returns (CreateCourseResponse) {
+    // GRPC TO rest
+    option (google.api.http) = {
+      post: "/lms/v1/course";
+      body: "*";
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Create Course";
+      summary: "Create Course";
+    };
+  }
+
+  rpc GetCourse(GetCourseRequest) returns (GetCourseResponse) {
+    // GRPC TO rest
+    option (google.api.http) = {
+      get: "/lms/v1/course";
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Get Course";
+      summary: "Create Course";
+    };
+  }
+}

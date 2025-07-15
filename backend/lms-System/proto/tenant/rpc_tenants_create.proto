@@ -1,0 +1,14 @@
+syntax = "proto3";
+package lms.tenants;
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/tenant";
+
+import "tenant/tenants.proto";
+message  CreateTenantRequest {
+  string  namespace = 1 ;
+  string  cms_owner_id = 2;
+}
+
+message  CreateTenantResponse {
+  Tenants created_tenant = 1;
+}
+

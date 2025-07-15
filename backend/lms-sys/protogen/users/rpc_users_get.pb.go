@@ -24,7 +24,7 @@ var File_users_rpc_users_get_proto protoreflect.FileDescriptor
 
 const file_users_rpc_users_get_proto_rawDesc = "" +
 	"\n" +
-	"\x19users/rpc_users_get.proto\x12\tlms.usersB<Z:github.com/multi-tenants-cms-golang/lms-sys/protogen/usersb\x06proto3"
+	"\x19users/rpc_users_get.proto\x12\tlms.usersB<Z:github.com/multi-tenant-cms-golang/lms-sys/protogen/usersb\x06proto3"
 
 var file_users_rpc_users_get_proto_goTypes = []any{}
 var file_users_rpc_users_get_proto_depIdxs = []int32{

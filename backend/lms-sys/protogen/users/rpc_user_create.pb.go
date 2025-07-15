@@ -154,7 +154,7 @@ const file_users_rpc_user_create_proto_rawDesc = "" +
 	"\aaddress\x18\x04 \x01(\tR\aaddress\x12!\n" +
 	"\fphone_number\x18\x05 \x01(\tR\vphoneNumber\"N\n" +
 	"\x15CreateLMSUserResponse\x125\n" +
-	"\ruser_response\x18\x01 \x01(\v2\x10.lms.users.UsersR\fuserResponseB<Z:github.com/multi-tenants-cms-golang/lms-sys/protogen/usersb\x06proto3"
+	"\ruser_response\x18\x01 \x01(\v2\x10.lms.users.UsersR\fuserResponseB<Z:github.com/multi-tenant-cms-golang/lms-sys/protogen/usersb\x06proto3"
 
 var (
 	file_users_rpc_user_create_proto_rawDescOnce sync.Once

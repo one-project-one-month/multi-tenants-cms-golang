@@ -28,7 +28,7 @@ const file_enrollment_service_enrollment_proto_rawDesc = "" +
 	"\n" +
 	"#enrollment/service.enrollment.proto\x12\x0elms.enrollment\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a\"enrollment/rpc_enroll_course.proto2\xb3\x01\n" +
 	"\x11EnrollmentService\x12\x9d\x01\n" +
-	"\fEnrollCourse\x12#.lms.enrollment.EnrollCourseRequest\x1a$.lms.enrollment.EnrollCourseResponse\"B\x92A\"\x12\x0fEnroll a course\x1a\x0fEnroll a course\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/lms/v1/enrollmentBAZ?github.com/multi-tenants-cms-golang/lms-sys/protogen/enrollmentb\x06proto3"
+	"\fEnrollCourse\x12#.lms.enrollment.EnrollCourseRequest\x1a$.lms.enrollment.EnrollCourseResponse\"B\x92A\"\x12\x0fEnroll a course\x1a\x0fEnroll a course\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/lms/v1/enrollmentBAZ?github.com/multi-tenant-cms-golang/lms-sys/protogen/enrollmentb\x06proto3"
 
 var file_enrollment_service_enrollment_proto_goTypes = []any{
 	(*EnrollCourseRequest)(nil),  // 0: lms.enrollment.EnrollCourseRequest

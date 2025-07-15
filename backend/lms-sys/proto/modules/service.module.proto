@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package lms.modules;
 
-option go_package = "github.com/multi-tenants-cms-golang/lms-sys/protogen/modules";
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/module";
 
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "google/api/annotations.proto";
@@ -17,7 +17,7 @@ import "modules/rpc_update_module.proto";
 service ModuleService {
     rpc CreateModule(CreateModuleRequest) returns (CreateModuleResponse) {
         option (google.api.http) = {
-            post: "/lms/v1/modules";
+            post: "/lms/v1/module";
             body: "*";
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -28,7 +28,7 @@ service ModuleService {
 
     rpc UpdateModule(UpdateModuleRequest) returns (UpdateModuleResponse) {
         option (google.api.http) = {
-            put: "/lms/v1/modules/{module_id}";
+            put: "/lms/v1/module/{module_id}";
             body: "*";
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -39,28 +39,28 @@ service ModuleService {
 
     rpc DeleteModules(DeleteModulesRequest) returns (DeleteModulesResponse) {
         option (google.api.http) = {
-            delete: "/lms/v1/modules";
+            delete: "/lms/v1/module";
             body: "*";
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-            description: "Delete single or multiple modules";
-            summary: "Delete modules";
+            description: "Delete single or multiple module";
+            summary: "Delete module";
         };
     }
 
     rpc ListModules(google.protobuf.Empty) returns (ListModulesResponse) {
         option (google.api.http) = {
-            get: "/lms/v1/modules";
+            get: "/lms/v1/module";
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-            description: "List/Get all modules";
-            summary: "Get all modules";
+            description: "List/Get all module";
+            summary: "Get all module";
         };
     }
 
     rpc GetModule(GetModuleRequest) returns (GetModuleResponse) {
         option (google.api.http) = {
-            get: "/lms/v1/modules/{module_id}";
+            get: "/lms/v1/module/{module_id}";
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
             description: "Get a module";

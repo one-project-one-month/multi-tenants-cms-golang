@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v6.30.2
-// source: modules/rpc_delete_modules.proto
+// source: module/rpc_delete_modules.proto
 
 package modules
 
@@ -121,12 +121,12 @@ var File_modules_rpc_delete_modules_proto protoreflect.FileDescriptor
 
 const file_modules_rpc_delete_modules_proto_rawDesc = "" +
 	"\n" +
-	" modules/rpc_delete_modules.proto\x12\vlms.modules\x1a\x14modules/module.proto\"K\n" +
+	" module/rpc_delete_modules.proto\x12\vlms.module\x1a\x14modules/module.proto\"K\n" +
 	"\x14DeleteModulesRequest\x12\x10\n" +
 	"\x03ids\x18\x01 \x03(\tR\x03ids\x12!\n" +
 	"\fforce_delete\x18\x02 \x01(\bR\vforceDelete\"1\n" +
 	"\x15DeleteModulesResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessageB>Z<github.com/multi-tenants-cms-golang/lms-sys/protogen/modulesb\x06proto3"
+	"\amessage\x18\x01 \x01(\tR\amessageB>Z<github.com/multi-tenant-cms-golang/lms-sys/protogen/modulesb\x06proto3"
 
 var (
 	file_modules_rpc_delete_modules_proto_rawDescOnce sync.Once
@@ -142,8 +142,8 @@ func file_modules_rpc_delete_modules_proto_rawDescGZIP() []byte {
 
 var file_modules_rpc_delete_modules_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_modules_rpc_delete_modules_proto_goTypes = []any{
-	(*DeleteModulesRequest)(nil),  // 0: lms.modules.DeleteModulesRequest
-	(*DeleteModulesResponse)(nil), // 1: lms.modules.DeleteModulesResponse
+	(*DeleteModulesRequest)(nil),  // 0: lms.module.DeleteModulesRequest
+	(*DeleteModulesResponse)(nil), // 1: lms.module.DeleteModulesResponse
 }
 var file_modules_rpc_delete_modules_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type

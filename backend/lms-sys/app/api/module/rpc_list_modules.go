@@ -15,19 +15,18 @@ import (
 func (ms *ModuleService) ListModules(ctx context.Context, req *emptypb.Empty) (*mpb.ListModulesResponse, error) {
 	ms.logger.WithFields(logrus.Fields{
 		"method": "ListModules",
-	}).Info("Listing modules")
+	}).Info("Listing module")
 
 	dbCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	modules, err := ms.store.ListModules(dbCtx)
 	if err != nil {
-		ms.logger.WithError(err).Errorf("Failed to list modules")
-		return nil, status.Errorf(codes.Internal, "failed to list modules: %v", err)
+		ms.logger.WithError(err).Errorf("Failed to list module")
+		return nil, status.Errorf(codes.Internal, "failed to list module: %v", err)
 	}
 
 	return &mpb.ListModulesResponse{
 		Modules: module.ConvertModulesToProto(modules),
 	}, nil
 }
-

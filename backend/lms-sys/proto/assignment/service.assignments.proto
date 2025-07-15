@@ -1,6 +1,6 @@
 syntax = "proto3";
 package lms.assignment;
-option go_package = "github.com/multi-tenants-cms-golang/lms-sys/protogen/assignment";
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/assignment";
 
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "google/api/annotations.proto";

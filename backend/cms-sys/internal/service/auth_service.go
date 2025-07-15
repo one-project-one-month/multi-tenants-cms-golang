@@ -547,7 +547,7 @@ func (s *Service) EmailServiceCommunication(userId uuid.UUID) error {
 
 	if redisErr != nil {
 		s.log.WithError(redisErr).Error("Redis operation failed")
-		return fmt.Errorf("failed to store verification code: %w", redisErr)
+		return fmt.Errorf("failed to store.go verification code: %w", redisErr)
 	}
 
 	if natsErr != nil {

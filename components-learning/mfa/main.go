@@ -31,7 +31,7 @@ NOTE:
 	Calculation = time_stamp = floor(171972005 / 30 ) = 5732400
 		HMAC(server secret,5732400) and truncate last digit after 6 digit
 	The client like google authenticator will do the same action
-	In real app, we have to store server secret with AES 128 encryption and
+	In real app, we have to store.go server secret with AES 128 encryption and
 		Rotate the key regularly
 
 */
