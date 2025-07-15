@@ -194,7 +194,7 @@ func (c *Client) parseSearchResponse(res *esapi.Response, req *dto.SearchRequest
 
 	hits := result["hits"].(map[string]interface{})
 	total := int64(hits["total"].(map[string]interface{})["value"].(float64))
-	products := []dto.ProductResponse{}
+	var products []dto.ProductResponse
 	for _, hit := range hits["hits"].([]interface{}) {
 		source := hit.(map[string]interface{})["_source"].(map[string]interface{})
 

@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (ms *ModuleService) CreateModule(ctx context.Context, req *mpb.CreateModuleRequest) (*mpb.CreateModuleResponse, error) {
+func (ms *ModulesService) CreateModule(ctx context.Context, req *mpb.CreateModuleRequest) (*mpb.CreateModuleResponse, error) {
 	ms.logger.WithFields(logrus.Fields{
 		"method":      "CreateModule",
 		"module_name": req.ModuleName,

@@ -13,10 +13,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (ms *ModuleService) GetModule(ctx context.Context, req *mpb.GetModuleRequest) (*mpb.GetModuleResponse, error) {
+func (ms *ModulesService) GetModule(ctx context.Context, req *mpb.GetModuleRequest) (*mpb.GetModuleResponse, error) {
 	ms.logger.WithFields(logrus.Fields{
-		"method": "GetModuleByID",
-		"module_id":   req.ModuleId,
+		"method":    "GetModuleByID",
+		"module_id": req.ModuleId,
 	}).Info("Getting module")
 
 	dbCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

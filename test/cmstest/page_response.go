@@ -10,12 +10,6 @@ type (
 	PageStatus    string
 )
 
-const (
-	RequestStatusPending  RequestStatus = "PENDING"
-	RequestStatusApproved RequestStatus = "APPROVED"
-	RequestStatusRejected RequestStatus = "REJECTED"
-)
-
 type PageResponse struct {
 	ID            uuid.UUID  `json:"id"`
 	PageRequestID uuid.UUID  `json:"pageRequestId"`

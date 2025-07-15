@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (ms *ModuleService) DeleteModules(ctx context.Context, req *mpb.DeleteModulesRequest) (*mpb.DeleteModulesResponse, error) {
+func (ms *ModulesService) DeleteModules(ctx context.Context, req *mpb.DeleteModulesRequest) (*mpb.DeleteModulesResponse, error) {
 	ms.logger.WithFields(logrus.Fields{
 		"method":     "DeleteModules",
 		"module_ids": req.Ids,

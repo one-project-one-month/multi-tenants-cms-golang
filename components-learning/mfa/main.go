@@ -68,6 +68,7 @@ func main() {
 	})
 
 	var buf bytes.Buffer
+	
 	img, err := key.Image(200, 200)
 	if err != nil {
 		panic(err.Error())

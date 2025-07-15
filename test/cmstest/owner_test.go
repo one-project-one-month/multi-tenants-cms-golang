@@ -33,7 +33,12 @@ func CreateOwnerTest(t *testing.T) {
 	resp, err := http.Post(ownerBaseURL+"/", "application/json", bytes.NewReader(jsonBody))
 
 	assert.NoError(t, err)
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			t.Error(err.Error())
+		}
+	}(resp.Body)
 
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	assert.Equal(t, http.StatusCreated, resp.StatusCode, string(bodyBytes))

@@ -332,7 +332,12 @@ func (s *Service) HealthCheck(ctx context.Context) error {
 	if _, err := client.DialToSMTPClientWithContext(ctx); err != nil {
 		return errors.Wrap(err, "SMTP health check failed")
 	}
-	defer client.Close()
+	defer func(client *mail.Client) {
+		err := client.Close()
+		if err != nil {
+			s.logger.Error("failed to close SMTP client", zap.Error(err))
+		}
+	}(client)
 
 	return nil
 }

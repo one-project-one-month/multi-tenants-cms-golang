@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (ms *ModuleService) UpdateModule(ctx context.Context, req *mpb.UpdateModuleRequest) (*mpb.UpdateModuleResponse, error) {
+func (ms *ModulesService) UpdateModule(ctx context.Context, req *mpb.UpdateModuleRequest) (*mpb.UpdateModuleResponse, error) {
 	ms.logger.WithFields(logrus.Fields{
 		"method":    "UpdateModule",
 		"module_id": req.ModuleId,

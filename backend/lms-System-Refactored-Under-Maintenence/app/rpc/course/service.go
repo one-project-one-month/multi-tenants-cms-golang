@@ -4,10 +4,10 @@ import (
 	coursepb "github.com/multi-tenants-cms-golang/lms-sys/protogen/course"
 )
 
-type CourseService struct {
+type CoursesService struct {
 	coursepb.UnimplementedCourseServiceServer
 }
 
-func NewCourseService() *CourseService {
-	return &CourseService{}
+func NewCourseService() *CoursesService {
+	return &CoursesService{}
 }

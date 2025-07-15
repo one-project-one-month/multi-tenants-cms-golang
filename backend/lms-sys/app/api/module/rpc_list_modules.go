@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func (ms *ModuleService) ListModules(ctx context.Context, req *emptypb.Empty) (*mpb.ListModulesResponse, error) {
+func (ms *ModulesService) ListModules(ctx context.Context, req *emptypb.Empty) (*mpb.ListModulesResponse, error) {
 	ms.logger.WithFields(logrus.Fields{
 		"method": "ListModules",
 	}).Info("Listing module")

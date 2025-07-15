@@ -9,6 +9,6 @@ type CustomerPurchaseReport struct {
 	PurchaseDate time.Time  `json:"purchase_date"`
 }
 
-const (
-	CMSTABLE = "cms_user cu "
-)
+//const (
+//	CMSTABLE = "cms_user cu "
+//)

@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *ModuleService) UpdateModule(ctx context.Context, req *modulepb.UpdateModuleRequest) (*modulepb.UpdateModuleResponse, error) {
+func (s *ModulesService) UpdateModule(ctx context.Context, req *modulepb.UpdateModuleRequest) (*modulepb.UpdateModuleResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
 	}

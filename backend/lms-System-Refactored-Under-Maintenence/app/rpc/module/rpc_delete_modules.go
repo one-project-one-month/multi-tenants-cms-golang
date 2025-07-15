@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *ModuleService) DeleteModules(ctx context.Context, req *modulepb.DeleteModulesRequest) (*modulepb.DeleteModulesResponse, error) {
+func (s *ModulesService) DeleteModules(ctx context.Context, req *modulepb.DeleteModulesRequest) (*modulepb.DeleteModulesResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
 	}

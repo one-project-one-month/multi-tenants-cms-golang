@@ -49,7 +49,11 @@ func TestCreatePageRequest(t *testing.T) {
 	_, err = io.Copy(part, file)
 	assert.NoError(t, err)
 
-	writer.Close()
+	err = writer.Close()
+	if err != nil {
+		t.Fatal(err.Error())
+		return
+	}
 
 	// Send request
 	req, err := http.NewRequest("POST", pageRequestBaseURL+"/", body)

@@ -4,10 +4,10 @@ import (
 	assignmentpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/assignment"
 )
 
-type AssignmentService struct {
+type AssignmentsService struct {
 	assignmentpb.UnimplementedAssignmentServiceServer
 }
 
-func NewAssignmentService() *AssignmentService {
-	return &AssignmentService{}
+func NewAssignmentService() *AssignmentsService {
+	return &AssignmentsService{}
 }

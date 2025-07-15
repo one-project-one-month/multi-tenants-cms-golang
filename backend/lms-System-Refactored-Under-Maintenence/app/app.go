@@ -2,7 +2,7 @@ package app
 
 import (
 	gate "github.com/multi-tenants-cms-golang/lms-sys/app/gateway"
-	rpc "github.com/multi-tenants-cms-golang/lms-sys/app/rpc"
+	"github.com/multi-tenants-cms-golang/lms-sys/app/rpc"
 	"github.com/sirupsen/logrus"
 	"sync"
 )

@@ -35,7 +35,11 @@ func InitNats() error {
 			nats.ReconnectHandler(func(nc *nats.Conn) {
 				log.Println("NATS reconnected")
 				if js, err := nc.JetStream(); err == nil {
-					initJetStream(js)
+					err := initJetStream(js)
+					if err != nil {
+						log.Printf("NATS stream initialization failed: %v", err)
+						return
+					}
 				}
 			}),
 		}

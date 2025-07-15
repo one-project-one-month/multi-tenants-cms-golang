@@ -4,10 +4,10 @@ import (
 	tenantpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/tenant"
 )
 
-type TenantService struct {
+type TenantsService struct {
 	tenantpb.UnimplementedTenantServiceServer
 }
 
-func NewTenantService() *TenantService {
-	return &TenantService{}
+func NewTenantService() *TenantsService {
+	return &TenantsService{}
 }

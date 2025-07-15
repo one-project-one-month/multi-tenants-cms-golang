@@ -6,14 +6,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type ModuleService struct {
+type ModulesService struct {
 	mpb.UnimplementedModuleServiceServer
 	store  *db.Store
 	logger *logrus.Logger
 }
 
-func NewModuleService(store *db.Store, logger *logrus.Logger) *ModuleService {
-	return &ModuleService{
+func NewModuleService(store *db.Store, logger *logrus.Logger) *ModulesService {
+	return &ModulesService{
 		store:  store,
 		logger: logger,
 	}

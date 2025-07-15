@@ -4,10 +4,10 @@ import (
 	modulepb "github.com/multi-tenants-cms-golang/lms-sys/protogen/module"
 )
 
-type ModuleService struct {
+type ModulesService struct {
 	modulepb.UnimplementedModuleServiceServer
 }
 
-func NewModuleService() *ModuleService {
-	return &ModuleService{}
+func NewModuleService() *ModulesService {
+	return &ModulesService{}
 }

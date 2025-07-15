@@ -91,18 +91,30 @@ func main() {
 		var emailReq EmailRequest
 		if err := json.Unmarshal(msg.Data(), &emailReq); err != nil {
 			log.Printf("Failed to parse message: %v", err)
-			msg.Nak()
+			err := msg.Nak()
+			if err != nil {
+				log.Printf("Failed to send email: %v", err.Error())
+				return
+			}
 			return
 		}
 
 		if err := sendEmail(smtpClient, fromAddr, emailReq); err != nil {
 			log.Printf("Failed to send email: %v", err)
-			msg.Nak()
+			err := msg.Nak()
+			if err != nil {
+				log.Printf("Failed to send email: %v", err.Error())
+				return
+			}
 			return
 		}
 
 		log.Printf("Email sent to %s", emailReq.To)
-		msg.Ack()
+		err := msg.Ack()
+		if err != nil {
+			log.Printf("Failed to send email: %v", err.Error())
+			return
+		}
 	})
 	if err != nil {
 		log.Fatalf("Consume failed: %v", err)

@@ -6,10 +6,10 @@ import (
 	"github.com/SwanHtetAungPhyo/certificate_signing/types"
 	"github.com/jung-kurt/gofpdf"
 	"github.com/skip2/go-qrcode"
+	"log"
 	"os"
 )
 
-// Main function to generate the PDF
 func GeneratePDF(cert *types.CompletionCertificate, filename string) error {
 	pdf := gofpdf.New("L", "mm", "A4", "")
 	pdf.AddPage()
@@ -146,7 +146,12 @@ func embedCertificateData(pdf *gofpdf.Fpdf, cert *types.CompletionCertificate) {
 		pdf.CellFormat(0, 10, "Error writing QR file", "", 1, "C", false, 0, "")
 		return
 	}
-	defer os.Remove(qrPath)
+	defer func(name string) {
+		err := os.Remove(name)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+	}(qrPath)
 
 	pdf.Image(qrPath, 235, 35, 40, 0, false, "", 0, "")
 }

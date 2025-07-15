@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -56,7 +57,7 @@ func IsTokenRevoked(tokenID string) (bool, error) {
 	key := fmt.Sprintf("revoked_token:%s", tokenID)
 	result := RedisClient.Get(ctx, key)
 
-	if result.Err() == redis.Nil {
+	if errors.Is(result.Err(), redis.Nil) {
 		return false, nil
 	}
 
