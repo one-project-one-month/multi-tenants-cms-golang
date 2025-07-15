@@ -1,0 +1,28 @@
+version: v1
+breaking:
+  use:
+    - FILE
+lint:
+  use:
+    - DEFAULT
+build:
+  roots:
+    - proto
+generate:
+  - name: go
+    out: protogen
+    opt:
+      - paths=source_relative
+  - name: go-grpc
+    out: protogen
+    opt:
+      - paths=source_relative
+  - name: grpc-gateway
+    out: protogen
+    opt:
+      - paths=source_relative
+  - name: openapiv2
+    out: protogen
+    opt:
+      - allow_merge=true
+      - merge_file_name=api

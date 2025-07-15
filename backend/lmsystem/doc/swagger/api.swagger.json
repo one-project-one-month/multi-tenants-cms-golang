@@ -1,0 +1,418 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "assignment/assignment.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "AssignmentService"
+    },
+    {
+      "name": "CourseService"
+    },
+    {
+      "name": "TenantService"
+    },
+    {
+      "name": "LMS_USER_SERVICE"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/lms/v1/assignment": {
+      "post": {
+        "summary": "Create Assignment",
+        "description": "Create Assignment",
+        "operationId": "AssignmentService_CreateAssignment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/assignmentCreateAssignmentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/assignmentCreateAssignmentRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AssignmentService"
+        ]
+      }
+    },
+    "/lms/v1/course": {
+      "get": {
+        "summary": "Create Course",
+        "description": "Get Course",
+        "operationId": "CourseService_GetCourse",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/courseGetCourseResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "courseTitle",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CourseService"
+        ]
+      },
+      "post": {
+        "summary": "Create Course",
+        "description": "Create Course",
+        "operationId": "CourseService_CreateCourse",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/courseCreateCourseResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/courseCreateCourseRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CourseService"
+        ]
+      }
+    },
+    "/lms/v1/tenants": {
+      "post": {
+        "summary": "Create Tenant",
+        "description": "Create a new tenant",
+        "operationId": "TenantService_CreateTenant",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tenantsCreateTenantResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tenantsCreateTenantRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TenantService"
+        ]
+      }
+    },
+    "/lms/v1/users": {
+      "post": {
+        "summary": "Create LMS User",
+        "description": "Create a new LMS user",
+        "operationId": "LMS_USER_SERVICE_CreateLMSUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/usersCreateLMSUserResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/usersCreateLMSUserRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LMS_USER_SERVICE"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "assignmentAssignment": {
+      "type": "object",
+      "properties": {
+        "assignmentId": {
+          "type": "string"
+        },
+        "courseId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "instruction": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "assignmentCreateAssignmentRequest": {
+      "type": "object",
+      "properties": {
+        "courseId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "instructions": {
+          "type": "string"
+        }
+      }
+    },
+    "assignmentCreateAssignmentResponse": {
+      "type": "object",
+      "properties": {
+        "assignmentResponse": {
+          "$ref": "#/definitions/assignmentAssignment"
+        }
+      }
+    },
+    "courseCourse": {
+      "type": "object",
+      "properties": {
+        "courseId": {
+          "type": "string"
+        },
+        "courseTitle": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "courseCreateCourseRequest": {
+      "type": "object",
+      "properties": {
+        "courseTitle": {
+          "type": "string"
+        }
+      }
+    },
+    "courseCreateCourseResponse": {
+      "type": "object",
+      "properties": {
+        "courseCreated": {
+          "$ref": "#/definitions/courseCourse"
+        }
+      }
+    },
+    "courseGetCourseResponse": {
+      "type": "object",
+      "properties": {
+        "courseTitle": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "tenantsCreateTenantRequest": {
+      "type": "object",
+      "properties": {
+        "namespace": {
+          "type": "string"
+        },
+        "cmsOwnerId": {
+          "type": "string"
+        }
+      }
+    },
+    "tenantsCreateTenantResponse": {
+      "type": "object",
+      "properties": {
+        "createdTenant": {
+          "$ref": "#/definitions/tenantsTenants"
+        }
+      }
+    },
+    "tenantsTenants": {
+      "type": "object",
+      "properties": {
+        "tenantsId": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "cmsOwnerId": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "isActive": {
+          "type": "boolean"
+        }
+      }
+    },
+    "usersCreateLMSUserRequest": {
+      "type": "object",
+      "properties": {
+        "lmsEmail": {
+          "type": "string"
+        },
+        "lmsRoleId": {
+          "type": "string"
+        },
+        "tenantsId": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "phoneNumber": {
+          "type": "string"
+        }
+      }
+    },
+    "usersCreateLMSUserResponse": {
+      "type": "object",
+      "properties": {
+        "userResponse": {
+          "$ref": "#/definitions/usersUsers"
+        }
+      }
+    },
+    "usersUsers": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "lmsEmail": {
+          "type": "string"
+        },
+        "lmsRoleId": {
+          "type": "string"
+        },
+        "tenantsId": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "phoneNumber": {
+          "type": "string"
+        },
+        "registrationDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
