@@ -11,7 +11,7 @@ service CourseService {
   rpc CreateCourse(CreateCourseRequest) returns (CreateCourseResponse) {
     // GRPC TO rest
     option (google.api.http) = {
-      post: "/lms/v1/course";
+      post: "/lms/v1/courses";
       body: "*";
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -23,11 +23,42 @@ service CourseService {
   rpc GetCourse(GetCourseRequest) returns (GetCourseResponse) {
     // GRPC TO rest
     option (google.api.http) = {
-      get: "/lms/v1/course";
+      get: "/lms/v1/courses";
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       description: "Get Course";
       summary: "Create Course";
+    };
+  }
+
+   rpc GetCourseByID(GetCourseByIDRequest) returns (GetCourseByIDResponse) {
+    option (google.api.http) = {
+      get: "/lms/v1/courses/{course_id}";
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Get course by ID";
+      summary: "Get Course by ID";
+    };
+  }
+
+  rpc UpdateCourse(UpdateCourseRequest) returns (UpdateCourseResponse) {
+    option (google.api.http) = {
+      put: "/lms/v1/courses/{course_id}";
+      body: "*";
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Update an existing course";
+      summary: "Update Course";
+    };
+  }
+
+  rpc DeleteCourse(DeleteCourseRequest) returns (DeleteCourseResponse) {
+    option (google.api.http) = {
+      delete: "/lms/v1/courses/{course_id}";
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Delete a course by ID";
+      summary: "Delete Course";
     };
   }
 }

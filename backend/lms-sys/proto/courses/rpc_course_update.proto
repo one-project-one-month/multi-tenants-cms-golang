@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package lms.course;
+
+option go_package = "github.com/multi-tenants-cms-golang/lms-sys/protogen/course";
+
+import "courses/course.proto";
+
+message UpdateCourseRequest {
+  int64 course_id = 1;
+  string course_title = 2;
+  string course_description = 3; // Optional if you have description
+}
+
+message UpdateCourseResponse {
+  Course updated_course = 1;
+}
