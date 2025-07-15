@@ -4,10 +4,12 @@ import (
 	asv "github.com/multi-tenants-cms-golang/lms-sys/app/api/assignment"
 	csv "github.com/multi-tenants-cms-golang/lms-sys/app/api/course"
 	tsv "github.com/multi-tenants-cms-golang/lms-sys/app/api/tenants"
+	msv "github.com/multi-tenants-cms-golang/lms-sys/app/api/module"
 	db "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	pb "github.com/multi-tenants-cms-golang/lms-sys/protogen/assignments"
 	cpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/courses"
 	tpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/tenants"
+	mpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/modules"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"net"
@@ -17,6 +19,7 @@ import (
 type Server struct {
 	pb.UnimplementedAssignmentServiceServer // Embed the unimplemented server
 	tpb.UnimplementedTenantServiceServer
+	mpb.UnimplementedModuleServiceServer
 
 	store  *db.Store
 	logger *logrus.Logger
@@ -45,11 +48,13 @@ func (s *Server) Run() error {
 	assignmentService := asv.NewAssignmentsService(s.store, s.logger)
 	tenantService := tsv.NewTenantService(s.store, s.logger)
 	courseService := csv.NewCoursesService(s.store, s.logger)
+	moduleService := msv.NewModuleService(s.store, s.logger)
 
 	// Register services with gRPC server
 	pb.RegisterAssignmentServiceServer(grpcServer, assignmentService)
 	tpb.RegisterTenantServiceServer(grpcServer, tenantService)
 	cpb.RegisterCourseServiceServer(grpcServer, courseService)
+	mpb.RegisterModuleServiceServer(grpcServer, moduleService)
 
 	s.logger.Println("Starting server on port 9001")
 	err = grpcServer.Serve(listener)

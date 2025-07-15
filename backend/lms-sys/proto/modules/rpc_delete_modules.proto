@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package lms.modules;
+
+option go_package = "github.com/multi-tenants-cms-golang/lms-sys/protogen/modules";
+
+import "modules/module.proto";
+
+message DeleteModulesRequest {
+    repeated string ids          = 1;
+    bool            force_delete = 2;
+}
+
+message DeleteModulesResponse {
+    string message = 1;
+}

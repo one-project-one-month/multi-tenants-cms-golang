@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package lms.modules;
+
+option go_package = "github.com/multi-tenants-cms-golang/lms-sys/protogen/modules";
+
+import "modules/module.proto";
+
+message CreateModuleRequest {
+    string module_name = 1;
+    string course_id   = 2;
+    string description = 3;
+}
+
+message CreateModuleResponse {
+    Module module = 1;
+}
