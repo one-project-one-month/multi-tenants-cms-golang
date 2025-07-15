@@ -71,7 +71,7 @@ const file_modules_rpc_list_modules_proto_rawDesc = "" +
 	"\n" +
 	"\x1emodules/rpc_list_modules.proto\x12\vlms.module\x1a\x14modules/module.proto\"D\n" +
 	"\x13ListModulesResponse\x12-\n" +
-	"\amodule\x18\x01 \x03(\v2\x13.lms.module.ModuleR\amodulesB>Z<github.com/multi-tenant-cms-golang/lms-sys/protogen/modulesb\x06proto3"
+	"\amodule\x18\x01 \x03(\v2\x13.lms.module.ModuleR\amodulesB>Z<github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/modulesb\x06proto3"
 
 var (
 	file_modules_rpc_list_modules_proto_rawDescOnce sync.Once

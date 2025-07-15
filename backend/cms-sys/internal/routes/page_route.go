@@ -6,7 +6,7 @@ import (
 )
 
 func SetupPageRoutes(app *fiber.App, handler handler.PageHandle) {
-	route := app.Group("cms/pages")
+	route := app.Group("cms-doc/pages")
 	route.Get("/", handler.GetAll)
 	route.Post("/", handler.Create)
 	route.Get("/:id", handler.GetById)

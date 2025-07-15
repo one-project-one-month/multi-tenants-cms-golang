@@ -81,9 +81,9 @@ func registerService(client *api.Client, config consulConfig, logger *logrus.Log
 	allTags := config.Tags
 	traefikTags := []string{
 		"traefik.enable=true",
-		"traefik.http.routers.cms-api.rule=Host(`api.localhost`) && PathPrefix(`/api/v1`)",
-		"traefik.http.routers.cms-api.service=cms-multi-tenant-api",
-		fmt.Sprintf("traefik.http.services.cms-multi-tenant-api.loadbalancer.server.port=%d", config.Port),
+		"traefik.http.routers.cms-doc-api.rule=Host(`api.localhost`) && PathPrefix(`/api/v1`)",
+		"traefik.http.routers.cms-doc-api.service=cms-doc-multi-tenant-api",
+		fmt.Sprintf("traefik.http.services.cms-doc-multi-tenant-api.loadbalancer.server.port=%d", config.Port),
 	}
 	allTags = append(allTags, traefikTags...)
 
@@ -94,7 +94,7 @@ func registerService(client *api.Client, config consulConfig, logger *logrus.Log
 		Port:    config.Port,
 		Address: localIP,
 		Meta: map[string]string{
-			"health-check-path": "/cms/health",
+			"health-check-path": "/cms-doc/health",
 		},
 		Checks: api.AgentServiceChecks{
 			{
@@ -122,7 +122,7 @@ func registerService(client *api.Client, config consulConfig, logger *logrus.Log
 		"service_name": config.Name,
 		"address":      localIP,
 		"port":         config.Port,
-		"metadata":     "health-check-path=/cms/health",
+		"metadata":     "health-check-path=/cms-doc/health",
 	}).Info("Service registered with Consul successfully")
 
 	return nil
@@ -159,7 +159,7 @@ func loadConsulConfig() consulConfig {
 	port, _ := strconv.Atoi(utils.GetEnv("PORT", "8081"))
 	checkTTL, _ := time.ParseDuration(utils.GetEnv("CONSUL_CHECK_TTL", "30s"))
 
-	tagsStr := utils.GetEnv("CONSUL_SERVICE_TAGS", "cms,multi-tenant,api")
+	tagsStr := utils.GetEnv("CONSUL_SERVICE_TAGS", "cms-doc,multi-tenant,api")
 	var tags []string
 	if tagsStr != "" {
 		for _, tag := range strings.Split(tagsStr, ",") {
@@ -177,8 +177,8 @@ func loadConsulConfig() consulConfig {
 		Datacenter: utils.GetEnv("CONSUL_DATACENTER", "dc1"),
 		Token:      utils.GetEnv("CONSUL_TOKEN", ""),
 		Scheme:     utils.GetEnv("CONSUL_SCHEME", "http"),
-		ServiceID:  utils.GetEnv("CONSUL_SERVICE_ID", fmt.Sprintf("cms-api-%s", localIP)),
-		Name:       utils.GetEnv("CONSUL_SERVICE_NAME", "cms-service"),
+		ServiceID:  utils.GetEnv("CONSUL_SERVICE_ID", fmt.Sprintf("cms-doc-api-%s", localIP)),
+		Name:       utils.GetEnv("CONSUL_SERVICE_NAME", "cms-doc-service"),
 		Tags:       tags,
 		Port:       port,
 		CheckTTL:   checkTTL,
@@ -315,7 +315,7 @@ func main() {
 		})
 	})
 
-	cmsGroup := app.Group("/cms")
+	cmsGroup := app.Group("/cms-doc")
 
 	cmsGroup.Get("/health", func(c *fiber.Ctx) error {
 		health := healthChecker.CheckHealth()

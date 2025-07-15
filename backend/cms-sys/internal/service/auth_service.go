@@ -298,7 +298,7 @@ func (s *Service) GenerateMFATokenSecret(userID uuid.UUID) (*types.MFASetupRespo
 	}
 
 	key, err := totp.Generate(totp.GenerateOpts{
-		Issuer:      "cms-sys",
+		Issuer:      "cms-doc-sys",
 		AccountName: user.CMSUserEmail,
 		Algorithm:   otp.AlgorithmSHA1,
 		Digits:      otp.DigitsSix,

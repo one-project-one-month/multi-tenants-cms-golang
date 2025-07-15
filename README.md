@@ -314,7 +314,7 @@ Follow these steps to contribute to the Multi-Tenant CMS project:
 
 ```bash
 git clone https://github.com/one-project-one-month/multi-tenants-cms-golang.git
-cd multi-tenant-cms-golang
+cd multi-tenant-cms-doc-golang
 ```
 
 ### 🌿 Step 2: Create Feature Branch

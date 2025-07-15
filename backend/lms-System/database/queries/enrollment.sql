@@ -1,8 +1,0 @@
--- -- name: CreateEnrollment :one
--- INSERT INTO "Enrollment" (
---     student_id,
---     course_id
--- ) VALUES (
---              $1,
---              $2
---          ) RETURNING *;

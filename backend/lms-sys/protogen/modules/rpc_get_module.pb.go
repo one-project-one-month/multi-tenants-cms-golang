@@ -117,7 +117,7 @@ const file_modules_rpc_get_module_proto_rawDesc = "" +
 	"\x10GetModuleRequest\x12\x1b\n" +
 	"\tmodule_id\x18\x01 \x01(\tR\bmoduleId\"@\n" +
 	"\x11GetModuleResponse\x12+\n" +
-	"\x06module\x18\x01 \x01(\v2\x13.lms.module.ModuleR\x06moduleB>Z<github.com/multi-tenant-cms-golang/lms-sys/protogen/modulesb\x06proto3"
+	"\x06module\x18\x01 \x01(\v2\x13.lms.module.ModuleR\x06moduleB>Z<github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/modulesb\x06proto3"
 
 var (
 	file_modules_rpc_get_module_proto_rawDescOnce sync.Once

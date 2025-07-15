@@ -24,7 +24,7 @@ var File_users_rpc_users_delete_proto protoreflect.FileDescriptor
 
 const file_users_rpc_users_delete_proto_rawDesc = "" +
 	"\n" +
-	"\x1cusers/rpc_users_delete.proto\x12\tlms.usersB<Z:github.com/multi-tenant-cms-golang/lms-sys/protogen/usersb\x06proto3"
+	"\x1cusers/rpc_users_delete.proto\x12\tlms.usersB<Z:github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/usersb\x06proto3"
 
 var file_users_rpc_users_delete_proto_goTypes = []any{}
 var file_users_rpc_users_delete_proto_depIdxs = []int32{

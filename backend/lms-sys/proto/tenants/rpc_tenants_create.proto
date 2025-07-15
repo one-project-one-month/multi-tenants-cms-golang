@@ -1,6 +1,6 @@
 syntax = "proto3";
 package lms.tenants;
-option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/tenant";
+option go_package = "github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/tenant";
 
 import "tenants/tenants.proto";
 message  CreateTenantRequest {

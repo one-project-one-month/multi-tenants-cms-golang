@@ -33,7 +33,7 @@ const file_modules_service_module_proto_rawDesc = "" +
 	"\fUpdateModule\x12 .lms.module.UpdateModuleRequest\x1a!.lms.module.UpdateModuleResponse\"S\x92A*\x12\rUpdate module\x1a\x19Update an existing module\x82\xd3\xe4\x93\x02 :\x01*\x1a\x1b/lms/v1/module/{module_id}\x12\xa8\x01\n" +
 	"\rDeleteModules\x12!.lms.module.DeleteModulesRequest\x1a\".lms.module.DeleteModulesResponse\"P\x92A3\x12\x0eDelete module\x1a!Delete single or multiple module\x82\xd3\xe4\x93\x02\x14:\x01**\x0f/lms/v1/module\x12\x8a\x01\n" +
 	"\vListModules\x12\x16.google.protobuf.Empty\x1a .lms.module.ListModulesResponse\"A\x92A'\x12\x0fGet all module\x1a\x14List/Get all module\x82\xd3\xe4\x93\x02\x11\x12\x0f/lms/v1/module\x12\x8e\x01\n" +
-	"\tGetModule\x12\x1d.lms.module.GetModuleRequest\x1a\x1e.lms.module.GetModuleResponse\"B\x92A\x1c\x12\fGet a module\x1a\fGet a module\x82\xd3\xe4\x93\x02\x1d\x12\x1b/lms/v1/module/{module_id}B>Z<github.com/multi-tenant-cms-golang/lms-sys/protogen/modulesb\x06proto3"
+	"\tGetModule\x12\x1d.lms.module.GetModuleRequest\x1a\x1e.lms.module.GetModuleResponse\"B\x92A\x1c\x12\fGet a module\x1a\fGet a module\x82\xd3\xe4\x93\x02\x1d\x12\x1b/lms/v1/module/{module_id}B>Z<github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/modulesb\x06proto3"
 
 var file_modules_service_module_proto_goTypes = []any{
 	(*CreateModuleRequest)(nil),   // 0: lms.module.CreateModuleRequest

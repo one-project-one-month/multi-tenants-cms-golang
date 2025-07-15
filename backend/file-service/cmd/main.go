@@ -103,9 +103,9 @@ func registerService(client *api.Client, config consulConfig, logger *logrus.Log
 	allTags := config.Tags
 	traefikTags := []string{
 		"traefik.enable=true",
-		"traefik.http.routers.cms-api.rule=Host(`api.localhost`) && PathPrefix(`/api/v1`)",
-		"traefik.http.routers.cms-api.service=cms-multi-tenant-api",
-		fmt.Sprintf("traefik.http.services.cms-multi-tenant-api.loadbalancer.server.port=%d", config.Port),
+		"traefik.http.routers.cms-doc-api.rule=Host(`api.localhost`) && PathPrefix(`/api/v1`)",
+		"traefik.http.routers.cms-doc-api.service=cms-doc-multi-tenant-api",
+		fmt.Sprintf("traefik.http.services.cms-doc-multi-tenant-api.loadbalancer.server.port=%d", config.Port),
 	}
 	allTags = append(allTags, traefikTags...)
 
@@ -177,7 +177,7 @@ func loadConsulConfig() consulConfig {
 	port, _ := strconv.Atoi(utils.GetEnv("PORT", "8080"))
 	checkTTL, _ := time.ParseDuration(utils.GetEnv("CONSUL_CHECK_TTL", "30s"))
 
-	tagsStr := utils.GetEnv("CONSUL_SERVICE_TAGS", "cms,multi-tenant,api")
+	tagsStr := utils.GetEnv("CONSUL_SERVICE_TAGS", "cms-doc,multi-tenant,api")
 	var tags []string
 	if tagsStr != "" {
 		for _, tag := range strings.Split(tagsStr, ",") {
@@ -192,8 +192,8 @@ func loadConsulConfig() consulConfig {
 		Datacenter: utils.GetEnv("CONSUL_DATACENTER", "dc1"),
 		Token:      utils.GetEnv("CONSUL_TOKEN", ""),
 		Scheme:     utils.GetEnv("CONSUL_SCHEME", "http"),
-		ServiceID:  utils.GetEnv("CONSUL_SERVICE_ID", fmt.Sprintf("cms-api-%s", hostname)),
-		Name:       utils.GetEnv("CONSUL_SERVICE_NAME", "cms-multi-tenant-api"),
+		ServiceID:  utils.GetEnv("CONSUL_SERVICE_ID", fmt.Sprintf("cms-doc-api-%s", hostname)),
+		Name:       utils.GetEnv("CONSUL_SERVICE_NAME", "cms-doc-multi-tenant-api"),
 		Tags:       tags,
 		Port:       port,
 		CheckTTL:   checkTTL,

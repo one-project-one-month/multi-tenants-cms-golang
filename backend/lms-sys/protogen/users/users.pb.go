@@ -147,7 +147,7 @@ const file_users_users_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB<Z:github.com/multi-tenant-cms-golang/lms-sys/protogen/usersb\x06proto3"
+	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB<Z:github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/usersb\x06proto3"
 
 var (
 	file_users_users_proto_rawDescOnce sync.Once

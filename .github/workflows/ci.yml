@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [cms-sys, lms-sys]
+        service: [cms-doc-sys, lms-sys]
 
     steps:
       - name: Checking Out
@@ -160,7 +160,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [cms-sys, lms-sys]
+        service: [cms-doc-sys, lms-sys]
 
     steps:
       - name: Checking Out

@@ -126,7 +126,7 @@ const file_modules_rpc_delete_modules_proto_rawDesc = "" +
 	"\x03ids\x18\x01 \x03(\tR\x03ids\x12!\n" +
 	"\fforce_delete\x18\x02 \x01(\bR\vforceDelete\"1\n" +
 	"\x15DeleteModulesResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessageB>Z<github.com/multi-tenant-cms-golang/lms-sys/protogen/modulesb\x06proto3"
+	"\amessage\x18\x01 \x01(\tR\amessageB>Z<github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/modulesb\x06proto3"
 
 var (
 	file_modules_rpc_delete_modules_proto_rawDescOnce sync.Once
