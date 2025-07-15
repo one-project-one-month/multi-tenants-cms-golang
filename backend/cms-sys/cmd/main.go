@@ -366,12 +366,10 @@ func main() {
 
 	port := utils.GetEnv("PORT", "8080")
 
-	// Register service with Consul before starting the server
 	if consulEnabled && consulClient != nil {
 		if err := registerService(consulClient, consulConfig, appLogger); err != nil {
 			appLogger.WithError(err).Error("Failed to register service with Consul")
 		} else {
-			// Start health update routine
 			startHealthUpdateRoutine(consulClient, consulConfig.ServiceID, appLogger)
 		}
 	}

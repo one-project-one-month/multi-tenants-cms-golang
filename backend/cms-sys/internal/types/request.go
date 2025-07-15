@@ -31,7 +31,7 @@ type RefreshTokenRequest struct {
 type OwnerCreateRequest struct {
 	Name      string `json:"name" validate:"required,min=2"`
 	Email     string `json:"email" validate:"required,email"`
-	NameSpace string `json:"namespace" validate:"required,min=3"` // TODO : Gotta remove namespace later
+	NameSpace string `json:"namespaces" validate:"required,min=3"` // TODO : Gotta remove namespace later
 	Password  string `json:"password" validate:"required,min=6"`
 }
 type OwnerUpdateRequest struct {
