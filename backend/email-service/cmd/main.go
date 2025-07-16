@@ -57,7 +57,7 @@ func main() {
 	// Create stream configuration
 	streamConfig := jetstream.StreamConfig{
 		Name:      "EMAILS",
-		Subjects:  []string{"email.verification", "email.notification"},
+		Subjects:  []string{"email.verification", "email.notification", "page.approval"},
 		Retention: jetstream.WorkQueuePolicy,
 		Storage:   jetstream.FileStorage,
 	}

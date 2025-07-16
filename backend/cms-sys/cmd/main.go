@@ -1,8 +1,19 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	aws2 "github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	loggMiddleware "github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/multi-tenants-cms-golang/cms-sys/internal/routes"
+	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
+	"gorm.io/gorm/logger"
 	"log"
 	"net"
 	"os"
@@ -12,23 +23,17 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
 	"github.com/multi-tenants-cms-golang/cms-sys/pkg/aws"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	loggMiddleware "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/hashicorp/consul/api"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/handler"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/repository"
-	"github.com/multi-tenants-cms-golang/cms-sys/internal/routes"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/service"
 	"github.com/multi-tenants-cms-golang/cms-sys/pkg/utils"
 	"github.com/sirupsen/logrus"
-	"gorm.io/gorm/logger"
 )
 
 type dISection struct {
@@ -78,19 +83,19 @@ func registerService(client *api.Client, config consulConfig, logger *logrus.Log
 		return err
 	}
 
-	allTags := config.Tags
-	traefikTags := []string{
-		"traefik.enable=true",
-		"traefik.http.routers.cms-doc-api.rule=Host(`api.localhost`) && PathPrefix(`/api/v1`)",
-		"traefik.http.routers.cms-doc-api.service=cms-doc-multi-tenant-api",
-		fmt.Sprintf("traefik.http.services.cms-doc-multi-tenant-api.loadbalancer.server.port=%d", config.Port),
-	}
-	allTags = append(allTags, traefikTags...)
+	//allTags := config.Tags
+	//traefikTags := []string{
+	//	"traefik.enable=true",
+	//	"traefik.http.routers.cms-doc-api.rule=Host(`api.localhost`) && PathPrefix(`/api/v1`)",
+	//	"traefik.http.routers.cms-doc-api.service=cms-doc-multi-tenant-api",
+	//	fmt.Sprintf("traefik.http.services.cms-doc-multi-tenant-api.loadbalancer.server.port=%d", config.Port),
+	//}
+	//allTags = append(allTags, traefikTags...)
 
 	cmsService := &api.AgentServiceRegistration{
-		ID:      config.ServiceID,
-		Name:    config.Name,
-		Tags:    allTags,
+		ID:   config.ServiceID,
+		Name: config.Name,
+		//Tags:    allTags,
 		Port:    config.Port,
 		Address: localIP,
 		Meta: map[string]string{
@@ -198,7 +203,93 @@ func startHealthUpdateRoutine(client *api.Client, serviceID string, logger *logr
 
 }
 
+func dependencyInjectionSection(
+	logger *logrus.Logger,
+	db *gorm.DB,
+	consulClient *api.Client,
+	redisClient *redis.Client,
+	jwtSecret []byte,
+) *dISection {
+	repo := repository.NewRepo(logger, db)
+	if err := repo.CreateDefaultRoles(); err != nil {
+		logger.Fatalf("Failed to create default roles: %v", err)
+	}
+	srv := service.NewService(logger, repo, redisClient, jwtSecret)
+	authHandler := handler.NewHandler(srv)
+	bucketName := utils.GetEnv("BUCKET_NAME", "")
+	s3, err := aws.NewS3Service(bucketName, logger)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to create S3 service")
+	}
+	ownerRepo := repository.NewOwnerRepository(logger, db)
+	ownerService := service.NewOwnerService(logger, ownerRepo, repo)
+	ownerHandler := handler.NewOwnerHandler(ownerService)
+
+	pageRequestRepo := repository.NewPageRequestRepository(logger, db)
+	pageRequestSrv := service.NewPageRequestService(logger, pageRequestRepo)
+	pageRequestHandler := handler.NewPageRequestHandler(pageRequestSrv, s3)
+
+	// Page
+	pageRepo := repository.NewPageRepository(logger, db)
+	pageService := service.NewPageService(logger, pageRepo, pageRequestRepo, ownerRepo)
+	pageHandler := handler.NewPageHandler(pageService)
+
+	return &dISection{
+
+		repo:               repo,
+		srv:                srv,
+		handler:            authHandler,
+		ownerHandler:       ownerHandler,
+		pageRequestHandler: pageRequestHandler,
+		pageHandler:        pageHandler,
+		consulClient:       consulClient,
+	}
+}
+
+func getAppCredentialsInProduction(parametersName []string, cfg *aws2.Config) (map[string]string, error) {
+	ssmClient := ssm.NewFromConfig(*cfg)
+	withDecryption := true
+	result, err := ssmClient.GetParameters(context.Background(), &ssm.GetParametersInput{
+		Names:          parametersName,
+		WithDecryption: &withDecryption,
+	})
+	if err != nil {
+
+		return nil, err
+	}
+	params := make(map[string]string)
+	for _, param := range result.Parameters {
+		params[*param.Name] = *param.Value
+	}
+	return params, nil
+}
+
+func awsConfigProvider() (*aws2.Config, error) {
+	regionName := utils.GetEnv("AWS_REGION", "")
+	accessKeyID := utils.GetEnv("AWS_ACCESS_KEY_ID", "")
+	secretAccessKey := utils.GetEnv("AWS_SECRET_ACCESS_KEY", "")
+	if regionName == "" || accessKeyID == "" || secretAccessKey == "" {
+		logrus.WithFields(logrus.Fields{
+			"regionName":      regionName[0:4],
+			"accessKeyID":     accessKeyID[0:4],
+			"secretAccessKey": secretAccessKey[0:4],
+		}).Info("AWS Region Name and Access Key ID")
+		return nil, errors.New("AWS configuration is missing in the ssm function ")
+	}
+	cfg, err := config.LoadDefaultConfig(context.Background(),
+		config.WithRegion(regionName),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKeyID, secretAccessKey, regionName)),
+	)
+	if err != nil {
+		logrus.WithError(err).Fatal("Failed to load SSM configuration")
+		return nil, err
+	}
+	return &cfg, nil
+}
+
 func main() {
+	applicationStatus := utils.GetEnv("CMS_APP_STATUS", "production")
+
 	appLogger := utils.NewLogger(utils.LogConfig{
 		Level:      utils.GetEnv("LOG_LEVEL", "info"),
 		FilePath:   utils.GetEnv("LOG_FILE_PATH", "logs/app.log"),
@@ -238,13 +329,65 @@ func main() {
 		RetryDelay:      utils.GetEnvAsDuration("DB_RETRY_DELAY", 2*time.Second),
 		LogLevel:        logger.Info,
 	}
+	var jwtSecret []byte
+	if applicationStatus == "production" {
+		cfg, err := awsConfigProvider()
+		if err != nil {
+			appLogger.WithError(err).Fatal("Failed to load AWS configuration")
+		}
+		parametersName := []string{
+			"/cms/db/host",
+			"/cms/db/port",
+			"/cms/db/user",
+			"/cms/db/password",
+			"/cms/db/name",
+			"/cms/jwt/secret",
+		}
+		params, err := getAppCredentialsInProduction(parametersName, cfg)
+		if err != nil {
+			appLogger.WithError(err).Fatal("Failed to get credentials from SSM")
+		}
 
+		if host, exists := params["/cms/db/host"]; exists {
+			dbConfig.Host = host
+		}
+		if port, exists := params["/cms/db/port"]; exists {
+			if p, err := strconv.Atoi(port); err == nil {
+				dbConfig.Port = p
+			}
+		}
+		if user, exists := params["/cms/db/user"]; exists {
+			dbConfig.User = user
+		}
+		if password, exists := params["/cms/db/password"]; exists {
+			dbConfig.Password = password
+		}
+		if dbName, exists := params["/cms/db/name"]; exists {
+			dbConfig.DBName = dbName
+		}
+		if jwtSecretStr, exists := params["/cms/jwt/secret"]; exists {
+			jwtSecret = []byte(jwtSecretStr)
+		}
+
+		appLogger.Info("Production mode: Using SSM parameters for database and JWT configuration")
+	} else {
+		jwtSecret = []byte(utils.GetEnv("JWT_SECRET", ""))
+		appLogger.Info("Development mode: Using environment variables")
+	}
 	dbConnection := utils.NewDatabaseConnection(dbConfig, appLogger)
 	if err := dbConnection.Connect(); err != nil {
 		appLogger.WithError(err).Fatal("Failed to initialize database connection")
 	}
 
-	err := dbConnection.DB.AutoMigrate(&types.CMSWholeSysRole{}, &types.CMSUser{}, &types.MFAToken{}, &types.CMSCusPurchase{}, &types.UserPageRequest{}, &types.Page{}, &types.PageRequest{})
+	err := dbConnection.DB.AutoMigrate(
+		&types.CMSWholeSysRole{},
+		&types.CMSUser{},
+		&types.MFAToken{},
+		&types.CMSCusPurchase{},
+		&types.UserPageRequest{},
+		&types.Page{},
+		&types.PageRequest{},
+	)
 	if err != nil {
 		appLogger.WithError(err).Fatal("Failed to migrate database")
 		return
@@ -300,9 +443,10 @@ func main() {
 		Output: appLogger.Writer(),
 	}))
 
+	origns := utils.GetEnv("CMS_AllOWED_ORIGIN", "")
 	app.Use(recover.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
+		AllowOrigins: origns,
 		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
 		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
 	}))
@@ -315,7 +459,7 @@ func main() {
 		})
 	})
 
-	cmsGroup := app.Group("/cms-doc")
+	cmsGroup := app.Group("/cms")
 
 	cmsGroup.Get("/health", func(c *fiber.Ctx) error {
 		health := healthChecker.CheckHealth()
@@ -358,7 +502,7 @@ func main() {
 		})
 	})
 
-	di := dependencyInjectionSection(appLogger, dbConnection.DB, consulClient, utils.GetRedisClient())
+	di := dependencyInjectionSection(appLogger, dbConnection.DB, consulClient, utils.GetRedisClient(), jwtSecret)
 	routes.SetupRoutes(app, di.handler)
 	routes.SetupOwnerRoutes(app, di.ownerHandler)
 	routes.SetupPageRequestRoutes(app, di.pageRequestHandler)
@@ -366,17 +510,20 @@ func main() {
 
 	port := utils.GetEnv("PORT", "8080")
 
-	// Register service with Consul before starting the server
 	if consulEnabled && consulClient != nil {
 		if err := registerService(consulClient, consulConfig, appLogger); err != nil {
 			appLogger.WithError(err).Error("Failed to register service with Consul")
 		} else {
-			// Start health update routine
 			startHealthUpdateRoutine(consulClient, consulConfig.ServiceID, appLogger)
 		}
 	}
-
+	appMode := utils.GetEnv("CMS_APP_STATUS", "production")
+	appLogger.WithFields(logrus.Fields{
+		"mode": appMode,
+	}).Info("Starting App With Mode" + appMode)
+	appLogger.Info("Starting App With Mode" + appMode)
 	go func() {
+
 		appLogger.WithField("port", port).Info("Server starting")
 		if err := app.Listen("0.0.0.0:" + port); err != nil {
 			appLogger.WithError(err).Fatal("Server failed to start")
@@ -403,46 +550,4 @@ func main() {
 	}
 
 	appLogger.Info("Server exited")
-}
-
-func dependencyInjectionSection(
-	logger *logrus.Logger,
-	db *gorm.DB,
-	consulClient *api.Client,
-	redisClient *redis.Client,
-) *dISection {
-	repo := repository.NewRepo(logger, db)
-	if err := repo.CreateDefaultRoles(); err != nil {
-		logger.Fatalf("Failed to create default roles: %v", err)
-	}
-	srv := service.NewService(logger, repo, redisClient)
-	authHandler := handler.NewHandler(srv)
-	bucketName := utils.GetEnv("BUCKET_NAME", "")
-	s3, err := aws.NewS3Service(bucketName, logger)
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to create S3 service")
-	}
-	ownerRepo := repository.NewOwnerRepository(logger, db)
-	ownerService := service.NewOwnerService(logger, ownerRepo, repo)
-	ownerHandler := handler.NewOwnerHandler(ownerService)
-
-	pageRequestRepo := repository.NewPageRequestRepository(logger, db)
-	pageRequestSrv := service.NewPageRequestService(logger, pageRequestRepo)
-	pageRequestHandler := handler.NewPageRequestHandler(pageRequestSrv, s3)
-
-	// Page
-	pageRepo := repository.NewPageRepository(logger, db)
-	pageService := service.NewPageService(logger, pageRepo, pageRequestRepo, ownerRepo)
-	pageHandler := handler.NewPageHandler(pageService)
-
-	return &dISection{
-
-		repo:               repo,
-		srv:                srv,
-		handler:            authHandler,
-		ownerHandler:       ownerHandler,
-		pageRequestHandler: pageRequestHandler,
-		pageHandler:        pageHandler,
-		consulClient:       consulClient,
-	}
 }

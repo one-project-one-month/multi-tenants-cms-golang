@@ -1,4 +1,3 @@
-// auth.tsp
 import "@typespec/http";
 import "@typespec/rest";
 import "./models/auth.tsp";

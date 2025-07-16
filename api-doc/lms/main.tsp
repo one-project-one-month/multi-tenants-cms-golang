@@ -17,10 +17,10 @@ import "./submission.tsp";
 import "./review.tsp";
 import "./report.tsp";
 
-@service({
+@service(#{
   title: "LMS Combined Service",
 })
 namespace LMS {
-// Expose all imported namespaces here if needed
+    course
 
 }
