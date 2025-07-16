@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -91,20 +92,22 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 
 	authResponse, err := h.service.Register(&req)
 	if err != nil {
-		switch err.Error() {
-		case "email already exists":
+		switch {
+		case errors.Is(err, errors.New("email already exists")):
 			return utils.ConflictResponse(c, "An account with this email already exists", nil)
+		case strings.Contains(err.Error(), "failed to send verification email"):
+			return utils.SuccessResponse(c, "Registration successful but verification email failed", authResponse)
 		default:
 			return utils.InternalServerErrorResponse(c, "Registration failed", err.Error())
 		}
 	}
 
-	return utils.CreatedResponse(c, "Registration successful! Please check your email for verification code.", map[string]interface{}{
-		"user":       authResponse.User,
-		"next_step":  "email_verification",
-		"message":    "A verification code has been sent to your email address",
-		"expires_in": "10 minutes",
-	})
+	message := "Registration successful! Please check your email for verification code."
+	if authResponse.User.Verified {
+		message = "Registration successful! Your account is ready to use."
+	}
+
+	return utils.CreatedResponse(c, message, authResponse)
 }
 
 func (h *Handler) VerifyEmail(c *fiber.Ctx) error {

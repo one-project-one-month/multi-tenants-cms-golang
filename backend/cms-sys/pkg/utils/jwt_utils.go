@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-var jwtSecret = []byte(GetEnv("JWT_SECRET", ""))
-
 type Claims struct {
 	UserID    uuid.UUID `json:"user_id"`
 	Email     string    `json:"email"`
@@ -28,7 +26,7 @@ func generateJTI() string {
 	return hex.EncodeToString(bytes)
 }
 
-func GenerateAccessToken(userID uuid.UUID, email, role string) (string, error) {
+func GenerateAccessToken(userID uuid.UUID, email, role string, jwtSecret []byte) (string, error) {
 	jti := generateJTI()
 	claims := &Claims{
 		UserID:    userID,
@@ -47,7 +45,7 @@ func GenerateAccessToken(userID uuid.UUID, email, role string) (string, error) {
 	return token.SignedString(jwtSecret)
 }
 
-func GenerateRefreshToken(userID uuid.UUID, email, role string) (string, error) {
+func GenerateRefreshToken(userID uuid.UUID, email, role string, jwtSecret []byte) (string, error) {
 	jti := generateJTI()
 	claims := &Claims{
 		UserID:    userID,
@@ -66,7 +64,7 @@ func GenerateRefreshToken(userID uuid.UUID, email, role string) (string, error) 
 	return token.SignedString(jwtSecret)
 }
 
-func ValidateToken(tokenString string) (*Claims, error) {
+func ValidateToken(tokenString string, jwtSecret []byte) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")

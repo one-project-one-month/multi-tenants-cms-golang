@@ -43,6 +43,8 @@ type Service struct {
 	log         *logrus.Logger
 	repo        repository.AuthRepository
 	redisClient *redis.Client
+	appStatus   string
+	jwtSecret   []byte
 }
 
 var _ AuthService = (*Service)(nil)
@@ -51,12 +53,15 @@ func NewService(
 	log *logrus.Logger,
 	repo repository.AuthRepository,
 	redisClient *redis.Client,
+	jwtSecret []byte,
 
 ) *Service {
 	return &Service{
 		log:         log,
 		repo:        repo,
 		redisClient: redisClient,
+		appStatus:   utils.GetEnv("CMS_APP_STATUS", "production"),
+		jwtSecret:   jwtSecret,
 	}
 }
 
@@ -72,13 +77,23 @@ func (s *Service) Login(email, password string) (*types.AuthResponse, error) {
 		return nil, errors.New("invalid credentials")
 	}
 
-	accessToken, err := utils.GenerateAccessToken(user.CMSUserID, user.CMSUserEmail, user.CMSUserRole)
+	accessToken, err := utils.GenerateAccessToken(
+		user.CMSUserID,
+		user.CMSUserEmail,
+		user.CMSUserRole,
+		s.jwtSecret,
+	)
 	if err != nil {
 		s.log.WithError(err).Error("Failed to generate access token")
 		return nil, errors.New("failed to generate access token")
 	}
 
-	refreshToken, err := utils.GenerateRefreshToken(user.CMSUserID, user.CMSUserEmail, user.CMSUserRole)
+	refreshToken, err := utils.GenerateRefreshToken(
+		user.CMSUserID,
+		user.CMSUserEmail,
+		user.CMSUserRole,
+		s.jwtSecret,
+	)
 	if err != nil {
 		s.log.WithError(err).Error("Failed to generate refresh token")
 		return nil, errors.New("failed to generate refresh token")
@@ -105,23 +120,15 @@ func (s *Service) Login(email, password string) (*types.AuthResponse, error) {
 func (s *Service) Register(req *types.RegisterRequest) (*types.AuthResponse, error) {
 	exists, err := s.repo.EmailExists(req.Email)
 	if err != nil {
-		s.log.WithError(err).Error("Failed to check if email exists")
-		return nil, errors.New("failed to check email availability")
+		return nil, fmt.Errorf("failed to check email availability: %w", err)
 	}
-
 	if exists {
 		return nil, errors.New("email already exists")
 	}
 
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
-		s.log.WithError(err).Error("Failed to hash password")
-		return nil, errors.New("failed to process password")
-	}
-
-	role := req.Role
-	if role == "" {
-		role = string(types.CMSCustomer)
+		return nil, fmt.Errorf("failed to process password: %w", err)
 	}
 
 	user := &types.CMSUser{
@@ -129,41 +136,39 @@ func (s *Service) Register(req *types.RegisterRequest) (*types.AuthResponse, err
 		CMSUserName:  req.Name,
 		CMSUserEmail: req.Email,
 		Password:     hashedPassword,
-		CMSUserRole:  role,
-		Verified:     false,
+		CMSUserRole:  s.determineUserRole(req.Role),
+		Verified:     s.isAutoVerifyEnabled(),
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
 
 	if err := s.repo.CreateUser(user); err != nil {
-		s.log.WithError(err).Error("Failed to create user")
-		return nil, errors.New("failed to create user")
+		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	userResponse := types.UserResponse{
-		ID:        user.CMSUserID,
-		Name:      user.CMSUserName,
-		Email:     user.CMSUserEmail,
-		Role:      user.CMSUserRole,
-		Verified:  user.Verified,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+	if !s.isAutoVerifyEnabled() {
+		if err := s.sendVerificationEmail(user.CMSUserID); err != nil {
+			return nil, fmt.Errorf("failed to send verification email: %w", err)
+		}
 	}
-	err = s.EmailServiceCommunication(user.CMSUserID)
-	if err != nil {
-		s.log.WithError(err).Error("Failed to send email")
-		return nil, err
-	}
+
 	return &types.AuthResponse{
-		User: userResponse,
-		////AccessToken:  accessToken,
-		////RefreshToken: refreshToken,
-		//ExpiresAt:    time.Now().Add(15 * time.Minute),
+		User: types.UserResponse{
+			ID:        user.CMSUserID,
+			Name:      user.CMSUserName,
+			Email:     user.CMSUserEmail,
+			Role:      user.CMSUserRole,
+			Verified:  user.Verified,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		},
 	}, nil
 }
-
 func (s *Service) RefreshToken(refreshToken string) (*types.TokenResponse, error) {
-	claims, err := utils.ValidateToken(refreshToken)
+	claims, err := utils.ValidateToken(
+		refreshToken,
+		s.jwtSecret,
+	)
 	if err != nil {
 		s.log.WithError(err).Error("Invalid refresh token")
 		return nil, errors.New("invalid refresh token")
@@ -179,13 +184,23 @@ func (s *Service) RefreshToken(refreshToken string) (*types.TokenResponse, error
 		return nil, errors.New("user not found")
 	}
 
-	newAccessToken, err := utils.GenerateAccessToken(user.CMSUserID, user.CMSUserEmail, user.CMSUserRole)
+	newAccessToken, err := utils.GenerateAccessToken(
+		user.CMSUserID,
+		user.CMSUserEmail,
+		user.CMSUserRole,
+		s.jwtSecret,
+	)
 	if err != nil {
 		s.log.WithError(err).Error("Failed to generate new access token")
 		return nil, errors.New("failed to generate access token")
 	}
 
-	newRefreshToken, err := utils.GenerateRefreshToken(user.CMSUserID, user.CMSUserEmail, user.CMSUserRole)
+	newRefreshToken, err := utils.GenerateRefreshToken(
+		user.CMSUserID,
+		user.CMSUserEmail,
+		user.CMSUserRole,
+		s.jwtSecret,
+	)
 	if err != nil {
 		s.log.WithError(err).Error("Failed to generate new refresh token")
 		return nil, errors.New("failed to generate refresh token")
@@ -263,7 +278,7 @@ func (s *Service) UpdateUserProfile(id uuid.UUID, req types.UserUpdateRequest) (
 
 func (s *Service) Logout(accessToken, refreshToken string) error {
 	if accessToken != "" {
-		accessClaims, err := utils.ValidateToken(accessToken)
+		accessClaims, err := utils.ValidateToken(accessToken, s.jwtSecret)
 		if err == nil && accessClaims.ID != "" {
 			ttl := time.Until(accessClaims.ExpiresAt.Time)
 			if ttl > 0 {
@@ -276,7 +291,7 @@ func (s *Service) Logout(accessToken, refreshToken string) error {
 	}
 
 	if refreshToken != "" {
-		refreshClaims, err := utils.ValidateToken(refreshToken)
+		refreshClaims, err := utils.ValidateToken(refreshToken, s.jwtSecret)
 		if err == nil && refreshClaims.ID != "" {
 			ttl := time.Until(refreshClaims.ExpiresAt.Time)
 			if ttl > 0 {
@@ -472,11 +487,21 @@ func (s *Service) VerifyMFALogin(userID uuid.UUID, verificationCode string) (*ty
 		s.log.WithError(err).Error("Failed to get user profile")
 		return nil, errors.New("failed to get user profile")
 	}
-	accessToken, err := utils.GenerateAccessToken(user.CMSUserID, user.CMSUserEmail, user.CMSUserRole)
+	accessToken, err := utils.GenerateAccessToken(
+		user.CMSUserID,
+		user.CMSUserEmail,
+		user.CMSUserRole,
+		s.jwtSecret,
+	)
 	if err != nil {
 		return nil, errors.New("failed to generate access token")
 	}
-	refreshToken, err := utils.GenerateRefreshToken(user.CMSUserID, user.CMSUserEmail, user.CMSUserRole)
+	refreshToken, err := utils.GenerateRefreshToken(
+		user.CMSUserID,
+		user.CMSUserEmail,
+		user.CMSUserRole,
+		s.jwtSecret,
+	)
 	if err != nil {
 		return nil, errors.New("failed to generate refresh token")
 	}
@@ -616,6 +641,25 @@ func (s *Service) VerifyEmail(email string, code string) error {
 	s.redisClient.Del(ctx, userInDb.CMSUserID.String())
 
 	return nil
+}
+
+func (s *Service) determineUserRole(requestedRole string) string {
+	if requestedRole == "" {
+		return string(types.CMSCustomer)
+	}
+	return requestedRole
+}
+
+func (s *Service) isAutoVerifyEnabled() bool {
+	return s.appStatus == "development"
+}
+
+func (s *Service) sendVerificationEmail(userID uuid.UUID) error {
+	if s.appStatus == "development" {
+		s.log.Info("Skipping email sending in development mode")
+		return nil
+	}
+	return s.EmailServiceCommunication(userID)
 }
 
 type EmailRequest struct {
