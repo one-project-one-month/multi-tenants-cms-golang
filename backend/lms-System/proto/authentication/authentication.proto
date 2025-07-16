@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package lms.authentication;
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/authentication";
+import "google/protobuf/timestamp.proto";
+
+
+// Is equal to the LMS USER
+message  SystemUser {
+  string id = 1;
+  string  username = 2;
+  string email = 3;
+  string phone_number = 4;
+  string address = 5;
+  google.protobuf.Timestamp registration_date = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}

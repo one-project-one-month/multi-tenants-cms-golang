@@ -1,0 +1,28 @@
+syntax = "proto3";
+package lms.authentication;
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/authentication";
+
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "google/api/annotations.proto";
+import "authentication/rpc_register.proto";
+import "authentication/rpc_email_verify.proto";
+
+
+service  AuthenticationService {
+  rpc Register(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+     post: "/lms/v1/{organisation}/register";
+     body: "*";
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+     description: "LMS user registration with respective namespace";
+    };
+  }
+
+  rpc VerifyEmail(EmailVerifyRequest) returns (EmailVerifyResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/{organisation}/verify-email/{email}/{token}";
+      body: "*";
+    }
+  }
+}
