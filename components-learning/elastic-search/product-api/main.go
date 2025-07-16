@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/SwanHtetAungPhyo/product-api/database"
 	"github.com/SwanHtetAungPhyo/product-api/elasticsearch"
 	"github.com/SwanHtetAungPhyo/product-api/handlers"
@@ -48,7 +49,8 @@ func main() {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
-			if e, ok := err.(*fiber.Error); ok {
+			var e *fiber.Error
+			if errors.As(err, &e) {
 				code = e.Code
 			}
 			return c.Status(code).JSON(fiber.Map{

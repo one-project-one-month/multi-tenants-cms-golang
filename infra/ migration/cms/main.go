@@ -21,7 +21,11 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
-	db.AutoMigrate(&types.CMSWholeSysRole{}, &types.CMSUser{}, &types.CMSCusPurchase{}, &types.MFAToken{})
+	err = db.AutoMigrate(&types.CMSWholeSysRole{}, &types.CMSUser{}, &types.CMSCusPurchase{}, &types.MFAToken{})
+	if err != nil {
+		log.Fatal(err.Error())
+		return
+	}
 	if err := types.SeedAll(db); err != nil {
 		log.Fatal("Failed to seed database:", err)
 	}

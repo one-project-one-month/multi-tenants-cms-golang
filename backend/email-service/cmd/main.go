@@ -2,288 +2,159 @@ package main
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
 	"fmt"
-	"github.com/multi-tenants-cms-golang/email-service/utils"
-	"net"
-	"net/http"
+	"log"
 	"os"
-	"os/signal"
-	"runtime"
-	"strconv"
-	"strings"
-	"sync"
-	"syscall"
 	"time"
 
-	"github.com/hashicorp/consul/api"
 	"github.com/nats-io/nats.go"
-	"go.uber.org/zap"
-
-	"github.com/multi-tenants-cms-golang/email-service/config"
-	"github.com/multi-tenants-cms-golang/email-service/internal/email"
-	"github.com/multi-tenants-cms-golang/email-service/internal/health"
-	natss "github.com/multi-tenants-cms-golang/email-service/internal/nats"
+	"github.com/nats-io/nats.go/jetstream"
+	"github.com/wneessen/go-mail"
 )
 
-type consulConfig struct {
-	Address    string
-	Datacenter string
-	Token      string
-	Scheme     string
-	ServiceID  string
-	Name       string
-	Tags       []string
-	Port       int
-	CheckTTL   time.Duration
-	CheckHTTP  string
+type EmailRequest struct {
+	To      string `json:"to"`
+	Subject string `json:"subject"`
+	Body    string `json:"body"`
 }
 
 func main() {
-	logger, err := zap.NewProduction()
-	if err != nil {
-		panic(err)
-	}
-	defer logger.Sync()
+	// Load configuration from environment
+	smtpHost := getEnv("SMTP_HOST", "smtp.gmail.com")
+	smtpPort := getEnvInt("SMTP_PORT", 587)
+	smtpUser := getEnv("SMTP_USER", "")
+	smtpPass := getEnv("SMTP_PASSWORD", "")
+	fromAddr := getEnv("FROM_ADDR", smtpUser)
+	natsUrl := getEnv("NATS_URL", "nats://localhost:4222")
 
-	cfg, err := config.Load()
-	if err != nil {
-		logger.Fatal("failed to load configuration", zap.Error(err))
-	}
-
-	nc, err := nats.Connect(cfg.NATS.URL,
-		nats.ReconnectWait(time.Second),
-		nats.MaxReconnects(-1),
-		nats.DisconnectErrHandler(func(nc *nats.Conn, err error) {
-			logger.Error("NATS disconnected", zap.Error(err))
-		}),
-		nats.ReconnectHandler(func(nc *nats.Conn) {
-			logger.Info("NATS reconnected")
-		}),
+	// Initialize SMTP client
+	smtpClient, err := mail.NewClient(
+		smtpHost,
+		mail.WithPort(smtpPort),
+		mail.WithSMTPAuth(mail.SMTPAuthPlain),
+		mail.WithUsername(smtpUser),
+		mail.WithPassword(smtpPass),
+		mail.WithTLSPolicy(mail.TLSMandatory),
 	)
 	if err != nil {
-		logger.Fatal("failed to connect to NATS", zap.Error(err))
+		log.Fatalf("Failed to create SMTP client: %v", err)
+	}
+
+	// Connect to NATS
+	nc, err := nats.Connect(natsUrl)
+	if err != nil {
+		log.Fatalf("NATS connection failed: %v", err)
 	}
 	defer nc.Close()
 
-	emailCh := make(chan natss.EmailRequest, 100)
-	emailService, err := email.NewService(
-		logger,
-		cfg.SMTP.Host,
-		cfg.SMTP.Port,
-		cfg.SMTP.User,
-		cfg.SMTP.Password,
-		cfg.SMTP.FromAddr,
-		cfg.SMTP.TemplateDir,
-	)
+	// Create JetStream context
+	js, err := jetstream.New(nc)
 	if err != nil {
-		logger.Fatal("failed to create email service", zap.Error(err))
+		log.Fatalf("JetStream init failed: %v", err)
 	}
 
-	natsConsumer, err := natss.NewConsumer(
-		nc,
-		logger,
-		emailCh,
-		cfg.NATS.StreamName,
-		cfg.NATS.Subject,
-		cfg.NATS.ConsumerName,
-	)
-	if err != nil {
-		logger.Fatal("failed to create NATS consumer", zap.Error(err))
+	// Create stream configuration
+	streamConfig := jetstream.StreamConfig{
+		Name:      "EMAILS",
+		Subjects:  []string{"email.verification", "email.notification"},
+		Retention: jetstream.WorkQueuePolicy,
+		Storage:   jetstream.FileStorage,
 	}
 
-	consulCfg := loadConsulConfig()
-	consulClient, err := api.NewClient(&api.Config{
-		Address:    consulCfg.Address,
-		Datacenter: consulCfg.Datacenter,
-		Token:      consulCfg.Token,
-		Scheme:     consulCfg.Scheme,
-	})
-	if err != nil {
-		logger.Fatal("failed to create Consul client", zap.Error(err))
-	}
-
-	if err := registerService(consulClient, consulCfg, logger); err != nil {
-		logger.Fatal("failed to register service with Consul", zap.Error(err))
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
+	// Create or update stream
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	var wg sync.WaitGroup
+	stream, err := js.CreateOrUpdateStream(ctx, streamConfig)
+	if err != nil {
+		log.Fatalf("Stream creation failed: %v", err)
+	}
 
-	workerCount := runtime.NumCPU()
-	logger.Info("starting email workers", zap.Int("count", workerCount))
+	// Create consumer
+	consumerConfig := jetstream.ConsumerConfig{
+		Durable:       "email-processor",
+		AckPolicy:     jetstream.AckExplicitPolicy,
+		DeliverPolicy: jetstream.DeliverAllPolicy,
+	}
 
-	for i := 0; i < workerCount; i++ {
-		wg.Add(1)
-		go func(workerID int) {
-			defer wg.Done()
-			logger.Info("worker started", zap.Int("id", workerID))
+	consumer, err := stream.CreateOrUpdateConsumer(ctx, consumerConfig)
+	if err != nil {
+		log.Fatalf("Consumer creation failed: %v", err)
+	}
 
-			for {
-				select {
-				case req, ok := <-emailCh:
-					if !ok {
-						logger.Info("worker stopping", zap.Int("id", workerID))
-						return
-					}
+	log.Println("Email service started. Waiting for messages...")
 
-					if err := emailService.Send(ctx, req); err != nil {
-						logger.Error("failed to send email",
-							zap.Int("worker", workerID),
-							zap.String("to", req.To),
-							zap.String("template", req.Template),
-							zap.Error(err))
-					}
-				case <-ctx.Done():
-					logger.Info("worker stopping due to context cancellation", zap.Int("id", workerID))
-					return
-				}
+	_, err = consumer.Consume(func(msg jetstream.Msg) {
+		log.Printf("Received message on subject: %s", msg.Subject())
+
+		var emailReq EmailRequest
+		if err := json.Unmarshal(msg.Data(), &emailReq); err != nil {
+			log.Printf("Failed to parse message: %v", err)
+			err := msg.Nak()
+			if err != nil {
+				log.Printf("Failed to send email: %v", err.Error())
+				return
 			}
-		}(i)
-	}
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := natsConsumer.Start(ctx); err != nil {
-			logger.Error("NATS consumer failed", zap.Error(err))
+			return
 		}
-	}()
 
-	healthServer := health.NewServer(cfg.Server.Port, logger)
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := healthServer.Start(); !errors.Is(err, http.ErrServerClosed) && err != nil {
-			logger.Error("health server failed", zap.Error(err))
+		if err := sendEmail(smtpClient, fromAddr, emailReq); err != nil {
+			log.Printf("Failed to send email: %v", err)
+			err := msg.Nak()
+			if err != nil {
+				log.Printf("Failed to send email: %v", err.Error())
+				return
+			}
+			return
 		}
-	}()
 
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-	<-sigCh
-
-	logger.Info("shutdown signal received, starting graceful shutdown")
-
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), cfg.Server.ShutdownTimeout)
-	defer shutdownCancel()
-
-	if err := healthServer.Stop(shutdownCtx); err != nil {
-		logger.Error("failed to stop health server gracefully", zap.Error(err))
-	}
-
-	cancel()
-	close(emailCh)
-
-	defer func() {
-		if err := deregisterService(consulClient, consulCfg.ServiceID, logger); err != nil {
-			logger.Error("failed to deregister service from Consul", zap.Error(err))
+		log.Printf("Email sent to %s", emailReq.To)
+		err := msg.Ack()
+		if err != nil {
+			log.Printf("Failed to send email: %v", err.Error())
+			return
 		}
-	}()
-
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		logger.Info("all goroutines stopped")
-	case <-shutdownCtx.Done():
-		logger.Warn("shutdown timeout exceeded, forcing exit")
-	}
-
-	logger.Info("shutdown complete")
-}
-
-func loadConsulConfig() consulConfig {
-	port, _ := strconv.Atoi(utils.GetEnv("PORT", "8080"))
-	checkTTL, _ := time.ParseDuration(utils.GetEnv("CONSUL_CHECK_TTL", "30s"))
-
-	tagsStr := utils.GetEnv("CONSUL_SERVICE_TAGS", "cms,multi-tenant,api")
-	var tags []string
-	if tagsStr != "" {
-		for _, tag := range strings.Split(tagsStr, ",") {
-			tags = append(tags, strings.TrimSpace(tag))
-		}
-	}
-
-	hostname, _ := os.Hostname()
-
-	return consulConfig{
-		Address:    utils.GetEnv("CONSUL_ADDRESS", "consul:8500"),
-		Datacenter: utils.GetEnv("CONSUL_DATACENTER", "dc1"),
-		Token:      utils.GetEnv("CONSUL_TOKEN", ""),
-		Scheme:     utils.GetEnv("CONSUL_SCHEME", "http"),
-		ServiceID:  utils.GetEnv("CONSUL_SERVICE_ID", fmt.Sprintf("cms-api-%s", hostname)),
-		Name:       utils.GetEnv("CONSUL_SERVICE_NAME", "cms-multi-tenant-api"),
-		Tags:       tags,
-		Port:       port,
-		CheckTTL:   checkTTL,
-		CheckHTTP:  fmt.Sprintf("http://%s:%d/health", hostname, port),
-	}
-}
-
-func getLocalIP() (string, error) {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
+	})
 	if err != nil {
-		return "", fmt.Errorf("failed to get local IP: %w", err)
+		log.Fatalf("Consume failed: %v", err)
 	}
-	defer conn.Close()
 
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
-	return localAddr.IP.String(), nil
+	select {}
 }
 
-func registerService(client *api.Client, config consulConfig, logger *zap.Logger) error {
-	localIP, err := getLocalIP()
-	if err != nil {
-		logger.Error("failed to get local IP address", zap.Error(err))
-		return err
+func sendEmail(client *mail.Client, from string, req EmailRequest) error {
+	m := mail.NewMsg()
+	if err := m.From(from); err != nil {
+		return fmt.Errorf("failed to set From address: %w", err)
+	}
+	if err := m.To(req.To); err != nil {
+		return fmt.Errorf("failed to set To address: %w", err)
 	}
 
-	service := &api.AgentServiceRegistration{
-		ID:      config.ServiceID,
-		Name:    config.Name,
-		Tags:    config.Tags,
-		Port:    config.Port,
-		Address: localIP,
-		Check: &api.AgentServiceCheck{
-			HTTP:                           config.CheckHTTP,
-			Interval:                       "10s",
-			Timeout:                        "5s",
-			DeregisterCriticalServiceAfter: "30s",
-		},
-		Meta: map[string]string{
-			"version":     "1.0.0",
-			"environment": utils.GetEnv("ENV", "development"),
-			"region":      utils.GetEnv("REGION", "us-east-1"),
-		},
-	}
+	m.Subject(req.Subject)
+	m.SetBodyString(mail.TypeTextHTML, req.Body)
 
-	if err := client.Agent().ServiceRegister(service); err != nil {
-		logger.Error("failed to register service with Consul", zap.Error(err))
-		return err
+	if err := client.DialAndSend(m); err != nil {
+		return fmt.Errorf("failed to send email: %w", err)
 	}
-
-	logger.Info("service registered with Consul",
-		zap.String("service_id", config.ServiceID),
-		zap.String("service_name", config.Name),
-		zap.String("address", localIP),
-		zap.Int("port", config.Port))
 
 	return nil
 }
 
-func deregisterService(client *api.Client, serviceID string, logger *zap.Logger) error {
-	if err := client.Agent().ServiceDeregister(serviceID); err != nil {
-		logger.Error("failed to deregister service from Consul", zap.Error(err))
-		return err
+func getEnv(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
 	}
+	return defaultValue
+}
 
-	logger.Info("service deregistered from Consul", zap.String("service_id", serviceID))
-	return nil
+func getEnvInt(key string, defaultValue int) int {
+	if value, exists := os.LookupEnv(key); exists {
+		var result int
+		if _, err := fmt.Sscanf(value, "%d", &result); err == nil {
+			return result
+		}
+	}
+	return defaultValue
 }

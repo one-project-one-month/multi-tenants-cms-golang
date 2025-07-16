@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v5.29.3
-// source: assignments/assignment.proto
+// source: assignment/assignment.proto
 
 package assignments
 
@@ -120,7 +120,7 @@ const file_assignments_assignment_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtBBZ@github.com/multi-tenants-cms-golang/lms-sys/protogen/assignmentsb\x06proto3"
+	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtBBZ@github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/assignmentsb\x06proto3"
 
 var (
 	file_assignments_assignment_proto_rawDescOnce sync.Once

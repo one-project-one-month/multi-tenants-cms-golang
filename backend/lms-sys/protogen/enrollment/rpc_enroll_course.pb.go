@@ -155,7 +155,7 @@ const file_enrollment_rpc_enroll_course_proto_rawDesc = "" +
 	"\n" +
 	"student_id\x18\x02 \x01(\tR\tstudentId\x12\x1b\n" +
 	"\tcourse_id\x18\x03 \x01(\tR\bcourseId\x12'\n" +
-	"\x0fenrollment_date\x18\x04 \x01(\tR\x0eenrollmentDateBAZ?github.com/multi-tenants-cms-golang/lms-sys/protogen/enrollmentb\x06proto3"
+	"\x0fenrollment_date\x18\x04 \x01(\tR\x0eenrollmentDateBAZ?github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/enrollmentb\x06proto3"
 
 var (
 	file_enrollment_rpc_enroll_course_proto_rawDescOnce sync.Once

@@ -6,7 +6,7 @@ import (
 )
 
 func SetupPageRequestRoutes(app *fiber.App, handler handler.PageRequestHandle) {
-	pageRequest := app.Group("/page-request")
+	pageRequest := app.Group("/cms/page-request")
 	pageRequest.Post("/", handler.Create)
 	pageRequest.Get("/", handler.GetAll)
 	pageRequest.Put("/status", handler.ChangeStatus)

@@ -11,18 +11,28 @@ import (
 )
 
 type Querier interface {
+	CreateEnrollment(ctx context.Context, arg CreateEnrollmentParams) (Enrollment, error)
+	CreateModule(ctx context.Context, arg CreateModuleParams) (Module, error)
 	CreateNewCourse(ctx context.Context, courseTitle string) (Course, error)
 	CreateNewTenant(ctx context.Context, arg CreateNewTenantParams) (Tenant, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (LmsUser, error)
+	DeleteAssociatedLessons(ctx context.Context, moduleID pgtype.UUID) error
+	DeleteAssociatedQuizzes(ctx context.Context, moduleID pgtype.UUID) error
+	DeleteModule(ctx context.Context, moduleID pgtype.UUID) error
+	DeleteModules(ctx context.Context, dollar_1 []pgtype.UUID) error
 	DeleteUser(ctx context.Context, lmsUserID pgtype.UUID) error
 	GetAllCourse(ctx context.Context) ([]Course, error)
+	GetModuleByID(ctx context.Context, moduleID pgtype.UUID) (Module, error)
 	GetTenantByID(ctx context.Context, tenantID pgtype.UUID) (Tenant, error)
 	GetTenantByNamespace(ctx context.Context, namespace string) (Tenant, error)
 	GetUser(ctx context.Context, lmsUserID pgtype.UUID) (LmsUser, error)
 	GetUserByEmail(ctx context.Context, lmsUserEmail string) (LmsUser, error)
 	GetUsersByRole(ctx context.Context, lmsRoleID pgtype.UUID) ([]LmsUser, error)
 	GetUsersByTenant(ctx context.Context, tenantID pgtype.UUID) ([]LmsUser, error)
+	ListModules(ctx context.Context) ([]Module, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]LmsUser, error)
+	ModuleHasAssociations(ctx context.Context, moduleID pgtype.UUID) (pgtype.Bool, error)
+	UpdateModuleByID(ctx context.Context, arg UpdateModuleByIDParams) (Module, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (LmsUser, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 }

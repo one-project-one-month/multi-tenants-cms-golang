@@ -1,0 +1,608 @@
+openapi: 3.0.0
+info:
+  title: CMS API
+  version: 0.0.0
+tags: []
+paths:
+  /auth/email/verify:
+    post:
+      operationId: AuthService_verifyEmail
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Auth.SuccessResponse'
+                  - $ref: '#/components/schemas/Auth.ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.EmailVerificationRequest'
+  /auth/login:
+    post:
+      operationId: AuthService_login
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.AuthResponse'
+                  - $ref: '#/components/schemas/Auth.ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.LoginRequest'
+  /auth/logout:
+    post:
+      operationId: AuthService_logout
+      parameters:
+        - name: authorization
+          in: header
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Auth.SuccessResponse'
+                  - $ref: '#/components/schemas/Auth.ErrorResponse'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.LogoutRequest'
+  /auth/me:
+    post:
+      operationId: AuthService_getMe
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.UserResponse'
+                  - $ref: '#/components/schemas/Auth.ErrorResponse'
+      security:
+        - BearerAuth: []
+  /auth/mfa/login:
+    post:
+      operationId: AuthService_loginWithMFA
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.AuthResponse'
+                  - $ref: '#/components/schemas/Auth.ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.MFALoginRequest'
+  /auth/mfa/setup:
+    post:
+      operationId: AuthService_setupMFA
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.MFASetupSuccessResponse'
+                  - $ref: '#/components/schemas/Auth.ErrorResponse'
+      security:
+        - BearerAuth: []
+  /auth/mfa/verify:
+    post:
+      operationId: AuthService_verifyMFASetup
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Auth.SuccessResponse'
+                  - $ref: '#/components/schemas/Auth.ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.MFAVerificationRequest'
+      security:
+        - BearerAuth: []
+  /auth/profile/{id}:
+    put:
+      operationId: AuthService_updateProfile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.UserResponse'
+                  - $ref: '#/components/schemas/Auth.ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UserUpdateRequest'
+      security:
+        - BearerAuth: []
+  /auth/refresh:
+    post:
+      operationId: AuthService_refresh
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.TokenResponse'
+                  - $ref: '#/components/schemas/Auth.ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.RefreshTokenRequest'
+  /auth/register:
+    post:
+      operationId: AuthService_register
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auth.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.RegistrationResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.RegisterRequest'
+components:
+  schemas:
+    Auth.ErrorResponse:
+      type: object
+      required:
+        - Success
+        - message
+        - Error
+      properties:
+        Success:
+          type: boolean
+        message:
+          type: string
+        Error:
+          type: string
+    Auth.SuccessResponse:
+      type: object
+      required:
+        - Success
+        - message
+        - Error
+      properties:
+        Success:
+          type: boolean
+        message:
+          type: string
+        Error:
+          type: string
+    Models.AuthResponse:
+      type: object
+      required:
+        - user
+      properties:
+        user:
+          $ref: '#/components/schemas/Models.UserResponse'
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+    Models.ChangeStatusPageRequest:
+      type: object
+      required:
+        - requestId
+        - status
+      properties:
+        requestId:
+          type: string
+        status:
+          $ref: '#/components/schemas/Models.Common.RequestStatus'
+    Models.Common.BearerAuth:
+      type: object
+    Models.Common.ErrorResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          enum:
+            - false
+        message:
+          type: string
+        error:
+          type: string
+        details: {}
+    Models.Common.PaginateRequest:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        limit:
+          type: integer
+          format: int32
+    Models.Common.RequestStatus:
+      type: string
+      enum:
+        - pending
+        - approved
+        - rejected
+        - in_review
+    Models.Common.SuccessResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          enum:
+            - true
+        message:
+          type: string
+        data: {}
+    Models.CreatePageRequest:
+      type: object
+      required:
+        - ownerId
+        - requestType
+        - title
+        - description
+      properties:
+        ownerId:
+          type: string
+        requestType:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        pageUrl:
+          type: string
+    Models.EmailVerificationRequest:
+      type: object
+      required:
+        - email
+        - code
+      properties:
+        email:
+          type: string
+          pattern: ^[^@]+@[^@]+\.[^@]+$
+        code:
+          type: string
+          pattern: ^[0-9]{6}$
+    Models.LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          pattern: ^[^@]+@[^@]+\.[^@]+$
+        password:
+          type: string
+          minLength: 6
+    Models.LogoutRequest:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+    Models.MFALoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          pattern: ^[^@]+@[^@]+\.[^@]+$
+        password:
+          type: string
+        mfa_code:
+          type: string
+          pattern: ^[0-9]{6}$
+    Models.MFASetupResponse:
+      type: object
+      required:
+        - secret
+        - qr_code_url
+        - qr_code_image
+        - token_id
+        - manual_entry
+      properties:
+        secret:
+          type: string
+        qr_code_url:
+          type: string
+        qr_code_image:
+          type: string
+        token_id:
+          type: integer
+          format: uint32
+        manual_entry:
+          type: string
+    Models.MFASetupSuccessResponse:
+      type: object
+      required:
+        - setup_data
+        - next_step
+        - message
+      properties:
+        setup_data:
+          $ref: '#/components/schemas/Models.MFASetupResponse'
+        next_step:
+          type: string
+          enum:
+            - verify_mfa_setup
+        message:
+          type: string
+    Models.MFAVerificationRequest:
+      type: object
+      required:
+        - token_id
+        - code
+      properties:
+        token_id:
+          type: integer
+          format: uint32
+        code:
+          type: string
+          pattern: ^[0-9]{6}$
+    Models.OwnerCreateRequest:
+      type: object
+      required:
+        - name
+        - email
+        - name_space
+        - password
+      properties:
+        name:
+          type: string
+          minLength: 2
+        email:
+          type: string
+          pattern: ^[^@]+@[^@]+\.[^@]+$
+        name_space:
+          type: string
+          minLength: 3
+        password:
+          type: string
+          minLength: 6
+    Models.OwnerDeleteRequest:
+      type: object
+      required:
+        - ids
+        - forceDelete
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+        forceDelete:
+          type: boolean
+    Models.OwnerResponse:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - role
+        - name_space
+        - verified
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        name_space:
+          type: string
+        verified:
+          type: boolean
+    Models.OwnerUpdateRequest:
+      type: object
+      required:
+        - name
+        - name_space
+      properties:
+        name:
+          type: string
+          minLength: 2
+        name_space:
+          type: string
+          minLength: 3
+    Models.PageRequestResponse:
+      type: object
+      required:
+        - id
+        - ownerId
+        - requestType
+        - title
+        - description
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+        ownerId:
+          type: string
+        requestType:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/Models.Common.RequestStatus'
+        pageUrl:
+          type: string
+        logoUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    Models.RefreshTokenRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+    Models.RegisterRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+          minLength: 2
+        email:
+          type: string
+          pattern: ^[^@]+@[^@]+\.[^@]+$
+        password:
+          type: string
+          minLength: 6
+        role:
+          type: string
+    Models.RegistrationResponse:
+      type: object
+      required:
+        - user
+        - next_step
+        - message
+        - expires_in
+      properties:
+        user:
+          $ref: '#/components/schemas/Models.UserResponse'
+        next_step:
+          type: string
+          enum:
+            - email_verification
+        message:
+          type: string
+        expires_in:
+          type: string
+    Models.TokenResponse:
+      type: object
+      required:
+        - access_token
+        - refresh_token
+        - expires_at
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+    Models.UserResponse:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - role
+        - verified
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        verified:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Models.UserUpdateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 2
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: Bearer
+servers:
+  - url: https://api.example.com
+    description: Production server
+    variables: {}

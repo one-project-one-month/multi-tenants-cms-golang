@@ -38,6 +38,9 @@ func NewPageRequestHandler(
 func (h *PageRequestHandler) Create(c *fiber.Ctx) error {
 	var req types.CreatePageRequest
 	if form, err := c.MultipartForm(); err != nil {
+		if form == nil {
+			return utils.BadRequestResponse(c, "Invalid request body", err.Error())
+		}
 		if files := form.File["logo"]; len(files) > 0 {
 			req.LogoFile = files[0]
 		}
@@ -92,23 +95,23 @@ func (h *PageRequestHandler) GetAll(c *fiber.Ctx) error {
 }
 
 func (h *PageRequestHandler) ChangeStatus(c *fiber.Ctx) error {
-    var req types.ChangeStatusPageRequest
+	var req types.ChangeStatusPageRequest
 
-    if err := c.BodyParser(&req); err != nil {
-        return utils.BadRequestResponse(c, "Invalid request body", err.Error())
-    }
+	if err := c.BodyParser(&req); err != nil {
+		return utils.BadRequestResponse(c, "Invalid request body", err.Error())
+	}
 
-    if err := h.validator.Struct(req); err != nil {
-        return utils.BadRequestResponse(c, "Validation failed", err.Error())
-    }
+	if err := h.validator.Struct(req); err != nil {
+		return utils.BadRequestResponse(c, "Validation failed", err.Error())
+	}
 
 	if !utils.IsValidRequestStatus(req.Status) {
 		return utils.BadRequestResponse(c, "Invalid request status", "Status must be PENDING, APPROVED or REJECTED")
 	}
 
-    if err := h.service.ChangeStatus(req); err != nil {
-        return utils.InternalServerErrorResponse(c, "Failed to change page request status", err.Error())
-    }
+	if err := h.service.ChangeStatus(req); err != nil {
+		return utils.InternalServerErrorResponse(c, "Failed to change page request status", err.Error())
+	}
 
-    return utils.SuccessResponse(c, "Page request status updated successfully", nil)
+	return utils.SuccessResponse(c, "Page request status updated successfully", nil)
 }

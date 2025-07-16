@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v5.29.3
-// source: assignments/service.assignments.proto
+// source: assignment/service.assignment.proto
 
 package assignments
 
@@ -117,5 +117,5 @@ var AssignmentService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "assignments/service.assignments.proto",
+	Metadata: "assignment/service.assignment.proto",
 }

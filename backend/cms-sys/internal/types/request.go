@@ -20,9 +20,9 @@ type MFAVerificationRequest struct {
 }
 
 type MFALoginRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
-	MFACode  string `json:"mfa_code,omitempty" validate:"omitempty,len=6,numeric"`
+	//Email    string `json:"email" validate:"required,email"`
+	//Password string `json:"password" validate:"required"`
+	MFACode string `json:"mfa_code,omitempty" validate:"omitempty,len=6,numeric"`
 }
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token" validate:"required"`
@@ -71,6 +71,6 @@ type EmailVerificationRequest struct {
 }
 
 type ChangeStatusPageRequest struct {
-    RequestID string			`json:"requestId" validate:"required,uuid4"`
-    Status    RequestStatus		`json:"status" validate:"required"`
+	RequestID string        `json:"requestId" validate:"required,uuid4"`
+	Status    RequestStatus `json:"status" validate:"required"`
 }

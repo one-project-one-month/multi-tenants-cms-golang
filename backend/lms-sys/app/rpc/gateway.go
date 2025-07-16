@@ -13,6 +13,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	pb "github.com/multi-tenants-cms-golang/lms-sys/protogen/assignments"
 	cpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/courses"
+	mpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/modules"
 	tpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/tenants"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
@@ -62,6 +63,10 @@ func (g *Gateway) Start() error {
 
 	if err := cpb.RegisterCourseServiceHandlerFromEndpoint(ctx, gwMux, g.grpcAddr, opts); err != nil {
 		return fmt.Errorf("failed to register course service gateway")
+	}
+
+	if err := mpb.RegisterModuleServiceHandlerFromEndpoint(ctx, gwMux, g.grpcAddr, opts); err != nil {
+		return fmt.Errorf("failed to register module service gateway")
 	}
 
 	statikFS, err := fs.New()

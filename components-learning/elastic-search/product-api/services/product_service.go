@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/SwanHtetAungPhyo/product-api/dto"
 	"github.com/SwanHtetAungPhyo/product-api/elasticsearch"
@@ -62,7 +63,7 @@ func (s *ProductService) GetProductByID(id string) (*models.Product, error) {
 		&product.CreatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("product not found")
 		}
 		return nil, fmt.Errorf("failed to get product: %w", err)
@@ -78,8 +79,8 @@ func (s *ProductService) UpdateProduct(id string, req *dto.UpdateProductRequest)
 	}
 
 	// Build dynamic query
-	setParts := []string{}
-	args := []interface{}{}
+	var setParts []string
+	var args []interface{}
 	argIndex := 1
 
 	if req.ProductName != nil {
@@ -114,7 +115,7 @@ func (s *ProductService) UpdateProduct(id string, req *dto.UpdateProductRequest)
 		&product.CreatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("product not found")
 		}
 		return nil, fmt.Errorf("failed to update product: %w", err)

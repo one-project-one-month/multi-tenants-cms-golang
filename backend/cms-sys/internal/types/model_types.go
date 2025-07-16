@@ -18,17 +18,20 @@ const (
 	CMSCustomer RoleType = "CMS_CUSTOMER"
 )
 
-const (
-	LMS SystemType = "LMS"
-	EMS SystemType = "EMS"
-)
-
-//const (
+// const (
+//
+//	LMS SystemType = "LMS"
+//	EMS SystemType = "EMS"
+//
+// )
+//
+// const (
+//
 //	PageStatusDraft     PageStatus = "DRAFT"
 //	PageStatusPublished PageStatus = "PUBLISHED"
 //	PageStatusArchived  PageStatus = "ARCHIVED"
-//)
 //
+// )
 const (
 	RequestStatusPending  RequestStatus = "PENDING"
 	RequestStatusApproved RequestStatus = "APPROVED"
@@ -58,8 +61,7 @@ type CMSUser struct {
 	Role         CMSWholeSysRole  `gorm:"foreignKey:CMSUserRole;references:RoleName" json:"role,omitempty"`
 	Purchases    []CMSCusPurchase `gorm:"foreignKey:CMSCusID" json:"purchases,omitempty"`
 	MFATokens    []MFAToken       `gorm:"foreignKey:UserID" json:"mfa_tokens,omitempty"`
-	MFAEnabled   bool            `gorm:"default:false" json:"mfa_enabled"`
-
+	MFAEnabled   bool             `gorm:"default:false" json:"mfa_enabled"`
 }
 
 func (CMSUser) TableName() string {
@@ -109,11 +111,11 @@ func (MFAToken) TableName() string {
 type PageRequestStatus string
 type PageType string
 
-const (
-	PageStatusPending  PageRequestStatus = "PENDING"
-	PageStatusApproved PageRequestStatus = "APPROVED"
-	PageStatusRejected PageRequestStatus = "REJECTED"
-)
+//const (
+//	PageStatusPending  PageRequestStatus = "PENDING"
+//	PageStatusApproved PageRequestStatus = "APPROVED"
+//	PageStatusRejected PageRequestStatus = "REJECTED"
+//)
 
 type UserPageRequest struct {
 	UserPageRequestID uint              `gorm:"primaryKey;autoIncrement" json:"user_page_request_id"`

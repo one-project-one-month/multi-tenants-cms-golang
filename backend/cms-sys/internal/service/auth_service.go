@@ -12,12 +12,12 @@ import (
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/repository"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
 	"github.com/multi-tenants-cms-golang/cms-sys/pkg/utils"
-	"github.com/nats-io/nats.go"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"image/png"
+	"log"
 	"math/big"
 	"sync"
 	"time"
@@ -43,7 +43,6 @@ type Service struct {
 	log         *logrus.Logger
 	repo        repository.AuthRepository
 	redisClient *redis.Client
-	natsConn    *nats.Conn
 }
 
 var _ AuthService = (*Service)(nil)
@@ -52,13 +51,12 @@ func NewService(
 	log *logrus.Logger,
 	repo repository.AuthRepository,
 	redisClient *redis.Client,
-	natsConn *nats.Conn,
+
 ) *Service {
 	return &Service{
 		log:         log,
 		repo:        repo,
 		redisClient: redisClient,
-		natsConn:    natsConn,
 	}
 }
 
@@ -300,7 +298,7 @@ func (s *Service) GenerateMFATokenSecret(userID uuid.UUID) (*types.MFASetupRespo
 	}
 
 	key, err := totp.Generate(totp.GenerateOpts{
-		Issuer:      "cms-sys",
+		Issuer:      "cms-doc-sys",
 		AccountName: user.CMSUserEmail,
 		Algorithm:   otp.AlgorithmSHA1,
 		Digits:      otp.DigitsSix,
@@ -344,31 +342,119 @@ func (s *Service) GenerateMFATokenSecret(userID uuid.UUID) (*types.MFASetupRespo
 }
 
 func (s *Service) VerifyMFASetup(userID uuid.UUID, tokenID uint, verificationCode string) error {
+	s.log.WithFields(logrus.Fields{
+		"userID":           userID,
+		"tokenID":          tokenID,
+		"verificationCode": verificationCode,
+	}).Debug("Starting MFA verification setup")
+
 	mfaToken, err := s.repo.GetMFAToken(tokenID, userID)
 	if err != nil {
+		s.log.WithFields(logrus.Fields{
+			"userID":  userID,
+			"tokenID": tokenID,
+			"error":   err.Error(),
+		}).Error("Failed to get MFA token from repository")
 		return errors.New("failed to get mfa token")
 	}
 
+	s.log.WithFields(logrus.Fields{
+		"userID":  userID,
+		"tokenID": tokenID,
+	}).Debug("Successfully retrieved MFA token from repository")
+
+	if mfaToken == nil {
+		s.log.WithFields(logrus.Fields{
+			"userID":  userID,
+			"tokenID": tokenID,
+		}).Error("MFA token is nil after successful repository call")
+		return errors.New("mfa token not found")
+	}
+
+	s.log.WithFields(logrus.Fields{
+		"userID":         userID,
+		"tokenID":        tokenID,
+		"mfaTokenUserID": mfaToken.UserID,
+		"hasExpiresAt":   mfaToken.ExpiresAt != nil,
+		"mfaTokenLength": len(mfaToken.MFAToken),
+	}).Debug("MFA token details")
+
 	if mfaToken.ExpiresAt != nil && time.Now().After(*mfaToken.ExpiresAt) {
-		s.log.Debug("token expired")
+		s.log.WithFields(logrus.Fields{
+			"userID":      userID,
+			"tokenID":     tokenID,
+			"expiresAt":   mfaToken.ExpiresAt,
+			"currentTime": time.Now(),
+		}).Debug("MFA token has expired")
 		return errors.New("mfa token expired")
 	}
+
+	s.log.WithFields(logrus.Fields{
+		"userID":  userID,
+		"tokenID": tokenID,
+	}).Debug("MFA token expiration check passed")
+
+	// Add nil check for MFAToken field
+	if mfaToken.MFAToken == "" {
+		s.log.WithFields(logrus.Fields{
+			"userID":  userID,
+			"tokenID": tokenID,
+		}).Error("MFA token secret is empty")
+		return errors.New("invalid mfa token")
+	}
+
+	s.log.WithFields(logrus.Fields{
+		"userID":         userID,
+		"tokenID":        tokenID,
+		"mfaTokenSecret": mfaToken.MFAToken[:10] + "...",
+	}).Debug("MFA token secret validation passed, validating TOTP code")
+
 	valid := totp.Validate(verificationCode, mfaToken.MFAToken)
 	if !valid {
-
+		s.log.WithFields(logrus.Fields{
+			"userID":           userID,
+			"tokenID":          tokenID,
+			"verificationCode": verificationCode,
+		}).Error("TOTP validation failed - invalid verification code")
 		return errors.New("mfa token is invalid")
 	}
+
+	s.log.WithFields(logrus.Fields{
+		"userID":  userID,
+		"tokenID": tokenID,
+	}).Debug("TOTP validation successful, updating user MFA status")
+
 	err = s.repo.UpdateUserMFAStatus(mfaToken.UserID, true)
 	if err != nil {
-		s.log.WithError(err).Error("Failed to update mfa status")
+		s.log.WithFields(logrus.Fields{
+			"userID":         userID,
+			"tokenID":        tokenID,
+			"mfaTokenUserID": mfaToken.UserID,
+			"error":          err.Error(),
+		}).Error("Failed to update user MFA status")
 		return errors.New("failed to update mfa status")
 	}
 
+	s.log.WithFields(logrus.Fields{
+		"userID":  userID,
+		"tokenID": tokenID,
+	}).Debug("Successfully updated user MFA status, updating MFA token")
+
 	mfaToken.ExpiresAt = nil
 	if err := s.repo.UpdateMFAToken(mfaToken); err != nil {
-		s.log.WithError(err).Error("Failed to update mfa token")
+		s.log.WithFields(logrus.Fields{
+			"userID":  userID,
+			"tokenID": tokenID,
+			"error":   err.Error(),
+		}).Error("Failed to update MFA token")
 		return errors.New("failed to update mfa token")
 	}
+
+	s.log.WithFields(logrus.Fields{
+		"userID":  userID,
+		"tokenID": tokenID,
+	}).Info("MFA setup verification completed successfully")
+
 	return nil
 }
 func (s *Service) VerifyMFALogin(userID uuid.UUID, verificationCode string) (*types.AuthResponse, error) {
@@ -440,34 +526,28 @@ func (s *Service) EmailServiceCommunication(userId uuid.UUID) error {
 
 	go func() {
 		defer wg.Done()
-		emailPayload := EmailMessage{
-			UserID:    user.CMSUserID,
-			Email:     user.CMSUserEmail,
-			Name:      user.CMSUserName,
-			Code:      code,
-			Type:      "email_verification",
-			ExpiresAt: time.Now().Add(time.Minute * 10),
-			Timestamp: time.Now(),
+		emailPayload := EmailRequest{
+			To:      user.CMSUserEmail,
+			Subject: "verification code",
+			Body:    "verification code is " + code,
 		}
 
-		jsonPayload, err := json.Marshal(emailPayload)
-		if err != nil {
-			s.log.WithError(err).Error("Failed to marshal email payload")
-			natsErr = err
-			return
+		data, _ := json.Marshal(emailPayload)
+		if err := utils.PublishMessage("email.verification", data); err != nil {
+			log.Printf("Failed to publish message: %v", err)
 		}
 
-		natsErr = utils.PublishMessage("email.verification", jsonPayload)
-		if natsErr != nil {
-			s.log.WithError(natsErr).Error("Failed to send email verification message")
-		}
+		//natsErr = utils.PublishMessage("email.verification", data)
+		//if natsErr != nil {
+		//	s.log.WithError(natsErr).Error("Failed to send email verification message")
+		//}
 	}()
 
 	wg.Wait()
 
 	if redisErr != nil {
 		s.log.WithError(redisErr).Error("Redis operation failed")
-		return fmt.Errorf("failed to store verification code: %w", redisErr)
+		return fmt.Errorf("failed to store.go verification code: %w", redisErr)
 	}
 
 	if natsErr != nil {
@@ -478,6 +558,7 @@ func (s *Service) EmailServiceCommunication(userId uuid.UUID) error {
 	s.log.Info("Email verification code sent successfully")
 	return nil
 }
+
 func (s *Service) generateEmailVerificationCode() (string, error) {
 	maxNumber := big.NewInt(9999999)
 	n, err := rand.Int(rand.Reader, maxNumber)
@@ -537,12 +618,8 @@ func (s *Service) VerifyEmail(email string, code string) error {
 	return nil
 }
 
-type EmailMessage struct {
-	UserID    uuid.UUID `json:"user_id"`
-	Email     string    `json:"email"`
-	Name      string    `json:"name"`
-	Code      string    `json:"code"`
-	Type      string    `json:"type"`
-	ExpiresAt time.Time `json:"expires_at"`
-	Timestamp time.Time `json:"timestamp"`
+type EmailRequest struct {
+	To      string `json:"to"`
+	Subject string `json:"subject"`
+	Body    string `json:"body"`
 }

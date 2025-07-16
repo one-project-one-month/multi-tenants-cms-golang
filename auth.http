@@ -1,0 +1,124 @@
+POST {{url}}/cms/auth/register
+Content-Type: application/json
+
+{
+  "name": "{{name}}",
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "role": "{{role}}"
+}
+
+> {%
+    client.test("Register user", function() {
+        client.assert(response.status === 200 || response.status === 201, "Registration should succeed");
+    });
+
+    // Save to global variables (accessible across requests)
+    client.global.set("register_response", JSON.stringify({
+        endpoint: "register",
+        timestamp: new Date().toISOString(),
+        status: response.status,
+        headers: response.headers,
+        body: response.body
+    }));
+
+    // Log to console (visible in HTTP client output)
+    console.log("Register Response:", JSON.stringify({
+        endpoint: "register",
+        status: response.status,
+        body: response.body
+    }, null, 2));
+%}
+
+###
+POST {{url}}/cms/auth/mfa/setup/{{userid}}
+Content-Type: application/json
+
+> {%
+    client.test("MFA setup", function() {
+        client.assert(response.status === 200, "MFA setup should succeed");
+    });
+
+    client.global.set("mfa_setup_response", JSON.stringify({
+        endpoint: "mfa/setup",
+        timestamp: new Date().toISOString(),
+        status: response.status,
+        headers: response.headers,
+        body: response.body
+    }));
+
+    console.log("MFA Setup Response:", JSON.stringify({
+        endpoint: "mfa/setup",
+        status: response.status,
+        body: response.body
+    }, null, 2));
+%}
+
+###
+POST {{url}}/cms/auth/mfa/verify/{{userid}}
+Content-Type: application/json
+
+{
+  "token_id": 2,
+  "code": "083432"
+}
+
+> {%
+    client.test("MFA verify", function() {
+        client.assert(response.status === 200, "MFA verification should succeed");
+    });
+
+    client.global.set("mfa_verify_response", JSON.stringify({
+        endpoint: "mfa/verify",
+        timestamp: new Date().toISOString(),
+        status: response.status,
+        headers: response.headers,
+        body: response.body
+    }));
+
+    console.log("MFA Verify Response:", JSON.stringify({
+        endpoint: "mfa/verify",
+        status: response.status,
+        body: response.body
+    }, null, 2));
+%}
+
+###
+POST {{url}}/cms/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "mfa_code": "765589"
+}
+
+> {%
+    client.test("Login", function() {
+        client.assert(response.status === 200, "Login should succeed");
+    });
+
+    client.global.set("login_response", JSON.stringify({
+        endpoint: "login",
+        timestamp: new Date().toISOString(),
+        status: response.status,
+        headers: response.headers,
+        body: response.body
+    }));
+
+    console.log("Login Response:", JSON.stringify({
+        endpoint: "login",
+        status: response.status,
+        body: response.body
+    }, null, 2));
+
+    // At the end, compile all responses
+    const allResponses = [
+        JSON.parse(client.global.get("register_response") || "{}"),
+        JSON.parse(client.global.get("mfa_setup_response") || "{}"),
+        JSON.parse(client.global.get("mfa_verify_response") || "{}"),
+        JSON.parse(client.global.get("login_response") || "{}")
+    ];
+
+    console.log("All API Responses:", JSON.stringify(allResponses, null, 2));
+%}

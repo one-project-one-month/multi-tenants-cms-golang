@@ -1,4 +1,4 @@
 syntax = "proto3";
 package lms.users;
-option go_package = "github.com/multi-tenants-cms-golang/lms-sys/protogen/users";
+option go_package = "github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/users";
 

@@ -14,7 +14,6 @@ import (
 
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
 	"github.com/multi-tenants-cms-golang/cms-sys/pkg/aws"
-	"github.com/nats-io/nats.go"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
@@ -82,27 +81,30 @@ func registerService(client *api.Client, config consulConfig, logger *logrus.Log
 	allTags := config.Tags
 	traefikTags := []string{
 		"traefik.enable=true",
-		"traefik.http.routers.cms-api.rule=Host(`api.localhost`) && PathPrefix(`/api/v1`)",
-		"traefik.http.routers.cms-api.service=cms-multi-tenant-api",
-		fmt.Sprintf("traefik.http.services.cms-multi-tenant-api.loadbalancer.server.port=%d", config.Port),
+		"traefik.http.routers.cms-doc-api.rule=Host(`api.localhost`) && PathPrefix(`/api/v1`)",
+		"traefik.http.routers.cms-doc-api.service=cms-doc-multi-tenant-api",
+		fmt.Sprintf("traefik.http.services.cms-doc-multi-tenant-api.loadbalancer.server.port=%d", config.Port),
 	}
 	allTags = append(allTags, traefikTags...)
 
 	cmsService := &api.AgentServiceRegistration{
-		ID:   config.ServiceID,
-		Name: config.Name,
-		Tags: allTags,
-		Port: config.Port,
-		//Address: localIP,
+		ID:      config.ServiceID,
+		Name:    config.Name,
+		Tags:    allTags,
+		Port:    config.Port,
+		Address: localIP,
+		Meta: map[string]string{
+			"health-check-path": "/cms-doc/health",
+		},
 		Checks: api.AgentServiceChecks{
 			{
-				HTTP:                           config.CheckHTTP,
+				HTTP:                           fmt.Sprintf("http://%s:%d/cms/health", localIP, config.Port),
 				Interval:                       "10s",
 				Timeout:                        "5s",
 				DeregisterCriticalServiceAfter: "30s",
 			},
 			{
-				CheckID:                        config.ServiceID + ":ttl", // Ensure this matches the update routine
+				CheckID:                        config.ServiceID + ":ttl",
 				TTL:                            config.CheckTTL.String(),
 				DeregisterCriticalServiceAfter: "1m",
 			},
@@ -120,6 +122,7 @@ func registerService(client *api.Client, config consulConfig, logger *logrus.Log
 		"service_name": config.Name,
 		"address":      localIP,
 		"port":         config.Port,
+		"metadata":     "health-check-path=/cms-doc/health",
 	}).Info("Service registered with Consul successfully")
 
 	return nil
@@ -153,10 +156,10 @@ func getLocalIP() (string, error) {
 }
 
 func loadConsulConfig() consulConfig {
-	port, _ := strconv.Atoi(utils.GetEnv("PORT", "8080"))
+	port, _ := strconv.Atoi(utils.GetEnv("PORT", "8081"))
 	checkTTL, _ := time.ParseDuration(utils.GetEnv("CONSUL_CHECK_TTL", "30s"))
 
-	tagsStr := utils.GetEnv("CONSUL_SERVICE_TAGS", "cms,multi-tenant,api")
+	tagsStr := utils.GetEnv("CONSUL_SERVICE_TAGS", "cms-doc,multi-tenant,api")
 	var tags []string
 	if tagsStr != "" {
 		for _, tag := range strings.Split(tagsStr, ",") {
@@ -164,19 +167,22 @@ func loadConsulConfig() consulConfig {
 		}
 	}
 
-	hostname, _ := os.Hostname()
+	localIP, err := getLocalIP()
+	if err != nil {
+		localIP, _ = os.Hostname()
+	}
 
 	return consulConfig{
 		Address:    utils.GetEnv("CONSUL_ADDRESS", "consul:8500"),
 		Datacenter: utils.GetEnv("CONSUL_DATACENTER", "dc1"),
 		Token:      utils.GetEnv("CONSUL_TOKEN", ""),
 		Scheme:     utils.GetEnv("CONSUL_SCHEME", "http"),
-		ServiceID:  utils.GetEnv("CONSUL_SERVICE_ID", fmt.Sprintf("cms-api-%s", hostname)),
-		Name:       utils.GetEnv("CONSUL_SERVICE_NAME", "cms-multi-tenant-api"),
+		ServiceID:  utils.GetEnv("CONSUL_SERVICE_ID", fmt.Sprintf("cms-doc-api-%s", localIP)),
+		Name:       utils.GetEnv("CONSUL_SERVICE_NAME", "cms-doc-service"),
 		Tags:       tags,
 		Port:       port,
 		CheckTTL:   checkTTL,
-		CheckHTTP:  fmt.Sprintf("http://%s:%d/health", hostname, port),
+		CheckHTTP:  fmt.Sprintf("http://%s:%d/health", localIP, port),
 	}
 }
 func startHealthUpdateRoutine(client *api.Client, serviceID string, logger *logrus.Logger) {
@@ -238,7 +244,7 @@ func main() {
 		appLogger.WithError(err).Fatal("Failed to initialize database connection")
 	}
 
-	err := dbConnection.DB.AutoMigrate(&types.CMSWholeSysRole{}, &types.CMSUser{}, &types.CMSCusPurchase{}, &types.UserPageRequest{}, &types.Page{}, &types.PageRequest{})
+	err := dbConnection.DB.AutoMigrate(&types.CMSWholeSysRole{}, &types.CMSUser{}, &types.MFAToken{}, &types.CMSCusPurchase{}, &types.UserPageRequest{}, &types.Page{}, &types.PageRequest{})
 	if err != nil {
 		appLogger.WithError(err).Fatal("Failed to migrate database")
 		return
@@ -259,12 +265,12 @@ func main() {
 	if err := utils.InitNats(); err != nil {
 		log.Fatalf("Failed to initialize NATS: %v", err)
 	}
-	defer func() {
-		err := utils.CloseNats()
-		if err != nil {
-			appLogger.WithError(err).Fatal("Failed to close NATS")
-		}
-	}()
+	//defer func() {
+	//	err := utils.CloseNats()
+	//	if err != nil {
+	//		appLogger.WithError(err).Fatal("Failed to close NATS")
+	//	}
+	//}()
 	app := fiber.New(fiber.Config{
 		AppName: "CMS Multi-Tenant System ",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -309,7 +315,9 @@ func main() {
 		})
 	})
 
-	app.Get("/health", func(c *fiber.Ctx) error {
+	cmsGroup := app.Group("/cms-doc")
+
+	cmsGroup.Get("/health", func(c *fiber.Ctx) error {
 		health := healthChecker.CheckHealth()
 
 		statusCode := fiber.StatusOK
@@ -320,7 +328,7 @@ func main() {
 		return c.Status(statusCode).JSON(health)
 	})
 
-	app.Get("/health/database", func(c *fiber.Ctx) error {
+	cmsGroup.Get("/health/database", func(c *fiber.Ctx) error {
 		stats := dbConnection.GetStats()
 		return c.JSON(fiber.Map{
 			"status": "healthy",
@@ -328,7 +336,7 @@ func main() {
 		})
 	})
 
-	app.Get("/health/consul", func(c *fiber.Ctx) error {
+	cmsGroup.Get("/health/consul", func(c *fiber.Ctx) error {
 		if !consulEnabled || consulClient == nil {
 			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
 				"status":  "disabled",
@@ -350,7 +358,7 @@ func main() {
 		})
 	})
 
-	di := dependencyInjectionSection(appLogger, dbConnection.DB, consulClient, utils.GetRedisClient(), utils.GetNatsConnection())
+	di := dependencyInjectionSection(appLogger, dbConnection.DB, consulClient, utils.GetRedisClient())
 	routes.SetupRoutes(app, di.handler)
 	routes.SetupOwnerRoutes(app, di.ownerHandler)
 	routes.SetupPageRequestRoutes(app, di.pageRequestHandler)
@@ -370,7 +378,7 @@ func main() {
 
 	go func() {
 		appLogger.WithField("port", port).Info("Server starting")
-		if err := app.Listen(":" + port); err != nil {
+		if err := app.Listen("0.0.0.0:" + port); err != nil {
 			appLogger.WithError(err).Fatal("Server failed to start")
 		}
 	}()
@@ -402,13 +410,12 @@ func dependencyInjectionSection(
 	db *gorm.DB,
 	consulClient *api.Client,
 	redisClient *redis.Client,
-	natsConn *nats.Conn,
 ) *dISection {
 	repo := repository.NewRepo(logger, db)
 	if err := repo.CreateDefaultRoles(); err != nil {
 		logger.Fatalf("Failed to create default roles: %v", err)
 	}
-	srv := service.NewService(logger, repo, redisClient, natsConn)
+	srv := service.NewService(logger, repo, redisClient)
 	authHandler := handler.NewHandler(srv)
 	bucketName := utils.GetEnv("BUCKET_NAME", "")
 	s3, err := aws.NewS3Service(bucketName, logger)

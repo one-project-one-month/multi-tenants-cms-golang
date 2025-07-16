@@ -1,0 +1,84 @@
+.
+├── Dockerfile
+├── Makefile
+├── README.md
+├── cmd
+│   └── main.go
+├── go.mod
+├── go.sum
+├── internal
+│   ├── handler
+│   │   ├── auth_handler.go
+│   │   ├── owner_handler.go
+│   │   ├── page_handler.go
+│   │   └── page_request_handler.go
+│   ├── mapper
+│   │   ├── page_mapper.go
+│   │   └── page_request_mapper.go
+│   ├── repository
+│   │   ├── auth_repo.go
+│   │   ├── owner_repo.go
+│   │   ├── page_repo.go
+│   │   └── page_request_repo.go
+│   ├── routes
+│   │   ├── auth_route.go
+│   │   ├── owner_route.go
+│   │   ├── page_request_route.go
+│   │   └── page_route.go
+│   ├── service
+│   │   ├── auth_service.go
+│   │   ├── owner_service.go
+│   │   ├── page_request_service.go
+│   │   └── page_service.go
+│   └── types
+│       ├── model_types.go
+│       ├── page_request.go
+│       ├── page_response.go
+│       ├── request.go
+│       └── response.go
+├── pkg
+│   ├── api
+│   │   ├── server.gen.go
+│   │   └── types.gen.go
+│   ├── aws
+│   │   └── s3_service.go
+│   └── utils
+│       ├── context.go
+│       ├── database.go
+│       ├── env.go
+│       ├── health.go
+│       ├── jwt_utils.go
+│       ├── logger.go
+│       ├── nats.go
+│       ├── pagination.go
+│       ├── password.go
+│       ├── redis.go
+│       ├── response.go
+│       ├── safe.go
+│       └── valid_request_status.go
+├── swagger
+│   └── openapi.yaml
+├── swagger-ui
+│   ├── api.gen.go
+│   └── dist
+│       ├── favicon-16x16.png
+│       ├── favicon-32x32.png
+│       ├── index.css
+│       ├── index.html
+│       ├── oauth2-redirect.html
+│       ├── swagger-initializer.js
+│       ├── swagger-ui-bundle.js
+│       ├── swagger-ui-bundle.js.map
+│       ├── swagger-ui-es-bundle-core.js
+│       ├── swagger-ui-es-bundle-core.js.map
+│       ├── swagger-ui-es-bundle.js
+│       ├── swagger-ui-es-bundle.js.map
+│       ├── swagger-ui-standalone-preset.js
+│       ├── swagger-ui-standalone-preset.js.map
+│       ├── swagger-ui.css
+│       ├── swagger-ui.css.map
+│       ├── swagger-ui.js
+│       └── swagger-ui.js.map
+└── tree.txt
+
+16 directories, 66 files

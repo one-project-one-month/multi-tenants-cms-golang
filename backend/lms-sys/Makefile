@@ -105,7 +105,7 @@ migrate-down-1: check-env ## Rollback last migration
 	migrate -path $(MIGRATIONS_PATH) -database "$(DB_URL)" down 1
 	@echo "Last migration rolled back!"
 
-migrate-up-1: check-env ## Apply next migration
+migrate-up-1:  ## Apply next migration
 	@echo "Applying next migration..."
 	migrate -path $(MIGRATIONS_PATH) -database "$(DB_URL)" up 1
 	@echo "Next migration applied!"
