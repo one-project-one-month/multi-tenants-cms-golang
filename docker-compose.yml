@@ -56,8 +56,9 @@ services:
       consul:
         condition: service_healthy
     environment:
+      - CMS_APP_STATUS=${CMS_APP_STATUS}
       - NATS_URL=${NATS_URL}
-      - DB_HOST=postgres-cms-doc
+      - DB_HOST=postgres-cms
       - DB_PORT=5432
       - DB_NAME=${POSTGRES_CMS_DB}
       - DB_USER=${POSTGRES_CMS_USER}
@@ -138,13 +139,13 @@ services:
 
   postgres-cms:
     image: postgres:15-alpine
-    container_name: postgres-cms-doc
+    container_name: postgres-cms
     environment:
       - POSTGRES_DB=${POSTGRES_CMS_DB}
       - POSTGRES_USER=${POSTGRES_CMS_USER}
       - POSTGRES_PASSWORD=${POSTGRES_CMS_PASSWORD}
     volumes:
-      - postgres-cms-doc:/var/lib/postgresql/data
+      - postgres-cms:/var/lib/postgresql/data
     networks:
       - whole-system-network
     ports:
@@ -215,35 +216,35 @@ services:
       - consul
     restart: unless-stopped
 
-  lms-main-system:
-    build:
-      context: ./backend/lms-sys
-      dockerfile: Dockerfile
-    networks:
-      - whole-system-network
-    depends_on:
-      postgres-lms:
-        condition: service_healthy
-      consul:
-        condition: service_healthy
-    environment:
-      - DB_SOURCE=postgresql://${POSTGRES_LMS_USER}:${POSTGRES_LMS_PASSWORD}@postgres-lms:5433/${POSTGRES_LMS_DB}?sslmode=disable
-      - GRPC_SERVER_ADDRESS=0.0.0.0:${LMS_GRPC_PORT}
-      - HTTP_SERVER_ADDRESS=0.0.0.0:${LMS_HTTP_PORT}
-      - CONSUL_ENABLED=${CONSUL_ENABLED}
-      - CONSUL_ADDRESS=${CONSUL_ADDRESS}
-      - CONSUL_DATACENTER=${CONSUL_DATACENTER}
-      - CONSUL_SCHEME=${CONSUL_SCHEME}
-      - CONSUL_SERVICE_ID=lms-api-1
-      - CONSUL_SERVICE_NAME=lms-service
-      - CONSUL_SERVICE_TAGS=${LMS_SERVICE_TAGS}
-      - CONSUL_CHECK_TTL=30s
-      - CONSUL_CHECK_ID=service-check-lms-api-1
-      - PORT=${LMS_HTTP_PORT}
-    ports:
-      - "8084:8080"
-      - "9090:9090"
-    restart: unless-stopped
+#  lms-main-system:
+#    build:
+#      context: ./backend/lms-sys
+#      dockerfile: Dockerfile
+#    networks:
+#      - whole-system-network
+#    depends_on:
+#      postgres-lms:
+#        condition: service_healthy
+#      consul:
+#        condition: service_healthy
+#    environment:
+#      - DB_SOURCE=postgresql://${POSTGRES_LMS_USER}:${POSTGRES_LMS_PASSWORD}@postgres-lms:5433/${POSTGRES_LMS_DB}?sslmode=disable
+#      - GRPC_SERVER_ADDRESS=0.0.0.0:${LMS_GRPC_PORT}
+#      - HTTP_SERVER_ADDRESS=0.0.0.0:${LMS_HTTP_PORT}
+#      - CONSUL_ENABLED=${CONSUL_ENABLED}
+#      - CONSUL_ADDRESS=${CONSUL_ADDRESS}
+#      - CONSUL_DATACENTER=${CONSUL_DATACENTER}
+#      - CONSUL_SCHEME=${CONSUL_SCHEME}
+#      - CONSUL_SERVICE_ID=lms-api-1
+#      - CONSUL_SERVICE_NAME=lms-service
+#      - CONSUL_SERVICE_TAGS=${LMS_SERVICE_TAGS}
+#      - CONSUL_CHECK_TTL=30s
+#      - CONSUL_CHECK_ID=service-check-lms-api-1
+#      - PORT=${LMS_HTTP_PORT}
+#    ports:
+#      - "8084:8080"
+#      - "9090:9090"
+#    restart: unless-stopped
 
   nats:
     image: nats:latest
