@@ -22,4 +22,4 @@ RETURNING
 -- name: UpdateEmailVerification :exec
 UPDATE lms_user
 SET  email_verified = true , updated_at = now()
-WHERE lms_user_id = $1;
+WHERE lms_user_email = $1;

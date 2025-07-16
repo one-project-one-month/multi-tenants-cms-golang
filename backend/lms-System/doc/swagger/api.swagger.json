@@ -54,6 +54,57 @@
           "AuthenticationService"
         ]
       }
+    },
+    "/lms/v1/{organisation}/verify-email/{email}/{token}": {
+      "post": {
+        "description": "LMS user Email Verification",
+        "operationId": "AuthenticationService_VerifyEmail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authenticationEmailVerifyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organisation",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AuthenticationServiceVerifyEmailBody"
+            }
+          }
+        ],
+        "tags": [
+          "AuthenticationService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -73,6 +124,20 @@
           "type": "string"
         },
         "phoneNumber": {
+          "type": "string"
+        },
+        "mfaVerificationOption": {
+          "type": "boolean"
+        }
+      }
+    },
+    "AuthenticationServiceVerifyEmailBody": {
+      "type": "object"
+    },
+    "authenticationEmailVerifyResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
           "type": "string"
         }
       }

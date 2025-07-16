@@ -22,15 +22,16 @@ const (
 )
 
 type RegisterRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Organisation  string                 `protobuf:"bytes,1,opt,name=organisation,proto3" json:"organisation,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
-	Password      string                 `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
-	Address       string                 `protobuf:"bytes,5,opt,name=address,proto3" json:"address,omitempty"`
-	PhoneNumber   string                 `protobuf:"bytes,6,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	Organisation          string                 `protobuf:"bytes,1,opt,name=organisation,proto3" json:"organisation,omitempty"`
+	Username              string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	Email                 string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	Password              string                 `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
+	Address               string                 `protobuf:"bytes,5,opt,name=address,proto3" json:"address,omitempty"`
+	PhoneNumber           string                 `protobuf:"bytes,6,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
+	MfaVerificationOption bool                   `protobuf:"varint,7,opt,name=mfa_verification_option,json=mfaVerificationOption,proto3" json:"mfa_verification_option,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *RegisterRequest) Reset() {
@@ -105,6 +106,13 @@ func (x *RegisterRequest) GetPhoneNumber() string {
 	return ""
 }
 
+func (x *RegisterRequest) GetMfaVerificationOption() bool {
+	if x != nil {
+		return x.MfaVerificationOption
+	}
+	return false
+}
+
 type RegisterResponse struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	RegisteredUser *SystemUser            `protobuf:"bytes,1,opt,name=registered_user,json=registeredUser,proto3" json:"registered_user,omitempty"`
@@ -161,14 +169,15 @@ var File_authentication_rpc_register_proto protoreflect.FileDescriptor
 
 const file_authentication_rpc_register_proto_rawDesc = "" +
 	"\n" +
-	"!authentication/rpc_register.proto\x12\x12lms.authentication\x1a#authentication/authentication.proto\"\xc0\x01\n" +
+	"!authentication/rpc_register.proto\x12\x12lms.authentication\x1a#authentication/authentication.proto\"\xf8\x01\n" +
 	"\x0fRegisterRequest\x12\"\n" +
 	"\forganisation\x18\x01 \x01(\tR\forganisation\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x04 \x01(\tR\bpassword\x12\x18\n" +
 	"\aaddress\x18\x05 \x01(\tR\aaddress\x12!\n" +
-	"\fphone_number\x18\x06 \x01(\tR\vphoneNumber\"u\n" +
+	"\fphone_number\x18\x06 \x01(\tR\vphoneNumber\x126\n" +
+	"\x17mfa_verification_option\x18\a \x01(\bR\x15mfaVerificationOption\"u\n" +
 	"\x10RegisterResponse\x12G\n" +
 	"\x0fregistered_user\x18\x01 \x01(\v2\x1e.lms.authentication.SystemUserR\x0eregisteredUser\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessageBDZBgithub.com/multi-tenant-cms-golang/lms-sys/protogen/authenticationb\x06proto3"

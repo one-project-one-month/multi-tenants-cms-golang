@@ -33,3 +33,7 @@ func GetRedis(key string) (string, error) {
 func GetClient() *redis.Client {
 	return redisClient
 }
+
+func DeleteRedis(email string) error {
+	return redisClient.Del(ctx, email).Err()
+}

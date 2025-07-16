@@ -3,9 +3,8 @@ package authentication
 import (
 	"context"
 	"github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
+	"github.com/multi-tenants-cms-golang/lms-sys/internal/types"
 	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
-	"github.com/nats-io/nats.go"
-	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
@@ -14,6 +13,7 @@ type AuthenticationService struct {
 	databaseCtx context.Context
 	store       *repo.Store
 	logger      *logrus.Logger
+	cfg         *types.Config
 	//redisClient *redis.Client
 	//natsConn    *nats.Conn
 }
@@ -21,13 +21,13 @@ type AuthenticationService struct {
 func NewAuthenticationService(
 	store *repo.Store,
 	logger *logrus.Logger,
-	redisClient *redis.Client,
-	natsConn *nats.Conn,
+	config *types.Config,
 ) *AuthenticationService {
 	return &AuthenticationService{
 		databaseCtx: context.Background(),
 		store:       store,
 		logger:      logger,
+		cfg:         config,
 		//redisClient: redisClient,
 		//natsConn:    natsConn,
 	}

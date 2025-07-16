@@ -23,6 +23,10 @@ service  AuthenticationService {
     option (google.api.http) = {
       post: "/lms/v1/{organisation}/verify-email/{email}/{token}";
       body: "*";
-    }
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "LMS user Email Verification";
+    };
   }
 }

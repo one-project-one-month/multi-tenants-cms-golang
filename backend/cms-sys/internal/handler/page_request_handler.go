@@ -14,12 +14,23 @@ type PageRequestHandle interface {
 	Create(c *fiber.Ctx) error
 	GetAll(c *fiber.Ctx) error
 	ChangeStatus(c *fiber.Ctx) error
+	ApproveRequest(c *fiber.Ctx) error
 }
 
 type PageRequestHandler struct {
 	service   service.PageRequestService
 	validator *validator.Validate
 	s3Service *aws.S3Service
+}
+
+func (h *PageRequestHandler) ApproveRequest(c *fiber.Ctx) error {
+	var req *types.ApprovePageRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.BadRequestResponse(c, "Invalid request body", err.Error())
+	}
+
+	//resp, err := h.service.ApprovePageRequest(req)
+	return utils.SuccessResponse(c, "Page request approved", req)
 }
 
 var _ PageRequestHandle = (*PageRequestHandler)(nil)

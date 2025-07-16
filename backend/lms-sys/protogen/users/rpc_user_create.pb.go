@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v5.29.3
-// source: users/rpc_user_create.proto
+// source: lms_user/rpc_user_create.proto
 
 package users
 
@@ -145,7 +145,7 @@ var File_users_rpc_user_create_proto protoreflect.FileDescriptor
 
 const file_users_rpc_user_create_proto_rawDesc = "" +
 	"\n" +
-	"\x1busers/rpc_user_create.proto\x12\tlms.users\x1a\x11users/users.proto\"\xaf\x01\n" +
+	"\x1busers/rpc_user_create.proto\x12\tlms.lms_user\x1a\x11users/lms_user.proto\"\xaf\x01\n" +
 	"\x14CreateLMSUserRequest\x12\x1b\n" +
 	"\tlms_email\x18\x01 \x01(\tR\blmsEmail\x12\x1e\n" +
 	"\vlms_role_id\x18\x02 \x01(\tR\tlmsRoleId\x12\x1d\n" +
@@ -154,7 +154,7 @@ const file_users_rpc_user_create_proto_rawDesc = "" +
 	"\aaddress\x18\x04 \x01(\tR\aaddress\x12!\n" +
 	"\fphone_number\x18\x05 \x01(\tR\vphoneNumber\"N\n" +
 	"\x15CreateLMSUserResponse\x125\n" +
-	"\ruser_response\x18\x01 \x01(\v2\x10.lms.users.UsersR\fuserResponseB<Z:github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/usersb\x06proto3"
+	"\ruser_response\x18\x01 \x01(\v2\x10.lms.lms_user.UsersR\fuserResponseB<Z:github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/usersb\x06proto3"
 
 var (
 	file_users_rpc_user_create_proto_rawDescOnce sync.Once
@@ -170,12 +170,12 @@ func file_users_rpc_user_create_proto_rawDescGZIP() []byte {
 
 var file_users_rpc_user_create_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_users_rpc_user_create_proto_goTypes = []any{
-	(*CreateLMSUserRequest)(nil),  // 0: lms.users.CreateLMSUserRequest
-	(*CreateLMSUserResponse)(nil), // 1: lms.users.CreateLMSUserResponse
-	(*Users)(nil),                 // 2: lms.users.Users
+	(*CreateLMSUserRequest)(nil),  // 0: lms.lms_user.CreateLMSUserRequest
+	(*CreateLMSUserResponse)(nil), // 1: lms.lms_user.CreateLMSUserResponse
+	(*Users)(nil),                 // 2: lms.lms_user.Users
 }
 var file_users_rpc_user_create_proto_depIdxs = []int32{
-	2, // 0: lms.users.CreateLMSUserResponse.user_response:type_name -> lms.users.Users
+	2, // 0: lms.lms_user.CreateLMSUserResponse.user_response:type_name -> lms.lms_user.Users
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name

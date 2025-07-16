@@ -1,30 +1,22 @@
 package cmstest
 
-//
-//import (
-//	"bytes"
-//
-//	"encoding/json"
-//	"github.com/stretchr/testify/assert"
-//	"io"
-//	"log"
-//	"net/http"
-//	"testing"
-//)
-//
-//const baseURL = "http://localhost:8081/cms/auth"
-//
+import (
+	"testing"
+)
+
+const baseURL = "http://localhost:8081/cms/auth"
+
 //var testEmail = "swanhtet102002@gmail.com"
 //var testPassword = "StrongP@ssword123"
-//var accessToken string
+////var accessToken string
 //var refreshToken string
-//
-//func TestRegisterLoginLogout(t *testing.T) {
-//	t.Run("Register", RegisterTest)
-//	t.Run("Login", LoginTest)
-//	t.Run("Logout", LogoutTest)
-//}
-//
+
+func TestRegisterLoginLogout(t *testing.T) {
+	t.Run("Register", RegisterTest)
+	//t.Run("Login", LoginTest)
+	//t.Run("Logout", LogoutTest)
+}
+
 //func RegisterTest(t *testing.T) {
 //	body := RegisterRequest{
 //		Name:     "API Tester",

@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v5.29.3
-// source: users/users.service.proto
+// source: lms_user/lms_user.service.proto
 
 package users
 
@@ -27,17 +27,17 @@ var File_users_users_service_proto protoreflect.FileDescriptor
 
 const file_users_users_service_proto_rawDesc = "" +
 	"\n" +
-	"\x19users/users.service.proto\x12\tlms.users\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x11users/users.proto\x1a\x1busers/rpc_user_create.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\xac\x01\n" +
+	"\x19users/lms_user.service.proto\x12\tlms.lms_user\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x11users/lms_user.proto\x1a\x1busers/rpc_user_create.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\xac\x01\n" +
 	"\x10LMS_USER_SERVICE\x12\x97\x01\n" +
-	"\rCreateLMSUser\x12\x1f.lms.users.CreateLMSUserRequest\x1a .lms.users.CreateLMSUserResponse\"C\x92A(\x12\x0fCreate LMS User\x1a\x15Create a new LMS user\x82\xd3\xe4\x93\x02\x12:\x01*\"\r/lms/v1/usersB<Z:github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/usersb\x06proto3"
+	"\rCreateLMSUser\x12\x1f.lms.lms_user.CreateLMSUserRequest\x1a .lms.lms_user.CreateLMSUserResponse\"C\x92A(\x12\x0fCreate LMS User\x1a\x15Create a new LMS user\x82\xd3\xe4\x93\x02\x12:\x01*\"\r/lms/v1/usersB<Z:github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/usersb\x06proto3"
 
 var file_users_users_service_proto_goTypes = []any{
-	(*CreateLMSUserRequest)(nil),  // 0: lms.users.CreateLMSUserRequest
-	(*CreateLMSUserResponse)(nil), // 1: lms.users.CreateLMSUserResponse
+	(*CreateLMSUserRequest)(nil),  // 0: lms.lms_user.CreateLMSUserRequest
+	(*CreateLMSUserResponse)(nil), // 1: lms.lms_user.CreateLMSUserResponse
 }
 var file_users_users_service_proto_depIdxs = []int32{
-	0, // 0: lms.users.LMS_USER_SERVICE.CreateLMSUser:input_type -> lms.users.CreateLMSUserRequest
-	1, // 1: lms.users.LMS_USER_SERVICE.CreateLMSUser:output_type -> lms.users.CreateLMSUserResponse
+	0, // 0: lms.lms_user.LMS_USER_SERVICE.CreateLMSUser:input_type -> lms.lms_user.CreateLMSUserRequest
+	1, // 1: lms.lms_user.LMS_USER_SERVICE.CreateLMSUser:output_type -> lms.lms_user.CreateLMSUserResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

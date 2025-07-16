@@ -74,10 +74,10 @@ func (q *Queries) RegisterLMSUser(ctx context.Context, arg RegisterLMSUserParams
 const updateEmailVerification = `-- name: UpdateEmailVerification :exec
 UPDATE lms_user
 SET  email_verified = true , updated_at = now()
-WHERE lms_user_id = $1
+WHERE lms_user_email = $1
 `
 
-func (q *Queries) UpdateEmailVerification(ctx context.Context, lmsUserID uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, updateEmailVerification, lmsUserID)
+func (q *Queries) UpdateEmailVerification(ctx context.Context, lmsUserEmail string) error {
+	_, err := q.db.ExecContext(ctx, updateEmailVerification, lmsUserEmail)
 	return err
 }

@@ -26,19 +26,24 @@ var File_authentication_service_authentication_proto protoreflect.FileDescriptor
 
 const file_authentication_service_authentication_proto_rawDesc = "" +
 	"\n" +
-	"+authentication/service.authentication.proto\x12\x12lms.authentication\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a!authentication/rpc_register.proto2\xcf\x01\n" +
+	"+authentication/service.authentication.proto\x12\x12lms.authentication\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a!authentication/rpc_register.proto\x1a%authentication/rpc_email_verify.proto2\x90\x03\n" +
 	"\x15AuthenticationService\x12\xb5\x01\n" +
-	"\bRegister\x12#.lms.authentication.RegisterRequest\x1a$.lms.authentication.RegisterResponse\"^\x92A1\x1a/LMS user registration with respective namespace\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/lms/v1/{organisation}/registerBDZBgithub.com/multi-tenant-cms-golang/lms-sys/protogen/authenticationb\x06proto3"
+	"\bRegister\x12#.lms.authentication.RegisterRequest\x1a$.lms.authentication.RegisterResponse\"^\x92A1\x1a/LMS user registration with respective namespace\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/lms/v1/{organisation}/register\x12\xbe\x01\n" +
+	"\vVerifyEmail\x12&.lms.authentication.EmailVerifyRequest\x1a'.lms.authentication.EmailVerifyResponse\"^\x92A\x1d\x1a\x1bLMS user Email Verification\x82\xd3\xe4\x93\x028:\x01*\"3/lms/v1/{organisation}/verify-email/{email}/{token}BDZBgithub.com/multi-tenant-cms-golang/lms-sys/protogen/authenticationb\x06proto3"
 
 var file_authentication_service_authentication_proto_goTypes = []any{
-	(*RegisterRequest)(nil),  // 0: lms.authentication.RegisterRequest
-	(*RegisterResponse)(nil), // 1: lms.authentication.RegisterResponse
+	(*RegisterRequest)(nil),     // 0: lms.authentication.RegisterRequest
+	(*EmailVerifyRequest)(nil),  // 1: lms.authentication.EmailVerifyRequest
+	(*RegisterResponse)(nil),    // 2: lms.authentication.RegisterResponse
+	(*EmailVerifyResponse)(nil), // 3: lms.authentication.EmailVerifyResponse
 }
 var file_authentication_service_authentication_proto_depIdxs = []int32{
 	0, // 0: lms.authentication.AuthenticationService.Register:input_type -> lms.authentication.RegisterRequest
-	1, // 1: lms.authentication.AuthenticationService.Register:output_type -> lms.authentication.RegisterResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	1, // 1: lms.authentication.AuthenticationService.VerifyEmail:input_type -> lms.authentication.EmailVerifyRequest
+	2, // 2: lms.authentication.AuthenticationService.Register:output_type -> lms.authentication.RegisterResponse
+	3, // 3: lms.authentication.AuthenticationService.VerifyEmail:output_type -> lms.authentication.EmailVerifyResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -50,6 +55,7 @@ func file_authentication_service_authentication_proto_init() {
 		return
 	}
 	file_authentication_rpc_register_proto_init()
+	file_authentication_rpc_email_verify_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

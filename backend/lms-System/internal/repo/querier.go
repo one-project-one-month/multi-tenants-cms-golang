@@ -6,13 +6,11 @@ package repo
 
 import (
 	"context"
-
-	"github.com/google/uuid"
 )
 
 type Querier interface {
 	RegisterLMSUser(ctx context.Context, arg RegisterLMSUserParams) (RegisterLMSUserRow, error)
-	UpdateEmailVerification(ctx context.Context, lmsUserID uuid.UUID) error
+	UpdateEmailVerification(ctx context.Context, lmsUserEmail string) error
 }
 
 var _ Querier = (*Queries)(nil)

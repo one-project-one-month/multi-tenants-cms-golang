@@ -176,34 +176,34 @@ type AuthServiceRegisterJSONRequestBody = ModelsRegisterRequest
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (POST /auth/auth/email/verify)
+	// (POST /authentication/authentication/email/verify)
 	AuthServiceVerifyEmail(ctx echo.Context) error
 
-	// (POST /auth/auth/login)
+	// (POST /authentication/authentication/login)
 	AuthServiceLogin(ctx echo.Context) error
 
-	// (POST /auth/auth/logout)
+	// (POST /authentication/authentication/logout)
 	AuthServiceLogout(ctx echo.Context, params AuthServiceLogoutParams) error
 
-	// (POST /auth/auth/me)
+	// (POST /authentication/authentication/me)
 	AuthServiceGetMe(ctx echo.Context) error
 
-	// (POST /auth/auth/mfa/login)
+	// (POST /authentication/authentication/mfa/login)
 	AuthServiceLoginWithMFA(ctx echo.Context) error
 
-	// (POST /auth/auth/mfa/setup)
+	// (POST /authentication/authentication/mfa/setup)
 	AuthServiceSetupMFA(ctx echo.Context) error
 
-	// (POST /auth/auth/mfa/verify)
+	// (POST /authentication/authentication/mfa/verify)
 	AuthServiceVerifyMFASetup(ctx echo.Context) error
 
-	// (PUT /auth/auth/profile/{id})
+	// (PUT /authentication/authentication/profile/{id})
 	AuthServiceUpdateProfile(ctx echo.Context, id string) error
 
-	// (POST /auth/auth/refresh)
+	// (POST /authentication/authentication/refresh)
 	AuthServiceRefresh(ctx echo.Context) error
 
-	// (POST /auth/auth/register)
+	// (POST /authentication/authentication/register)
 	AuthServiceRegister(ctx echo.Context) error
 }
 
@@ -365,15 +365,15 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.POST(baseURL+"/auth/auth/email/verify", wrapper.AuthServiceVerifyEmail)
-	router.POST(baseURL+"/auth/auth/login", wrapper.AuthServiceLogin)
-	router.POST(baseURL+"/auth/auth/logout", wrapper.AuthServiceLogout)
-	router.POST(baseURL+"/auth/auth/me", wrapper.AuthServiceGetMe)
-	router.POST(baseURL+"/auth/auth/mfa/login", wrapper.AuthServiceLoginWithMFA)
-	router.POST(baseURL+"/auth/auth/mfa/setup", wrapper.AuthServiceSetupMFA)
-	router.POST(baseURL+"/auth/auth/mfa/verify", wrapper.AuthServiceVerifyMFASetup)
-	router.PUT(baseURL+"/auth/auth/profile/:id", wrapper.AuthServiceUpdateProfile)
-	router.POST(baseURL+"/auth/auth/refresh", wrapper.AuthServiceRefresh)
-	router.POST(baseURL+"/auth/auth/register", wrapper.AuthServiceRegister)
+	router.POST(baseURL+"/authentication/authentication/email/verify", wrapper.AuthServiceVerifyEmail)
+	router.POST(baseURL+"/authentication/authentication/login", wrapper.AuthServiceLogin)
+	router.POST(baseURL+"/authentication/authentication/logout", wrapper.AuthServiceLogout)
+	router.POST(baseURL+"/authentication/authentication/me", wrapper.AuthServiceGetMe)
+	router.POST(baseURL+"/authentication/authentication/mfa/login", wrapper.AuthServiceLoginWithMFA)
+	router.POST(baseURL+"/authentication/authentication/mfa/setup", wrapper.AuthServiceSetupMFA)
+	router.POST(baseURL+"/authentication/authentication/mfa/verify", wrapper.AuthServiceVerifyMFASetup)
+	router.PUT(baseURL+"/authentication/authentication/profile/:id", wrapper.AuthServiceUpdateProfile)
+	router.POST(baseURL+"/authentication/authentication/refresh", wrapper.AuthServiceRefresh)
+	router.POST(baseURL+"/authentication/authentication/register", wrapper.AuthServiceRegister)
 
 }

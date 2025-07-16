@@ -1,6 +1,6 @@
 syntax = "proto3";
 package lms.users;
-option go_package = "github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/users";
+option go_package = "github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/lms_user";
 import "google/protobuf/timestamp.proto";
 
 message Users {

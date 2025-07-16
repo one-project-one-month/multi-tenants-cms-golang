@@ -41,7 +41,7 @@ const (
 type CMSWholeSysRole struct {
 	RoleID   uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"role_id"`
 	RoleName string    `gorm:"type:varchar(15);not null;unique" json:"role_name"`
-	Users    []CMSUser `gorm:"foreignKey:CMSUserRole;references:RoleName" json:"users,omitempty"`
+	Users    []CMSUser `gorm:"foreignKey:CMSUserRole;references:RoleName" json:"lms_user,omitempty"`
 }
 
 func (CMSWholeSysRole) TableName() string {

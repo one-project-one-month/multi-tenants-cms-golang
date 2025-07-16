@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v5.29.3
-// source: users/users.service.proto
+// source: lms_user/lms_user.service.proto
 
 package users
 
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LMS_USER_SERVICE_CreateLMSUser_FullMethodName = "/lms.users.LMS_USER_SERVICE/CreateLMSUser"
+	LMS_USER_SERVICE_CreateLMSUser_FullMethodName = "/lms.lms_user.LMS_USER_SERVICE/CreateLMSUser"
 )
 
 // LMS_USER_SERVICEClient is the client API for LMS_USER_SERVICE service.
@@ -108,7 +108,7 @@ func _LMS_USER_SERVICE_CreateLMSUser_Handler(srv interface{}, ctx context.Contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var LMS_USER_SERVICE_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "lms.users.LMS_USER_SERVICE",
+	ServiceName: "lms.lms_user.LMS_USER_SERVICE",
 	HandlerType: (*LMS_USER_SERVICEServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -117,5 +117,5 @@ var LMS_USER_SERVICE_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "users/users.service.proto",
+	Metadata: "lms_user/lms_user.service.proto",
 }
