@@ -74,15 +74,7 @@ func request_AuthenticationService_VerifyEmail_0(ctx context.Context, marshaler 
 	if req.Body != nil {
 		_, _ = io.Copy(io.Discard, req.Body)
 	}
-	val, ok := pathParams["organisation"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organisation")
-	}
-	protoReq.Organisation, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "organisation", err)
-	}
-	val, ok = pathParams["email"]
+	val, ok := pathParams["email"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "email")
 	}
@@ -111,15 +103,7 @@ func local_request_AuthenticationService_VerifyEmail_0(ctx context.Context, mars
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	val, ok := pathParams["organisation"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organisation")
-	}
-	protoReq.Organisation, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "organisation", err)
-	}
-	val, ok = pathParams["email"]
+	val, ok := pathParams["email"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "email")
 	}
@@ -143,21 +127,12 @@ func request_AuthenticationService_Login_0(ctx context.Context, marshaler runtim
 	var (
 		protoReq LoginRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if req.Body != nil {
 		_, _ = io.Copy(io.Discard, req.Body)
-	}
-	val, ok := pathParams["organisation"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organisation")
-	}
-	protoReq.Organisation, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "organisation", err)
 	}
 	msg, err := client.Login(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -167,22 +142,15 @@ func local_request_AuthenticationService_Login_0(ctx context.Context, marshaler 
 	var (
 		protoReq LoginRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	val, ok := pathParams["organisation"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organisation")
-	}
-	protoReq.Organisation, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "organisation", err)
-	}
 	msg, err := server.Login(ctx, &protoReq)
 	return msg, metadata, err
 }
+
+var filter_AuthenticationService_ResendVerificationEmail_0 = &utilities.DoubleArray{Encoding: map[string]int{"email": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 
 func request_AuthenticationService_ResendVerificationEmail_0(ctx context.Context, marshaler runtime.Marshaler, client AuthenticationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
@@ -193,21 +161,19 @@ func request_AuthenticationService_ResendVerificationEmail_0(ctx context.Context
 	if req.Body != nil {
 		_, _ = io.Copy(io.Discard, req.Body)
 	}
-	val, ok := pathParams["organisation"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organisation")
-	}
-	protoReq.Organisation, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "organisation", err)
-	}
-	val, ok = pathParams["email"]
+	val, ok := pathParams["email"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "email")
 	}
 	protoReq.Email, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "email", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AuthenticationService_ResendVerificationEmail_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.ResendVerificationEmail(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -219,21 +185,19 @@ func local_request_AuthenticationService_ResendVerificationEmail_0(ctx context.C
 		metadata runtime.ServerMetadata
 		err      error
 	)
-	val, ok := pathParams["organisation"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organisation")
-	}
-	protoReq.Organisation, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "organisation", err)
-	}
-	val, ok = pathParams["email"]
+	val, ok := pathParams["email"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "email")
 	}
 	protoReq.Email, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "email", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AuthenticationService_ResendVerificationEmail_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.ResendVerificationEmail(ctx, &protoReq)
 	return msg, metadata, err
@@ -243,21 +207,12 @@ func request_AuthenticationService_LogOut_0(ctx context.Context, marshaler runti
 	var (
 		protoReq LoginOutRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if req.Body != nil {
 		_, _ = io.Copy(io.Discard, req.Body)
-	}
-	val, ok := pathParams["organisation"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organisation")
-	}
-	protoReq.Organisation, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "organisation", err)
 	}
 	msg, err := client.LogOut(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -267,18 +222,9 @@ func local_request_AuthenticationService_LogOut_0(ctx context.Context, marshaler
 	var (
 		protoReq LoginOutRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["organisation"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organisation")
-	}
-	protoReq.Organisation, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "organisation", err)
 	}
 	msg, err := server.LogOut(ctx, &protoReq)
 	return msg, metadata, err
@@ -316,7 +262,7 @@ func RegisterAuthenticationServiceHandlerServer(ctx context.Context, mux *runtim
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.authentication.AuthenticationService/VerifyEmail", runtime.WithHTTPPathPattern("/lms/v1/auth/{organisation}/verify-email/{email}/{token}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.authentication.AuthenticationService/VerifyEmail", runtime.WithHTTPPathPattern("/lms/v1/auth/verify-email/{email}/{token}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -336,7 +282,7 @@ func RegisterAuthenticationServiceHandlerServer(ctx context.Context, mux *runtim
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.authentication.AuthenticationService/Login", runtime.WithHTTPPathPattern("/lms/v1/auth/{organisation}/login"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.authentication.AuthenticationService/Login", runtime.WithHTTPPathPattern("/lms/v1/auth/login"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -356,7 +302,7 @@ func RegisterAuthenticationServiceHandlerServer(ctx context.Context, mux *runtim
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.authentication.AuthenticationService/ResendVerificationEmail", runtime.WithHTTPPathPattern("/lms/v1/{organisation}/resend/{email}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.authentication.AuthenticationService/ResendVerificationEmail", runtime.WithHTTPPathPattern("/lms/v1/auth/resend/{email}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -376,7 +322,7 @@ func RegisterAuthenticationServiceHandlerServer(ctx context.Context, mux *runtim
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.authentication.AuthenticationService/LogOut", runtime.WithHTTPPathPattern("/lms/v1/auth/{organisation}/logout"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.authentication.AuthenticationService/LogOut", runtime.WithHTTPPathPattern("/lms/v1/auth/logout"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -451,7 +397,7 @@ func RegisterAuthenticationServiceHandlerClient(ctx context.Context, mux *runtim
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.authentication.AuthenticationService/VerifyEmail", runtime.WithHTTPPathPattern("/lms/v1/auth/{organisation}/verify-email/{email}/{token}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.authentication.AuthenticationService/VerifyEmail", runtime.WithHTTPPathPattern("/lms/v1/auth/verify-email/{email}/{token}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -468,7 +414,7 @@ func RegisterAuthenticationServiceHandlerClient(ctx context.Context, mux *runtim
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.authentication.AuthenticationService/Login", runtime.WithHTTPPathPattern("/lms/v1/auth/{organisation}/login"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.authentication.AuthenticationService/Login", runtime.WithHTTPPathPattern("/lms/v1/auth/login"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -485,7 +431,7 @@ func RegisterAuthenticationServiceHandlerClient(ctx context.Context, mux *runtim
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.authentication.AuthenticationService/ResendVerificationEmail", runtime.WithHTTPPathPattern("/lms/v1/{organisation}/resend/{email}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.authentication.AuthenticationService/ResendVerificationEmail", runtime.WithHTTPPathPattern("/lms/v1/auth/resend/{email}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -502,7 +448,7 @@ func RegisterAuthenticationServiceHandlerClient(ctx context.Context, mux *runtim
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.authentication.AuthenticationService/LogOut", runtime.WithHTTPPathPattern("/lms/v1/auth/{organisation}/logout"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.authentication.AuthenticationService/LogOut", runtime.WithHTTPPathPattern("/lms/v1/auth/logout"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -520,10 +466,10 @@ func RegisterAuthenticationServiceHandlerClient(ctx context.Context, mux *runtim
 
 var (
 	pattern_AuthenticationService_Register_0                = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"lms", "v1", "auth", "register"}, ""))
-	pattern_AuthenticationService_VerifyEmail_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6}, []string{"lms", "v1", "auth", "organisation", "verify-email", "email", "token"}, ""))
-	pattern_AuthenticationService_Login_0                   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"lms", "v1", "auth", "organisation", "login"}, ""))
-	pattern_AuthenticationService_ResendVerificationEmail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"lms", "v1", "organisation", "resend", "email"}, ""))
-	pattern_AuthenticationService_LogOut_0                  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"lms", "v1", "auth", "organisation", "logout"}, ""))
+	pattern_AuthenticationService_VerifyEmail_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"lms", "v1", "auth", "verify-email", "email", "token"}, ""))
+	pattern_AuthenticationService_Login_0                   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"lms", "v1", "auth", "login"}, ""))
+	pattern_AuthenticationService_ResendVerificationEmail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"lms", "v1", "auth", "resend", "email"}, ""))
+	pattern_AuthenticationService_LogOut_0                  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"lms", "v1", "auth", "logout"}, ""))
 )
 
 var (

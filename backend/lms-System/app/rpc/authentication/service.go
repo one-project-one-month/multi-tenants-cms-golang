@@ -39,13 +39,11 @@ func NewAuthenticationService(
 func (s *AuthenticationService) buildLoginCookies(user *types.UserInfo, tokens *types.TokenPair) []string {
 	var cookies []string
 
-	// Access token (short-lived)
 	cookies = append(cookies, cook.NewCookieBuilder("access_token", tokens.AccessToken).
 		MaxAge(900).
 		Path("/").
 		Build())
 
-	// Refresh token (long-lived)
 	cookies = append(cookies, cook.NewCookieBuilder("refresh_token", tokens.RefreshToken).
 		MaxAge(604800).
 		Path("/auth").
@@ -62,20 +60,17 @@ func (s *AuthenticationService) buildLoginCookies(user *types.UserInfo, tokens *
 		MaxAge(3600).
 		Build())
 
-	// CSRF token
 	csrfToken := s.generateCSRFToken()
 	cookies = append(cookies, cook.NewCookieBuilder("csrf_token", csrfToken).
 		HttpOnly(false).
 		MaxAge(3600).
 		Build())
 
-	// Session ID
 	sessionID := s.generateSessionID()
 	cookies = append(cookies, cook.NewCookieBuilder("session_id", sessionID).
 		MaxAge(7200).
 		Build())
 
-	// Preferences cookie
 	preferences := `{"theme":"light","language":"en"}`
 	cookies = append(cookies, cook.NewCookieBuilder("user_preferences", preferences).
 		HttpOnly(false).

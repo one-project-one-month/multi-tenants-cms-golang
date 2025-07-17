@@ -3,20 +3,45 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"github.com/multi-tenants-cms-golang/lms-sys/internal/types"
-	"strings"
+	"net"
+	"net/http"
+	"runtime/debug"
+	"syscall"
 
 	"github.com/golang-jwt/jwt/v5"
+	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/selector"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/metadata"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/gateway/middleware"
 	authSrv "github.com/multi-tenants-cms-golang/lms-sys/app/rpc/authentication"
 	db "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
+	"github.com/multi-tenants-cms-golang/lms-sys/internal/types"
 	authpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
+	"github.com/oklog/run"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel"
+	stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
-	"net"
+)
+
+const (
+	component = "lms-grpc-server"
+	grpcAddr  = ":9001"
+	httpAddr  = ":9002"
 )
 
 type Server struct {
@@ -44,49 +69,139 @@ func NewServer(
 }
 
 func (s *Server) Run() error {
-	listener, err := net.Listen("tcp", ":9001")
+	// Setup tracing
+	exporter, err := stdout.New(stdout.WithPrettyPrint())
 	if err != nil {
-		return fmt.Errorf("failed to listen: %v", err)
+		s.logger.Errorf("failed to initialize exporter: %v", err)
+		return err
+	}
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithBatcher(exporter),
+	)
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	))
+	defer func() { _ = tp.Shutdown(context.Background()) }()
+
+	// Setup metrics
+	srvMetrics := grpcprom.NewServerMetrics(
+		grpcprom.WithServerHandlingTimeHistogram(
+			grpcprom.WithHistogramBuckets([]float64{0.001, 0.01, 0.1, 0.3, 0.6, 1, 3, 6, 9, 20, 30, 60, 90, 120}),
+		),
+		grpcprom.WithContextLabels("tenant_name"),
+	)
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(srvMetrics)
+
+	panicsTotal := promauto.With(reg).NewCounter(prometheus.CounterOpts{
+		Name: "grpc_req_panics_recovered_total",
+		Help: "Total number of gRPC requests recovered from internal panic.",
+	})
+
+	// Create interceptor chain
+	interceptors := []grpc.UnaryServerInterceptor{
+		// Metrics interceptor
+		srvMetrics.UnaryServerInterceptor(
+			grpcprom.WithExemplarFromContext(s.exemplarFromContext),
+			grpcprom.WithLabelsFromContext(s.labelsFromContext),
+		),
+		// Logging interceptor
+		logging.UnaryServerInterceptor(s.interceptorLogger(), logging.WithFieldsFromContext(s.logTraceID)),
+
+		selector.UnaryServerInterceptor(
+			auth.UnaryServerInterceptor(s.authFunction()),
+			selector.MatchFunc(s.authMatcher),
+		),
+		// Recovery interceptor
+		recovery.UnaryServerInterceptor(recovery.WithRecoveryHandler(s.panicRecoveryHandler(panicsTotal))),
 	}
 
+	// Create gRPC server
 	grpcServer := grpc.NewServer(
-	//grpc.UnaryInterceptor(s.unaryInterceptor()),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+		grpc.ChainUnaryInterceptor(interceptors...),
 	)
 
+	// Register services
 	authService := authSrv.NewAuthenticationService(s.store, s.logger, &types.Config{})
 	authpb.RegisterAuthenticationServiceServer(grpcServer, authService)
-	s.logger.Info("Starting gRPC server on port 9001")
-	if err := grpcServer.Serve(listener); err != nil {
-		return fmt.Errorf("failed to serve: %v", err)
-	}
-	return nil
+	srvMetrics.InitializeMetrics(grpcServer)
 
+	// Setup run group for graceful shutdown
+	var g run.Group
+
+	// gRPC server
+	g.Add(func() error {
+		listener, err := net.Listen("tcp", grpcAddr)
+		if err != nil {
+			return fmt.Errorf("failed to listen: %v", err)
+		}
+		s.logger.Infof("Starting gRPC server on %s", grpcAddr)
+		return grpcServer.Serve(listener)
+	}, func(err error) {
+		grpcServer.GracefulStop()
+	})
+
+	// HTTP metrics server
+	g.Add(func() error {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{
+			EnableOpenMetrics: true,
+		}))
+		httpSrv := &http.Server{Addr: httpAddr, Handler: mux}
+		s.logger.Infof("Starting metrics server on %s", httpAddr)
+		return httpSrv.ListenAndServe()
+	}, func(error) {
+		// HTTP server shutdown handled by run group
+	})
+
+	// Signal handler
+	g.Add(run.SignalHandler(context.Background(), syscall.SIGINT, syscall.SIGTERM))
+
+	return g.Run()
 }
 
-func (s *Server) unaryInterceptor() grpc.UnaryServerInterceptor {
-	return func(
-		ctx context.Context,
-		req interface{},
-		info *grpc.UnaryServerInfo,
-		handler grpc.UnaryHandler,
-	) (interface{}, error) {
-		if shouldSkipAuth(info.FullMethod) {
-			return handler(ctx, req)
-		}
+// Helper functions
 
-		md, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			return nil, status.Error(codes.Unauthenticated, "metadata not provided")
-		}
+func (s *Server) interceptorLogger() logging.Logger {
+	return logging.LoggerFunc(func(ctx context.Context, lvl logging.Level, msg string, fields ...any) {
+		s.logger.WithFields(logrus.Fields{}).Log(logrus.Level(lvl), msg)
+	})
+}
 
-		authHeaders := md.Get("authorization")
-		if len(authHeaders) == 0 {
-			return nil, status.Error(codes.Unauthenticated, "authorization token not provided")
-		}
+func (s *Server) logTraceID(ctx context.Context) logging.Fields {
+	if span := trace.SpanContextFromContext(ctx); span.IsSampled() {
+		return logging.Fields{"traceID", span.TraceID().String()}
+	}
+	return nil
+}
 
-		token := strings.TrimPrefix(authHeaders[0], "Bearer ")
-		if token == "" {
-			return nil, status.Error(codes.Unauthenticated, "invalid authorization header format")
+func (s *Server) exemplarFromContext(ctx context.Context) prometheus.Labels {
+	if span := trace.SpanContextFromContext(ctx); span.IsSampled() {
+		return prometheus.Labels{"traceID": span.TraceID().String()}
+	}
+	return nil
+}
+
+func (s *Server) labelsFromContext(ctx context.Context) prometheus.Labels {
+	labels := prometheus.Labels{}
+	md := metadata.ExtractIncoming(ctx)
+	if tenantName := md.Get("tenant-name"); tenantName != "" {
+		labels["tenant_name"] = tenantName
+	} else {
+		labels["tenant_name"] = "unknown"
+	}
+	return labels
+}
+
+func (s *Server) authFunction() func(ctx context.Context) (context.Context, error) {
+	return func(ctx context.Context) (context.Context, error) {
+		token, err := auth.AuthFromMD(ctx, "bearer")
+		if err != nil {
+			return nil, err
 		}
 
 		userCtx, err := s.verifyToken(token)
@@ -94,12 +209,30 @@ func (s *Server) unaryInterceptor() grpc.UnaryServerInterceptor {
 			return nil, status.Errorf(codes.Unauthenticated, "invalid token: %v", err)
 		}
 
-		if !s.hasRequiredRole(userCtx.Roles, info.FullMethod) {
-			return nil, status.Error(codes.PermissionDenied, "insufficient permissions")
-		}
+		return context.WithValue(ctx, middleware.UserContextKey, userCtx), nil
+	}
+}
 
-		newCtx := context.WithValue(ctx, middleware.UserContextKey, userCtx)
-		return handler(newCtx, req)
+func (s *Server) authMatcher(ctx context.Context, callMeta interceptors.CallMeta) bool {
+	if healthpb.Health_ServiceDesc.ServiceName == callMeta.Service {
+		return false
+	}
+
+	serviceName, methodName := parseFullMethod(callMeta.Method)
+	if serviceName == "lms.authentication.AuthenticationService" {
+		switch methodName {
+		case "Register", "Login", "VerifyEmail", "ResendVerificationEmail":
+			return false
+		}
+	}
+	return true
+}
+
+func (s *Server) panicRecoveryHandler(panicsTotal prometheus.Counter) func(p any) (err error) {
+	return func(p any) (err error) {
+		panicsTotal.Inc()
+		s.logger.Errorf("recovered from panic: %v\n%s", p, debug.Stack())
+		return status.Errorf(codes.Internal, "%s", p)
 	}
 }
 
@@ -170,50 +303,6 @@ func (s *Server) validateClaims(claims jwt.MapClaims) error {
 	}
 
 	return nil
-}
-
-func (s *Server) hasRequiredRole(userRoles []middleware.Role, method string) bool {
-	requiredRoles := s.getRequiredRoles(method)
-	if len(requiredRoles) == 0 {
-		return true
-	}
-
-	for _, userRole := range userRoles {
-		for _, requiredRole := range requiredRoles {
-			if userRole == requiredRole {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func (s *Server) getRequiredRoles(method string) []middleware.Role {
-	roleMapping := map[string][]middleware.Role{
-		"/lms_user.LMS_USER_SERVICE/AdminMethod":      {middleware.LMSAdmin},
-		"/lms_user.LMS_USER_SERVICE/InstructorMethod": {middleware.Instructor, middleware.LMSAdmin},
-		"/lms_user.LMS_USER_SERVICE/StudentMethod":    {middleware.Student},
-		"/lms_user.LMS_USER_SERVICE/ProtectedMethod":  {middleware.Student, middleware.Instructor, middleware.LMSAdmin},
-	}
-
-	if roles, ok := roleMapping[method]; ok {
-		return roles
-	}
-	return nil
-}
-
-func shouldSkipAuth(method string) bool {
-	skipMethods := []string{
-		"/lms_user.LMS_USER_SERVICE/PublicMethod",
-		"/grpc.health.v1.Health/Check",
-	}
-
-	for _, m := range skipMethods {
-		if m == method {
-			return true
-		}
-	}
-	return false
 }
 
 func contains(slice []string, item string) bool {

@@ -30,10 +30,15 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthenticationServiceClient interface {
+	// Register a new user account
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
+	// Verify user email address
 	VerifyEmail(ctx context.Context, in *EmailVerifyRequest, opts ...grpc.CallOption) (*EmailVerifyResponse, error)
+	// Authenticate user
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	// Resend verification email
 	ResendVerificationEmail(ctx context.Context, in *ResendVerificationRequest, opts ...grpc.CallOption) (*ResendVerificationResponse, error)
+	// Logout user
 	LogOut(ctx context.Context, in *LoginOutRequest, opts ...grpc.CallOption) (*LogoutResponse, error)
 }
 
@@ -99,10 +104,15 @@ func (c *authenticationServiceClient) LogOut(ctx context.Context, in *LoginOutRe
 // All implementations must embed UnimplementedAuthenticationServiceServer
 // for forward compatibility.
 type AuthenticationServiceServer interface {
+	// Register a new user account
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
+	// Verify user email address
 	VerifyEmail(context.Context, *EmailVerifyRequest) (*EmailVerifyResponse, error)
+	// Authenticate user
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	// Resend verification email
 	ResendVerificationEmail(context.Context, *ResendVerificationRequest) (*ResendVerificationResponse, error)
+	// Logout user
 	LogOut(context.Context, *LoginOutRequest) (*LogoutResponse, error)
 	mustEmbedUnimplementedAuthenticationServiceServer()
 }

@@ -26,13 +26,58 @@ var File_authentication_service_authentication_proto protoreflect.FileDescriptor
 
 const file_authentication_service_authentication_proto_rawDesc = "" +
 	"\n" +
-	"+authentication/service.authentication.proto\x12\x12lms.authentication\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a!authentication/rpc_register.proto\x1a%authentication/rpc_email_verify.proto\x1a\x1eauthentication/rpc_login.proto\x1a2authentication/rpc_resend_email_verification.proto\x1a\x1fauthentication/rpc_logout.proto2\xee\x06\n" +
-	"\x15AuthenticationService\x12\xab\x01\n" +
-	"\bRegister\x12#.lms.authentication.RegisterRequest\x1a$.lms.authentication.RegisterResponse\"T\x92A1\x1a/LMS user registration with respective namespace\x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/lms/v1/auth/register\x12\xc3\x01\n" +
-	"\vVerifyEmail\x12&.lms.authentication.EmailVerifyRequest\x1a'.lms.authentication.EmailVerifyResponse\"c\x92A\x1d\x1a\x1bLMS user Email Verification\x82\xd3\xe4\x93\x02=:\x01*\"8/lms/v1/auth/{organisation}/verify-email/{email}/{token}\x12\x8d\x01\n" +
-	"\x05Login\x12 .lms.authentication.LoginRequest\x1a!.lms.authentication.LoginResponse\"?\x92A\x10\x1a\x0eLMS User login\x82\xd3\xe4\x93\x02&:\x01*\"!/lms/v1/auth/{organisation}/login\x12\xbd\x01\n" +
-	"\x17ResendVerificationEmail\x12-.lms.authentication.ResendVerificationRequest\x1a..lms.authentication.ResendVerificationResponse\"C\x92A\x13\x1a\x11User email resend\x82\xd3\xe4\x93\x02'\"%/lms/v1/{organisation}/resend/{email}\x12\x90\x01\n" +
-	"\x06LogOut\x12#.lms.authentication.LoginOutRequest\x1a\".lms.authentication.LogoutResponse\"=\x92A\r\x1a\vUser logout\x82\xd3\xe4\x93\x02':\x01*\"\"/lms/v1/auth/{organisation}/logoutBDZBgithub.com/multi-tenant-cms-golang/lms-sys/protogen/authenticationb\x06proto3"
+	"+authentication/service.authentication.proto\x12\x12lms.authentication\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a!authentication/rpc_register.proto\x1a%authentication/rpc_email_verify.proto\x1a\x1eauthentication/rpc_login.proto\x1a2authentication/rpc_resend_email_verification.proto\x1a\x1fauthentication/rpc_logout.proto2\xc3\r\n" +
+	"\x15AuthenticationService\x12\xdb\x02\n" +
+	"\bRegister\x12#.lms.authentication.RegisterRequest\x1a$.lms.authentication.RegisterResponse\"\x83\x02\x92A\xdf\x01\n" +
+	"\x0eAuthentication\x12\x11Register new user\x1a,Creates a new user account in the LMS systemJI\n" +
+	"\x03201\x12B\n" +
+	"\x1cUser successfully registered\x12\"\n" +
+	" \x1a\x1e#/definitions/RegisterResponseJ#\n" +
+	"\x03400\x12\x1c\n" +
+	"\x1aInvalid request parametersJ\x1c\n" +
+	"\x03409\x12\x15\n" +
+	"\x13User already exists\x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/lms/v1/auth/register\x12\xf4\x02\n" +
+	"\vVerifyEmail\x12&.lms.authentication.EmailVerifyRequest\x1a'.lms.authentication.EmailVerifyResponse\"\x93\x02\x92A\xdb\x01\n" +
+	"\x0eAuthentication\x12\x14Verify email address\x1aCVerifies a user's email address using the token sent to their emailJK\n" +
+	"\x03200\x12D\n" +
+	"\x1bEmail successfully verified\x12%\n" +
+	"#\x1a!#/definitions/EmailVerifyResponseJ!\n" +
+	"\x03400\x12\x1a\n" +
+	"\x18Invalid or expired token\x82\xd3\xe4\x93\x02.:\x01*\")/lms/v1/auth/verify-email/{email}/{token}\x12\xa0\x02\n" +
+	"\x05Login\x12 .lms.authentication.LoginRequest\x1a!.lms.authentication.LoginResponse\"\xd1\x01\x92A\xb0\x01\n" +
+	"\x0eAuthentication\x12\n" +
+	"User login\x1a8Authenticates user credentials and returns access tokensJ:\n" +
+	"\x03200\x123\n" +
+	"\x10Login successful\x12\x1f\n" +
+	"\x1d\x1a\x1b#/definitions/LoginResponseJ\x1c\n" +
+	"\x03401\x12\x15\n" +
+	"\x13Invalid credentials\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/lms/v1/auth/login\x12\xfe\x02\n" +
+	"\x17ResendVerificationEmail\x12-.lms.authentication.ResendVerificationRequest\x1a..lms.authentication.ResendVerificationResponse\"\x83\x02\x92A\xdc\x01\n" +
+	"\x0eAuthentication\x12\x19Resend verification email\x1aCResends the email verification token to the specified email addressJP\n" +
+	"\x03200\x12I\n" +
+	"\x19Verification email resent\x12,\n" +
+	"*\x1a(#/definitions/ResendVerificationResponseJ\x18\n" +
+	"\x03404\x12\x11\n" +
+	"\x0fEmail not found\x82\xd3\xe4\x93\x02\x1d\"\x1b/lms/v1/auth/resend/{email}\x12\xb0\x02\n" +
+	"\x06LogOut\x12#.lms.authentication.LoginOutRequest\x1a\".lms.authentication.LogoutResponse\"\xdc\x01\x92A\xba\x01\n" +
+	"\x0eAuthentication\x12\vUser logout\x1a,Invalidates the user's authentication tokensJ<\n" +
+	"\x03200\x125\n" +
+	"\x11Logout successful\x12 \n" +
+	"\x1e\x1a\x1c#/definitions/LogoutResponseJ!\n" +
+	"\x03401\x12\x1a\n" +
+	"\x18Invalid or missing tokenb\f\n" +
+	"\n" +
+	"\n" +
+	"\x06Bearer\x12\x00\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/lms/v1/auth/logoutB\xce\x03\x92A\x86\x03\x12\xe6\x01\n" +
+	"\x1aLMS Authentication Service\x12=API for user authentication in the Learning Management System\"D\n" +
+	"\bLMS Team\x12\x1fhttps://lms.example.com/support\x1a\x17support@lms.example.com*>\n" +
+	"\n" +
+	"Apache 2.0\x120https://www.apache.org/licenses/LICENSE-2.0.html2\x031.0\x1a\x13api.lms.example.com\"\x03/v1*\x02\x02\x012\x10application/json:\x10application/jsonZK\n" +
+	"I\n" +
+	"\x06Bearer\x12?\b\x02\x12*Authentication token, prefixed with Bearer\x1a\rAuthorization \x02b\f\n" +
+	"\n" +
+	"\n" +
+	"\x06Bearer\x12\x00ZBgithub.com/multi-tenant-cms-golang/lms-sys/protogen/authenticationb\x06proto3"
 
 var file_authentication_service_authentication_proto_goTypes = []any{
 	(*RegisterRequest)(nil),            // 0: lms.authentication.RegisterRequest

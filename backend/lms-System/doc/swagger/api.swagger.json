@@ -1,13 +1,29 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "authentication/authentication.proto",
-    "version": "version not set"
+    "title": "LMS Authentication Service",
+    "description": "API for user authentication in the Learning Management System",
+    "version": "1.0",
+    "contact": {
+      "name": "LMS Team",
+      "url": "https://lms.example.com/support",
+      "email": "support@lms.example.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    }
   },
   "tags": [
     {
       "name": "AuthenticationService"
     }
+  ],
+  "host": "api.lms.example.com",
+  "basePath": "/v1",
+  "schemes": [
+    "https",
+    "http"
   ],
   "consumes": [
     "application/json"
@@ -16,9 +32,91 @@
     "application/json"
   ],
   "paths": {
+    "/lms/v1/auth/login": {
+      "post": {
+        "summary": "User login",
+        "description": "Authenticates user credentials and returns access tokens",
+        "operationId": "AuthenticationService_Login",
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "schema": {
+              "$ref": "#/definitions/LoginResponse"
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authenticationLoginRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/lms/v1/auth/logout": {
+      "post": {
+        "summary": "User logout",
+        "description": "Invalidates the user's authentication tokens",
+        "operationId": "AuthenticationService_LogOut",
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "schema": {
+              "$ref": "#/definitions/LogoutResponse"
+            }
+          },
+          "401": {
+            "description": "Invalid or missing token",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authenticationLoginOutRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Authentication"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/lms/v1/auth/register": {
       "post": {
-        "description": "LMS user registration with respective namespace",
+        "summary": "Register new user",
+        "description": "Creates a new user account in the LMS system",
         "operationId": "AuthenticationService_Register",
         "responses": {
           "200": {
@@ -26,6 +124,20 @@
             "schema": {
               "$ref": "#/definitions/authenticationRegisterResponse"
             }
+          },
+          "201": {
+            "description": "User successfully registered",
+            "schema": {
+              "$ref": "#/definitions/RegisterResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "schema": {}
+          },
+          "409": {
+            "description": "User already exists",
+            "schema": {}
           },
           "default": {
             "description": "An unexpected error response.",
@@ -45,20 +157,25 @@
           }
         ],
         "tags": [
-          "AuthenticationService"
+          "Authentication"
         ]
       }
     },
-    "/lms/v1/auth/{organisation}/login": {
+    "/lms/v1/auth/resend/{email}": {
       "post": {
-        "description": "LMS User login",
-        "operationId": "AuthenticationService_Login",
+        "summary": "Resend verification email",
+        "description": "Resends the email verification token to the specified email address",
+        "operationId": "AuthenticationService_ResendVerificationEmail",
         "responses": {
           "200": {
-            "description": "A successful response.",
+            "description": "Verification email resent",
             "schema": {
-              "$ref": "#/definitions/authenticationLoginResponse"
+              "$ref": "#/definitions/ResendVerificationResponse"
             }
+          },
+          "404": {
+            "description": "Email not found",
+            "schema": {}
           },
           "default": {
             "description": "An unexpected error response.",
@@ -69,74 +186,38 @@
         },
         "parameters": [
           {
-            "name": "organisation",
+            "name": "email",
             "in": "path",
             "required": true,
             "type": "string"
           },
           {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/AuthenticationServiceLoginBody"
-            }
-          }
-        ],
-        "tags": [
-          "AuthenticationService"
-        ]
-      }
-    },
-    "/lms/v1/auth/{organisation}/logout": {
-      "post": {
-        "description": "User logout",
-        "operationId": "AuthenticationService_LogOut",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/authenticationLogoutResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
             "name": "organisation",
-            "in": "path",
-            "required": true,
+            "in": "query",
+            "required": false,
             "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/AuthenticationServiceLogOutBody"
-            }
           }
         ],
         "tags": [
-          "AuthenticationService"
+          "Authentication"
         ]
       }
     },
-    "/lms/v1/auth/{organisation}/verify-email/{email}/{token}": {
+    "/lms/v1/auth/verify-email/{email}/{token}": {
       "post": {
-        "description": "LMS user Email Verification",
+        "summary": "Verify email address",
+        "description": "Verifies a user's email address using the token sent to their email",
         "operationId": "AuthenticationService_VerifyEmail",
         "responses": {
           "200": {
-            "description": "A successful response.",
+            "description": "Email successfully verified",
             "schema": {
-              "$ref": "#/definitions/authenticationEmailVerifyResponse"
+              "$ref": "#/definitions/EmailVerifyResponse"
             }
+          },
+          "400": {
+            "description": "Invalid or expired token",
+            "schema": {}
           },
           "default": {
             "description": "An unexpected error response.",
@@ -146,12 +227,6 @@
           }
         },
         "parameters": [
-          {
-            "name": "organisation",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
           {
             "name": "email",
             "in": "path",
@@ -174,75 +249,49 @@
           }
         ],
         "tags": [
-          "AuthenticationService"
-        ]
-      }
-    },
-    "/lms/v1/{organisation}/resend/{email}": {
-      "post": {
-        "description": "User email resend",
-        "operationId": "AuthenticationService_ResendVerificationEmail",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/authenticationResendVerificationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "organisation",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "email",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "AuthenticationService"
+          "Authentication"
         ]
       }
     }
   },
   "definitions": {
-    "AuthenticationServiceLogOutBody": {
-      "type": "object",
-      "properties": {
-        "email": {
-          "type": "string"
-        }
-      }
-    },
-    "AuthenticationServiceLoginBody": {
-      "type": "object",
-      "properties": {
-        "email": {
-          "type": "string"
-        },
-        "password": {
-          "type": "string"
-        }
-      }
-    },
     "AuthenticationServiceVerifyEmailBody": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "organisation": {
+          "type": "string"
+        }
+      }
     },
     "authenticationEmailVerifyResponse": {
       "type": "object",
       "properties": {
         "message": {
+          "type": "string"
+        }
+      }
+    },
+    "authenticationLoginOutRequest": {
+      "type": "object",
+      "properties": {
+        "organisation": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      }
+    },
+    "authenticationLoginRequest": {
+      "type": "object",
+      "properties": {
+        "organisation": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "password": {
           "type": "string"
         }
       }
@@ -379,5 +428,18 @@
         }
       }
     }
-  }
+  },
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "description": "Authentication token, prefixed with Bearer",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "Bearer": []
+    }
+  ]
 }
