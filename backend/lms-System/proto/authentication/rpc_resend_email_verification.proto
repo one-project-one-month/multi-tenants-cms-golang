@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package lms.authentication;
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/authentication";
+import "google/protobuf/timestamp.proto";
+
+message ResendVerificationRequest{
+  string  organisation = 1;
+  string email = 2;
+}
+
+message  ResendVerificationResponse {
+ string  message = 1;
+ bool success = 2;
+}
+

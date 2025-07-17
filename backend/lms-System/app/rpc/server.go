@@ -3,11 +3,14 @@ package rpc
 import (
 	"context"
 	"fmt"
+	"github.com/multi-tenants-cms-golang/lms-sys/internal/types"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/gateway/middleware"
+	authSrv "github.com/multi-tenants-cms-golang/lms-sys/app/rpc/authentication"
 	db "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
+	authpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -50,11 +53,14 @@ func (s *Server) Run() error {
 		grpc.UnaryInterceptor(s.unaryInterceptor()),
 	)
 
+	authService := authSrv.NewAuthenticationService(s.store, s.logger, &types.Config{})
+	authpb.RegisterAuthenticationServiceServer(grpcServer, authService)
 	s.logger.Info("Starting gRPC server on port 9001")
 	if err := grpcServer.Serve(listener); err != nil {
 		return fmt.Errorf("failed to serve: %v", err)
 	}
 	return nil
+	
 }
 
 func (s *Server) unaryInterceptor() grpc.UnaryServerInterceptor {

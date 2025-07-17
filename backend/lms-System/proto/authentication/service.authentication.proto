@@ -6,12 +6,13 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 import "google/api/annotations.proto";
 import "authentication/rpc_register.proto";
 import "authentication/rpc_email_verify.proto";
-
-
+import  "authentication/rpc_login.proto";
+import  "authentication/rpc_resend_email_verification.proto";
+import  "authentication/rpc_logout.proto";
 service  AuthenticationService {
   rpc Register(RegisterRequest) returns (RegisterResponse) {
     option (google.api.http) = {
-     post: "/lms/v1/{organisation}/register";
+     post: "/lms/v1/auth/{organisation}/register";
      body: "*";
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -21,12 +22,40 @@ service  AuthenticationService {
 
   rpc VerifyEmail(EmailVerifyRequest) returns (EmailVerifyResponse) {
     option (google.api.http) = {
-      post: "/lms/v1/{organisation}/verify-email/{email}/{token}";
+      post: "/lms/v1/auth/{organisation}/verify-email/{email}/{token}";
       body: "*";
     };
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       description: "LMS user Email Verification";
+    };
+  }
+
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/auth/{organisation}/login";
+      body: "*";
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "LMS User login";
+    };
+  }
+  rpc ResendVerificationEmail(ResendVerificationRequest) returns (ResendVerificationResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/{organisation}/resend/{email}";
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "User email resend";
+    };
+  }
+
+  rpc LogOut(LoginOutRequest) returns (LogoutResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/auth/{organisation}/logout";
+      body: "*";
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "User logout";
     };
   }
 }

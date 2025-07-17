@@ -14,10 +14,10 @@ type RBACConfig struct {
 
 func (c *RBACConfig) RBACMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if shouldSkipRBAC(r.URL.Path) {
-			next.ServeHTTP(w, r)
-			return
-		}
+		//if shouldSkipRBAC(r.URL.Path) {
+		//	next.ServeHTTP(w, r)
+		//	return
+		//}
 
 		userCtx := GetUserContext(r)
 		if userCtx == nil {
@@ -40,22 +40,6 @@ func (c *RBACConfig) RBACMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-func shouldSkipRBAC(path string) bool {
-	skipPaths := []string{
-		"/healthz",
-		"/swagger/",
-		"/authentication/login",
-		"/authentication/register",
-	}
-
-	for _, p := range skipPaths {
-		if strings.HasPrefix(path, p) {
-			return true
-		}
-	}
-	return false
 }
 
 func (c *RBACConfig) getRequiredRoles(r *http.Request) []Role {

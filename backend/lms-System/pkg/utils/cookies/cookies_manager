@@ -1,0 +1,108 @@
+package cookies
+
+import (
+	"encoding/json"
+	"time"
+)
+
+type CookieManager struct {
+	config *CookieConfig
+}
+
+type CookieConfig struct {
+	Domain          string
+	Secure          bool
+	SameSite        string
+	AccessTokenTTL  time.Duration
+	RefreshTokenTTL time.Duration
+	SessionTTL      time.Duration
+}
+
+func NewCookieManager(config *CookieConfig) *CookieManager {
+	return &CookieManager{config: config}
+}
+
+func (cm *CookieManager) BuildAuthCookies(user *User, tokens *TokenPair) map[string]string {
+	cookies := make(map[string]string)
+
+	// Access token cookie
+	cookies["access_token"] = cm.buildCookie("access_token", tokens.AccessToken, CookieOptions{
+		MaxAge:   int(cm.config.AccessTokenTTL.Seconds()),
+		HttpOnly: true,
+		Path:     "/",
+	})
+
+	// Refresh token cookie
+	cookies["refresh_token"] = cm.buildCookie("refresh_token", tokens.RefreshToken, CookieOptions{
+		MaxAge:   int(cm.config.RefreshTokenTTL.Seconds()),
+		HttpOnly: true,
+		Path:     "/auth",
+	})
+
+	// User info cookie
+	userInfo, _ := json.Marshal(map[string]interface{}{
+		"id":    user.ID,
+		"email": user.Email,
+		"role":  user.Role,
+	})
+	cookies["user_info"] = cm.buildCookie("user_info", string(userInfo), CookieOptions{
+		MaxAge:   3600,
+		HttpOnly: false,
+		Path:     "/",
+	})
+
+	// CSRF token
+	cookies["csrf_token"] = cm.buildCookie("csrf_token", generateRandomString(32), CookieOptions{
+		MaxAge:   3600,
+		HttpOnly: false,
+		Path:     "/",
+	})
+
+	// Session ID
+	cookies["session_id"] = cm.buildCookie("session_id", generateRandomString(32), CookieOptions{
+		MaxAge:   int(cm.config.SessionTTL.Seconds()),
+		HttpOnly: true,
+		Path:     "/",
+	})
+
+	return cookies
+}
+
+type CookieOptions struct {
+	MaxAge   int
+	HttpOnly bool
+	Path     string
+}
+
+func (cm *CookieManager) buildCookie(name, value string, options CookieOptions) string {
+	return NewCookieBuilder(name, value).
+		MaxAge(options.MaxAge).
+		HttpOnly(options.HttpOnly).
+		Path(options.Path).
+		Secure(cm.config.Secure).
+		SameSite(cm.config.SameSite).
+		Domain(cm.config.Domain).
+		Build()
+}
+
+func (cm *CookieManager) BuildClearCookies() []string {
+	cookieNames := []string{
+		"access_token",
+		"refresh_token",
+		"user_info",
+		"csrf_token",
+		"session_id",
+	}
+
+	var cookies []string
+	for _, name := range cookieNames {
+		cookie := cm.buildCookie(name, "", CookieOptions{
+			MaxAge:   0,
+			HttpOnly: true,
+			Path:     "/",
+		})
+		cookies = append(cookies, cookie)
+	}
+
+	return cookies
+}

@@ -9,7 +9,8 @@ import (
 )
 
 type Querier interface {
-	RegisterLMSUser(ctx context.Context, arg RegisterLMSUserParams) (RegisterLMSUserRow, error)
+	GetUserByEmail(ctx context.Context, lmsUserEmail string) (LmsUser, error)
+	RegisterUserWithRoles(ctx context.Context, arg RegisterUserWithRolesParams) (RegisterUserWithRolesRow, error)
 	UpdateEmailVerification(ctx context.Context, lmsUserEmail string) error
 }
 

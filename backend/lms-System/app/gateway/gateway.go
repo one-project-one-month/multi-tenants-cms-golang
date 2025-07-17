@@ -7,10 +7,15 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/gateway/middleware"
+	"github.com/multi-tenants-cms-golang/lms-sys/app/gateway/modifier"
 	_ "github.com/multi-tenants-cms-golang/lms-sys/doc/statik"
+	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	//"google.golang.org/grpc"
 	//"google.golang.org/grpc/credentials/insecure"
 	"net/http"
@@ -139,7 +144,7 @@ func NewGateway(
 		SecretKey:       jwtSecret,
 		Issuer:          jwtIssuer,
 		Audience:        jwtAudience,
-		TokenExpiration: 24 * time.Hour, // Token expires in 24 hours
+		TokenExpiration: 24 * time.Hour,
 	}
 
 	tokenVerifier := NewGatewayTokenVerifier(logger, jwtConfig)
@@ -195,32 +200,42 @@ func (g *Gateway) Start() error {
 		runtime.WithErrorHandler(g.errorHandler),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{}),
 		runtime.WithIncomingHeaderMatcher(g.headerMatcher),
+		runtime.WithIncomingHeaderMatcher(runtime.DefaultHeaderMatcher),
+		runtime.WithOutgoingHeaderMatcher(runtime.DefaultHeaderMatcher),
+		runtime.WithForwardResponseOption(modifier.ResponseModifier),
+		runtime.WithMetadata(modifier.RequestModifier),
 	)
 
-	//opts := []grpc.DialOption{
-	//	grpc.WithTransportCredentials(insecure.NewCredentials()),
-	//	grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(25 * 1024 * 1024)), // 25MB
-	//}
+	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(25 * 1024 * 1024)),
+	}
 
+	err := authenticationpb.RegisterAuthenticationServiceHandlerFromEndpoint(
+		ctx,
+		gwMux,
+		g.grpcAddr,
+		opts,
+	)
+	if err != nil {
+		return fmt.Errorf("authenticationpb.RegisterAuthenticationServiceHandlerFromEndpoint error: %w", err)
+	}
 	statikFS, err := fs.New()
 	if err != nil {
 		return fmt.Errorf("statik filesystem error: %w", err)
 	}
 
-	// Create main mux router
 	mux := http.NewServeMux()
-	mux.Handle("/", gwMux)
 	mux.Handle("/swagger/", http.StripPrefix("/swagger/", http.FileServer(statikFS)))
 	mux.HandleFunc("/healthz", g.healthCheck)
+	mux.Handle("/", gwMux)
 
-	// Create handler chain with middleware
 	handlerChain := g.authConfig.AuthMiddleware(
-		g.rbacConfig.RBACMiddleware(
-			mux,
-		),
+		//g.rbacConfig.RBACMiddleware(
+		//	mux,
+		//),
+		mux,
 	)
-
-	// Configure CORS
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
@@ -239,7 +254,6 @@ func (g *Gateway) Start() error {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// Graceful shutdown
 	go func() {
 		sigint := make(chan os.Signal, 1)
 		signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM)

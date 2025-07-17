@@ -19,8 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthenticationService_Register_FullMethodName    = "/lms.authentication.AuthenticationService/Register"
-	AuthenticationService_VerifyEmail_FullMethodName = "/lms.authentication.AuthenticationService/VerifyEmail"
+	AuthenticationService_Register_FullMethodName                = "/lms.authentication.AuthenticationService/Register"
+	AuthenticationService_VerifyEmail_FullMethodName             = "/lms.authentication.AuthenticationService/VerifyEmail"
+	AuthenticationService_Login_FullMethodName                   = "/lms.authentication.AuthenticationService/Login"
+	AuthenticationService_ResendVerificationEmail_FullMethodName = "/lms.authentication.AuthenticationService/ResendVerificationEmail"
+	AuthenticationService_LogOut_FullMethodName                  = "/lms.authentication.AuthenticationService/LogOut"
 )
 
 // AuthenticationServiceClient is the client API for AuthenticationService service.
@@ -29,6 +32,9 @@ const (
 type AuthenticationServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	VerifyEmail(ctx context.Context, in *EmailVerifyRequest, opts ...grpc.CallOption) (*EmailVerifyResponse, error)
+	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	ResendVerificationEmail(ctx context.Context, in *ResendVerificationRequest, opts ...grpc.CallOption) (*ResendVerificationResponse, error)
+	LogOut(ctx context.Context, in *LoginOutRequest, opts ...grpc.CallOption) (*LogoutResponse, error)
 }
 
 type authenticationServiceClient struct {
@@ -59,12 +65,45 @@ func (c *authenticationServiceClient) VerifyEmail(ctx context.Context, in *Email
 	return out, nil
 }
 
+func (c *authenticationServiceClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LoginResponse)
+	err := c.cc.Invoke(ctx, AuthenticationService_Login_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authenticationServiceClient) ResendVerificationEmail(ctx context.Context, in *ResendVerificationRequest, opts ...grpc.CallOption) (*ResendVerificationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResendVerificationResponse)
+	err := c.cc.Invoke(ctx, AuthenticationService_ResendVerificationEmail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authenticationServiceClient) LogOut(ctx context.Context, in *LoginOutRequest, opts ...grpc.CallOption) (*LogoutResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LogoutResponse)
+	err := c.cc.Invoke(ctx, AuthenticationService_LogOut_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthenticationServiceServer is the server API for AuthenticationService service.
 // All implementations must embed UnimplementedAuthenticationServiceServer
 // for forward compatibility.
 type AuthenticationServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	VerifyEmail(context.Context, *EmailVerifyRequest) (*EmailVerifyResponse, error)
+	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	ResendVerificationEmail(context.Context, *ResendVerificationRequest) (*ResendVerificationResponse, error)
+	LogOut(context.Context, *LoginOutRequest) (*LogoutResponse, error)
 	mustEmbedUnimplementedAuthenticationServiceServer()
 }
 
@@ -80,6 +119,15 @@ func (UnimplementedAuthenticationServiceServer) Register(context.Context, *Regis
 }
 func (UnimplementedAuthenticationServiceServer) VerifyEmail(context.Context, *EmailVerifyRequest) (*EmailVerifyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyEmail not implemented")
+}
+func (UnimplementedAuthenticationServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedAuthenticationServiceServer) ResendVerificationEmail(context.Context, *ResendVerificationRequest) (*ResendVerificationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResendVerificationEmail not implemented")
+}
+func (UnimplementedAuthenticationServiceServer) LogOut(context.Context, *LoginOutRequest) (*LogoutResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LogOut not implemented")
 }
 func (UnimplementedAuthenticationServiceServer) mustEmbedUnimplementedAuthenticationServiceServer() {}
 func (UnimplementedAuthenticationServiceServer) testEmbeddedByValue()                               {}
@@ -138,6 +186,60 @@ func _AuthenticationService_VerifyEmail_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthenticationService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticationServiceServer).Login(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthenticationService_Login_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticationServiceServer).Login(ctx, req.(*LoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthenticationService_ResendVerificationEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResendVerificationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticationServiceServer).ResendVerificationEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthenticationService_ResendVerificationEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticationServiceServer).ResendVerificationEmail(ctx, req.(*ResendVerificationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthenticationService_LogOut_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginOutRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticationServiceServer).LogOut(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthenticationService_LogOut_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticationServiceServer).LogOut(ctx, req.(*LoginOutRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthenticationService_ServiceDesc is the grpc.ServiceDesc for AuthenticationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +254,18 @@ var AuthenticationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "VerifyEmail",
 			Handler:    _AuthenticationService_VerifyEmail_Handler,
+		},
+		{
+			MethodName: "Login",
+			Handler:    _AuthenticationService_Login_Handler,
+		},
+		{
+			MethodName: "ResendVerificationEmail",
+			Handler:    _AuthenticationService_ResendVerificationEmail_Handler,
+		},
+		{
+			MethodName: "LogOut",
+			Handler:    _AuthenticationService_LogOut_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

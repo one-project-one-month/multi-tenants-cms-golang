@@ -3,34 +3,109 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/consul/api"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 	"github.com/multi-tenants-cms-golang/lms-sys/app"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/gateway"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/rpc"
 	db "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/env"
+	"github.com/natefinch/lumberjack"
 	"github.com/sirupsen/logrus"
 )
 
-func main() {
+func initLogger() *logrus.Logger {
+	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		logrus.WithError(err).Fatal("Failed to load .env")
+	}
+
+	// Initialize logger
 	logger := logrus.New()
+	logger.Info("Initializing logger with rotation and JSON formatting")
+
+	// Configure Lumberjack for log rotation
+	logFile := &lumberjack.Logger{
+		Filename:   "logs/lms-system.log",
+		MaxSize:    100, // MB
+		MaxBackups: 3,
+		MaxAge:     28, // days
+		Compress:   true,
+		LocalTime:  true,
+	}
+	logger.Infof("Configured log rotation: file=%s, maxSize=%dMB, maxBackups=%d, maxAge=%ddays, compress=%t",
+		logFile.Filename, logFile.MaxSize, logFile.MaxBackups, logFile.MaxAge, logFile.Compress)
+
+	// Set output to both file and stdout
+	logger.Info("Setting dual output to stdout and log file")
+	logger.SetOutput(io.MultiWriter(os.Stdout, logFile))
+
+	// Configure JSON formatter with enhanced caller info
+	logger.Info("Configuring JSON formatter with custom fields")
 	logger.SetFormatter(&logrus.JSONFormatter{
 		TimestampFormat: "2006-01-02T15:04:05.999Z07:00",
 		FieldMap: logrus.FieldMap{
 			logrus.FieldKeyTime:  "timestamp",
 			logrus.FieldKeyLevel: "severity",
 			logrus.FieldKeyMsg:   "message",
+			logrus.FieldKeyFunc:  "caller",
 		},
 		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
-			return f.File, f.Function + " | " + string(rune(f.Line))
+			file := strings.TrimPrefix(f.File, "/Users/swanhtet/Desktop/multi-tenants-cms-golang/backend/lms-System/")
+			funcName := f.Function[strings.LastIndex(f.Function, ".")+1:]
+			return file, funcName + ":" + string(rune(f.Line))
 		},
 		PrettyPrint: true,
 	})
-	logger.SetLevel(logrus.InfoLevel)
+
+	// Enable caller reporting
+	logger.Info("Enabling caller reporting in logs")
+	logger.SetReportCaller(true)
+
+	// Set log level from environment
+	logLevel := os.Getenv("LOG_LEVEL")
+	if logLevel == "" {
+		logLevel = "info"
+	}
+	logger.Infof("Setting log level: %s", logLevel)
+
+	level, err := logrus.ParseLevel(logLevel)
+	if err != nil {
+		logger.Warnf("Invalid LOG_LEVEL '%s', defaulting to 'info'", logLevel)
+		level = logrus.InfoLevel
+	}
+	logger.SetLevel(level)
+
+	// Verify logger configuration
+	logger.WithFields(logrus.Fields{
+		"logLevel":    logger.GetLevel(),
+		"outputs":     "stdout+file",
+		"formatter":   "JSON",
+		"callerInfo":  true,
+		"compression": logFile.Compress,
+	}).Info("Logger initialization complete")
+
+	return logger
+}
+func main() {
+	logger := initLogger()
+	defer func() {
+		if file, ok := logger.Out.(*lumberjack.Logger); ok {
+			err := file.Close()
+			if err != nil {
+				return
+			}
+		}
+	}()
+
+	logger.Info("Application starting with log rotation enabled")
 
 	grpcServerAddress := env.GetEnv("LMS_GRPC_SERVER_ADDRESS", ":9001")
 	grpcGatewayAddress := env.GetEnv("LMS_GRPC_GATEWAY_ADDRESS", ":8086")
@@ -38,8 +113,8 @@ func main() {
 	jwtIssuer := env.GetEnv("LMS_JWT_ISSUER", "lms-system")
 	jwtAudience := env.GetEnv("LMS_JWT_AUDIENCE", "lms-client")
 	consulAddress := env.GetEnv("LMS_CONSUL_ADDRESS", "localhost:8500")
-	serviceName := env.GetEnv("LMS_SERVICE_NAME", "lms-service")
-	serviceID := env.GetEnv("LMS_SERVICE_ID", "lms-service-1")
+	//serviceName := env.GetEnv("LMS_SERVICE_NAME", "lms-service")
+	serviceID := env.GetEnv("LMS_SERVICE_ID", "lms-srvice-1")
 
 	dbConn := DatabaseConn(logger)
 	defer dbConn.Close()
@@ -57,13 +132,13 @@ func main() {
 		}
 	}(consulClient, serviceID)
 
-	if err := RegisterService(consulClient, serviceName, serviceID+"-grpc", grpcServerAddress, "grpc"); err != nil {
-		logger.WithError(err).Fatal("Failed to register gRPC server with Consul")
-	}
-
-	if err := RegisterService(consulClient, serviceName, serviceID+"-gateway", grpcGatewayAddress, "http"); err != nil {
-		logger.WithError(err).Fatal("Failed to register gRPC gateway with Consul")
-	}
+	//if err := RegisterService(consulClient, serviceName, serviceID+"-grpc", grpcServerAddress, "grpc"); err != nil {
+	//	logger.WithError(err).Fatal("Failed to register gRPC server with Consul")
+	//}
+	//
+	//if err := RegisterService(consulClient, serviceName, serviceID+"-gateway", grpcGatewayAddress, "http"); err != nil {
+	//	logger.WithError(err).Fatal("Failed to register gRPC gateway with Consul")
+	//}
 
 	grpcServer := rpc.NewServer(
 		dbStore,

@@ -12,27 +12,37 @@ import (
 	"github.com/google/uuid"
 )
 
-const registerLMSUser = `-- name: RegisterLMSUser :one
-INSERT INTO lms_user (
-    lms_user_name,
-    lms_user_email,
-    password,
-    address,
-    phone_number
-) VALUES (
-             $1, $2, $3, $4, $5
-         )
-RETURNING
-    lms_user_id,
-    lms_user_name,
-    lms_user_email,
-    address,
-    phone_number,
-    registration_date,
-    updated_at
+const registerUserWithRoles = `-- name: RegisterUserWithRoles :one
+WITH inserted_user AS (
+    INSERT INTO lms_user (
+                          lms_user_name,
+                          lms_user_email,
+                          password,
+                          address,
+                          phone_number,
+                          registration_date,
+                          email_verified
+        ) VALUES (
+                     $1, $2, $3, $4, $5, CURRENT_DATE, FALSE
+                 ) RETURNING lms_user_id, lms_user_name, lms_user_email,address,phone_number,registration_date,created_at,updated_at
+),
+     role_ids AS (
+         SELECT lms_role_id
+         FROM LMS_USER_Role
+         WHERE lms_role_name IN ('STUDENT', 'USER')
+     ),
+     role_assignments AS (
+         INSERT INTO lms_user_roles_map (lms_user_id, lms_role_id)
+             SELECT iu.lms_user_id, ri.lms_role_id
+             FROM inserted_user iu
+                      CROSS JOIN role_ids ri
+             RETURNING lms_user_id
+     )
+SELECT lms_user_id, lms_user_name, lms_user_email,address,registration_date,created_at,updated_at,phone_number
+FROM inserted_user
 `
 
-type RegisterLMSUserParams struct {
+type RegisterUserWithRolesParams struct {
 	LmsUserName  string         `json:"lms_user_name"`
 	LmsUserEmail string         `json:"lms_user_email"`
 	Password     string         `json:"password"`
@@ -40,41 +50,43 @@ type RegisterLMSUserParams struct {
 	PhoneNumber  sql.NullString `json:"phone_number"`
 }
 
-type RegisterLMSUserRow struct {
+type RegisterUserWithRolesRow struct {
 	LmsUserID        uuid.UUID      `json:"lms_user_id"`
 	LmsUserName      string         `json:"lms_user_name"`
 	LmsUserEmail     string         `json:"lms_user_email"`
 	Address          sql.NullString `json:"address"`
-	PhoneNumber      sql.NullString `json:"phone_number"`
 	RegistrationDate sql.NullTime   `json:"registration_date"`
+	CreatedAt        sql.NullTime   `json:"created_at"`
 	UpdatedAt        sql.NullTime   `json:"updated_at"`
+	PhoneNumber      sql.NullString `json:"phone_number"`
 }
 
-func (q *Queries) RegisterLMSUser(ctx context.Context, arg RegisterLMSUserParams) (RegisterLMSUserRow, error) {
-	row := q.db.QueryRowContext(ctx, registerLMSUser,
+func (q *Queries) RegisterUserWithRoles(ctx context.Context, arg RegisterUserWithRolesParams) (RegisterUserWithRolesRow, error) {
+	row := q.db.QueryRowContext(ctx, registerUserWithRoles,
 		arg.LmsUserName,
 		arg.LmsUserEmail,
 		arg.Password,
 		arg.Address,
 		arg.PhoneNumber,
 	)
-	var i RegisterLMSUserRow
+	var i RegisterUserWithRolesRow
 	err := row.Scan(
 		&i.LmsUserID,
 		&i.LmsUserName,
 		&i.LmsUserEmail,
 		&i.Address,
-		&i.PhoneNumber,
 		&i.RegistrationDate,
+		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.PhoneNumber,
 	)
 	return i, err
 }
 
 const updateEmailVerification = `-- name: UpdateEmailVerification :exec
-UPDATE lms_user
-SET  email_verified = true , updated_at = now()
-WHERE lms_user_email = $1
+UPDATE  lms_user
+SET  email_verified = true ,updated_at = now()
+WHERE  lms_user_email = $1
 `
 
 func (q *Queries) UpdateEmailVerification(ctx context.Context, lmsUserEmail string) error {

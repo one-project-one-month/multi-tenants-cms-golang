@@ -1,18 +1,27 @@
--- Create custom types
-CREATE TYPE lms_role_type AS ENUM ('LMS_ADMIN', 'STUDENT', 'INSTRUCTOR');
-CREATE TYPE system_type AS ENUM ('LMS', 'EMS');
-CREATE TYPE enrollment_type AS ENUM('ENROLLED', 'COMPLETED', 'DROPPED');
-CREATE TYPE material_type AS ENUM('Video', 'PDF', 'Slide', 'Link');
-CREATE TYPE course_status AS ENUM('Pending', 'Published', 'Unpublished', 'Archived');
+-- =============================================================================
+-- LMS Database Schema
+-- =============================================================================
 
--- Create tables in proper dependency order
--- 1. Create Role Type Table
+-- -----------------------------------------------------------------------------
+-- Custom Types
+-- -----------------------------------------------------------------------------
+CREATE TYPE lms_role_type AS ENUM ('LMS_ADMIN', 'STUDENT', 'INSTRUCTOR', 'USER');
+CREATE TYPE system_type AS ENUM ('LMS', 'EMS');
+CREATE TYPE enrollment_type AS ENUM ('ENROLLED', 'COMPLETED', 'DROPPED');
+CREATE TYPE material_type AS ENUM ('Video', 'PDF', 'Slide', 'Link');
+CREATE TYPE course_status AS ENUM ('Pending', 'Published', 'Unpublished', 'Archived');
+
+-- -----------------------------------------------------------------------------
+-- Core Tables (in dependency order)
+-- -----------------------------------------------------------------------------
+
+-- 1. Role Type Table
 CREATE TABLE LMS_USER_Role (
                                lms_role_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                lms_role_name lms_role_type NOT NULL UNIQUE
 );
 
--- 2. Create Tenants Table
+-- 2. Tenants Table
 CREATE TABLE Tenants (
                          tenant_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                          namespace VARCHAR(255) UNIQUE NOT NULL,
@@ -21,28 +30,41 @@ CREATE TABLE Tenants (
                          is_active BOOLEAN DEFAULT TRUE
 );
 
--- 3. Create Users Table
+-- 3. Users Table
 CREATE TABLE LMS_USER (
                           lms_user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                          lms_user_name varchar(100) not null ,
+                          lms_user_name VARCHAR(100) NOT NULL,
                           lms_user_email VARCHAR(255) UNIQUE NOT NULL,
                           password VARCHAR(255) NOT NULL,
-                          lms_role_id UUID NOT NULL,
                           tenant_id UUID,
                           address TEXT,
                           phone_number VARCHAR(100),
-                          mfa_enable bool,
-                          email_verified bool,
-                          registration_date DATE,
+                          mfa_enable BOOLEAN DEFAULT FALSE,
+                          email_verified BOOLEAN DEFAULT FALSE,
+                          registration_date DATE DEFAULT CURRENT_DATE,
                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                          CONSTRAINT fk_lms_user_role FOREIGN KEY (lms_role_id)
-                              REFERENCES LMS_USER_Role(lms_role_id) ON DELETE RESTRICT,
                           CONSTRAINT fk_lms_user_tenant FOREIGN KEY (tenant_id)
                               REFERENCES Tenants(tenant_id) ON DELETE SET NULL
 );
 
--- 4. Tenant Members
+-- 4. User Roles Mapping Table (Many-to-Many)
+CREATE TABLE lms_user_roles_map (
+                                    user_role_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                                    lms_user_id UUID NOT NULL,
+                                    lms_role_id UUID NOT NULL,
+                                    assigned_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                    is_active BOOLEAN DEFAULT TRUE,
+                                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                    CONSTRAINT fk_user_roles_user FOREIGN KEY (lms_user_id)
+                                        REFERENCES LMS_USER(lms_user_id) ON DELETE CASCADE,
+                                    CONSTRAINT fk_user_roles_role FOREIGN KEY (lms_role_id)
+                                        REFERENCES LMS_USER_Role(lms_role_id) ON DELETE CASCADE,
+                                    UNIQUE(lms_user_id, lms_role_id)
+);
+
+-- 5. Tenant Members
 CREATE TABLE Tenants_Members (
                                  tm_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                  lms_user_id UUID NOT NULL,
@@ -56,37 +78,37 @@ CREATE TABLE Tenants_Members (
                                  UNIQUE(lms_user_id, tenant_id)
 );
 
--- 5. Course Category
+-- 6. Course Category
 CREATE TABLE Course_Category (
                                  category_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                  category_name VARCHAR(100) NOT NULL,
                                  description TEXT,
                                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                 updated_at TIMESTAMP
+                                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 6. Course
+-- 7. Course
 CREATE TABLE Course (
                         course_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                         course_title VARCHAR(150) NOT NULL,
                         description TEXT,
                         instructor_id UUID NOT NULL,
-                        overall_rating INT,
+                        overall_rating DECIMAL(3,2) CHECK (overall_rating >= 1.0 AND overall_rating <= 5.0),
                         course_category UUID NOT NULL,
                         status course_status DEFAULT 'Pending',
-                        duration_day_count INT,
+                        duration_day_count INTEGER CHECK (duration_day_count > 0),
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         owned_by UUID NOT NULL,
                         CONSTRAINT fk_course_category FOREIGN KEY (course_category)
-                            REFERENCES Course_Category(category_id),
+                            REFERENCES Course_Category(category_id) ON DELETE RESTRICT,
                         CONSTRAINT fk_course_instructor FOREIGN KEY (instructor_id)
-                            REFERENCES LMS_USER(lms_user_id),
+                            REFERENCES LMS_USER(lms_user_id) ON DELETE RESTRICT,
                         CONSTRAINT fk_course_tenant FOREIGN KEY (owned_by)
-                            REFERENCES Tenants(tenant_id)
+                            REFERENCES Tenants(tenant_id) ON DELETE CASCADE
 );
 
--- 7. Namespace Consumer
+-- 8. Namespace Consumer
 CREATE TABLE namespace_consumer (
                                     consumer_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                     lms_user_id UUID NOT NULL,
@@ -98,43 +120,143 @@ CREATE TABLE namespace_consumer (
                                     UNIQUE(lms_user_id, namespace)
 );
 
--- 8. Enrollment
+-- -----------------------------------------------------------------------------
+-- Course Content Tables
+-- -----------------------------------------------------------------------------
+
+-- 9. Module
+CREATE TABLE Module (
+                        module_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        module_name VARCHAR(150) NOT NULL,
+                        course_id UUID NOT NULL,
+                        description TEXT,
+                        sequence_order INTEGER DEFAULT 1,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        CONSTRAINT fk_module_course FOREIGN KEY (course_id)
+                            REFERENCES Course(course_id) ON DELETE CASCADE
+);
+
+-- 10. Lesson
+CREATE TABLE Lesson (
+                        lesson_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        title VARCHAR(200) NOT NULL,
+                        content TEXT,
+                        material_type material_type,
+                        module_id UUID NOT NULL,
+                        sequence_order INTEGER DEFAULT 1,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        CONSTRAINT fk_lesson_module FOREIGN KEY (module_id)
+                            REFERENCES Module(module_id) ON DELETE CASCADE
+);
+
+-- 11. Quiz
+CREATE TABLE Quiz (
+                      quiz_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                      question TEXT NOT NULL,
+                      answer TEXT NOT NULL,
+                      module_id UUID NOT NULL,
+                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                      CONSTRAINT fk_quiz_module FOREIGN KEY (module_id)
+                          REFERENCES Module(module_id) ON DELETE CASCADE
+);
+
+-- 12. Assignment
+CREATE TABLE Assignment (
+                            assignment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                            course_id UUID NOT NULL,
+                            title VARCHAR(200) NOT NULL,
+                            instructions TEXT,
+                            due_date TIMESTAMP,
+                            max_score INTEGER DEFAULT 100,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            CONSTRAINT fk_assignment_course FOREIGN KEY (course_id)
+                                REFERENCES Course(course_id) ON DELETE CASCADE
+);
+
+-- -----------------------------------------------------------------------------
+-- Student Activity Tables
+-- -----------------------------------------------------------------------------
+
+-- 13. Enrollment
 CREATE TABLE enrollment (
                             enrollment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                             student_id UUID NOT NULL,
                             course_id UUID NOT NULL,
                             enrollment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            progress DECIMAL,
-                            status enrollment_type NOT NULL,
+                            progress DECIMAL(5,2) DEFAULT 0.00 CHECK (progress >= 0 AND progress <= 100),
+                            status enrollment_type NOT NULL DEFAULT 'ENROLLED',
                             due_date TIMESTAMP,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             CONSTRAINT fk_enrollment_student FOREIGN KEY (student_id)
                                 REFERENCES LMS_USER(lms_user_id) ON DELETE CASCADE,
                             CONSTRAINT fk_enrollment_course FOREIGN KEY (course_id)
-                                REFERENCES Course(course_id) ON DELETE CASCADE
+                                REFERENCES Course(course_id) ON DELETE CASCADE,
+                            UNIQUE(student_id, course_id)
 );
 
--- 9. Certificate
+-- 14. Student Quiz
+CREATE TABLE Student_Quiz (
+                              student_quiz_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                              student_id UUID NOT NULL,
+                              quiz_id UUID NOT NULL,
+                              score INTEGER CHECK (score >= 0),
+                              attempt INTEGER DEFAULT 1 CHECK (attempt > 0),
+                              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                              CONSTRAINT fk_student_quiz_student FOREIGN KEY (student_id)
+                                  REFERENCES LMS_USER(lms_user_id) ON DELETE CASCADE,
+                              CONSTRAINT fk_student_quiz_quiz FOREIGN KEY (quiz_id)
+                                  REFERENCES Quiz(quiz_id) ON DELETE CASCADE
+);
+
+-- 15. Submission
+CREATE TABLE Submission (
+                            submission_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                            assignment_id UUID NOT NULL,
+                            student_id UUID NOT NULL,
+                            submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            file_url VARCHAR(500),
+                            grade INTEGER CHECK (grade >= 0),
+                            feedback TEXT,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            CONSTRAINT fk_submission_assignment FOREIGN KEY (assignment_id)
+                                REFERENCES Assignment(assignment_id) ON DELETE CASCADE,
+                            CONSTRAINT fk_submission_student FOREIGN KEY (student_id)
+                                REFERENCES LMS_USER(lms_user_id) ON DELETE CASCADE,
+                            UNIQUE(assignment_id, student_id)
+);
+
+-- 16. Certificate
 CREATE TABLE Certificate (
                              certificate_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                              enrollment_id UUID UNIQUE NOT NULL,
                              issue_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                              certificate_url VARCHAR(500),
+                             verification_code VARCHAR(100) UNIQUE,
                              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                             updated_at TIMESTAMP,
+                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                              CONSTRAINT fk_certificate_enrollment FOREIGN KEY (enrollment_id)
                                  REFERENCES enrollment(enrollment_id) ON DELETE CASCADE
 );
 
--- 10. Rating
+-- -----------------------------------------------------------------------------
+-- Feedback and Analytics Tables
+-- -----------------------------------------------------------------------------
+
+-- 17. Rating
 CREATE TABLE Rating (
                         rating_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                         user_id UUID NOT NULL,
                         course_id UUID NOT NULL,
-                        rating_count INT CHECK (rating_count >= 1 AND rating_count <= 5),
+                        rating_count INTEGER NOT NULL CHECK (rating_count >= 1 AND rating_count <= 5),
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         CONSTRAINT fk_rating_user FOREIGN KEY (user_id)
                             REFERENCES LMS_USER(lms_user_id) ON DELETE CASCADE,
                         CONSTRAINT fk_rating_course FOREIGN KEY (course_id)
@@ -142,86 +264,7 @@ CREATE TABLE Rating (
                         UNIQUE(user_id, course_id)
 );
 
--- 11. Module
-CREATE TABLE Module (
-                        module_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                        module_name VARCHAR(150) NOT NULL,
-                        course_id UUID NOT NULL,
-                        description TEXT,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP,
-                        CONSTRAINT fk_module_course FOREIGN KEY (course_id)
-                            REFERENCES Course(course_id) ON DELETE CASCADE
-);
-
--- 12. Quiz
-CREATE TABLE Quiz (
-                      quiz_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                      question TEXT NOT NULL,
-                      answer TEXT NOT NULL,
-                      module_id UUID NOT NULL,
-                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                      updated_at TIMESTAMP,
-                      CONSTRAINT fk_quiz_module FOREIGN KEY (module_id)
-                          REFERENCES Module(module_id) ON DELETE CASCADE
-);
-
--- 13. Student Quiz
-CREATE TABLE Student_Quiz (
-                              student_quiz_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                              student_id UUID NOT NULL,
-                              quiz_id UUID NOT NULL,
-                              score INT,
-                              attempt INT DEFAULT 1,
-                              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                              updated_at TIMESTAMP,
-                              CONSTRAINT fk_student_quiz_student FOREIGN KEY (student_id)
-                                  REFERENCES LMS_USER(lms_user_id) ON DELETE CASCADE,
-                              CONSTRAINT fk_student_quiz_quiz FOREIGN KEY (quiz_id)
-                                  REFERENCES Quiz(quiz_id) ON DELETE CASCADE
-);
-
--- 14. Lesson
-CREATE TABLE Lesson (
-                        lesson_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                        title VARCHAR(200) NOT NULL,
-                        content TEXT,
-                        material_type material_type,
-                        module_id UUID NOT NULL,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP,
-                        CONSTRAINT fk_lesson_module FOREIGN KEY (module_id)
-                            REFERENCES Module(module_id) ON DELETE CASCADE
-);
-
--- 15. Assignment
-CREATE TABLE Assignment (
-                            assignment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                            course_id UUID NOT NULL,
-                            title VARCHAR(200) NOT NULL,
-                            instructions TEXT,
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP,
-                            CONSTRAINT fk_assignment_course FOREIGN KEY (course_id)
-                                REFERENCES Course(course_id) ON DELETE CASCADE
-);
-
--- 16. Submission
-CREATE TABLE Submission (
-                            submission_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                            assignment_id UUID NOT NULL,
-                            student_id UUID NOT NULL,
-                            submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            file_url VARCHAR(500),
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP,
-                            CONSTRAINT fk_submission_assignment FOREIGN KEY (assignment_id)
-                                REFERENCES Assignment(assignment_id) ON DELETE CASCADE,
-                            CONSTRAINT fk_submission_student FOREIGN KEY (student_id)
-                                REFERENCES LMS_USER(lms_user_id) ON DELETE CASCADE
-);
-
--- 17. Review
+-- 18. Review
 CREATE TABLE Review (
                         review_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                         course_id UUID NOT NULL,
@@ -229,44 +272,57 @@ CREATE TABLE Review (
                         title VARCHAR(200),
                         description TEXT,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         CONSTRAINT fk_review_course FOREIGN KEY (course_id)
                             REFERENCES Course(course_id) ON DELETE CASCADE,
                         CONSTRAINT fk_review_user FOREIGN KEY (user_id)
-                            REFERENCES LMS_USER(lms_user_id) ON DELETE CASCADE
+                            REFERENCES LMS_USER(lms_user_id) ON DELETE CASCADE,
+                        UNIQUE(course_id, user_id)
 );
 
--- 18. Report
+-- 19. Report
 CREATE TABLE Report (
                         report_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                         report_name VARCHAR(200) NOT NULL,
                         generated_by_user_id UUID NOT NULL,
                         generated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         data_snapshot TEXT,
+                        report_type VARCHAR(50),
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         CONSTRAINT fk_report_user FOREIGN KEY (generated_by_user_id)
                             REFERENCES LMS_USER(lms_user_id) ON DELETE CASCADE
 );
 
--- Create indexes for better performance
+-- =============================================================================
+-- Indexes for Performance Optimization
+-- =============================================================================
 
--- LMS_USER indexes
+-- -----------------------------------------------------------------------------
+-- User-related indexes
+-- -----------------------------------------------------------------------------
 CREATE INDEX idx_lms_user_email ON LMS_USER(lms_user_email);
-CREATE INDEX idx_lms_user_role ON LMS_USER(lms_role_id);
 CREATE INDEX idx_lms_user_created_at ON LMS_USER(created_at);
 CREATE INDEX idx_lms_user_registration_date ON LMS_USER(registration_date);
 CREATE INDEX idx_lms_user_phone ON LMS_USER(phone_number);
-CREATE INDEX idx_lms_user_role_active ON LMS_USER(lms_role_id, created_at);
+CREATE INDEX idx_lms_user_tenant ON LMS_USER(tenant_id);
 
--- Tenants indexes
+-- User roles mapping indexes
+CREATE INDEX idx_user_roles_map_user ON lms_user_roles_map(lms_user_id);
+CREATE INDEX idx_user_roles_map_role ON lms_user_roles_map(lms_role_id);
+CREATE INDEX idx_user_roles_map_active ON lms_user_roles_map(is_active);
+CREATE INDEX idx_user_roles_map_user_active ON lms_user_roles_map(lms_user_id, is_active);
+
+-- -----------------------------------------------------------------------------
+-- Tenant-related indexes
+-- -----------------------------------------------------------------------------
 CREATE INDEX idx_tenants_namespace ON Tenants(namespace);
 CREATE INDEX idx_tenants_owner ON Tenants(cms_owner_id);
 CREATE INDEX idx_tenants_active ON Tenants(is_active);
 CREATE INDEX idx_tenants_created_at ON Tenants(created_at);
 CREATE INDEX idx_tenants_active_true ON Tenants(tenant_id) WHERE is_active = TRUE;
 
--- Tenants_Members indexes
+-- Tenant members indexes
 CREATE INDEX idx_tenant_members_user ON Tenants_Members(lms_user_id);
 CREATE INDEX idx_tenant_members_tenant ON Tenants_Members(tenant_id);
 CREATE INDEX idx_tenant_members_joined_date ON Tenants_Members(joined_date);
@@ -275,7 +331,9 @@ CREATE INDEX idx_tenant_members_active_user ON Tenants_Members(is_active, lms_us
 CREATE INDEX idx_tenant_members_active_tenant ON Tenants_Members(is_active, tenant_id);
 CREATE INDEX idx_tenant_members_active_true ON Tenants_Members(lms_user_id, tenant_id) WHERE is_active = TRUE;
 
--- Course indexes
+-- -----------------------------------------------------------------------------
+-- Course-related indexes
+-- -----------------------------------------------------------------------------
 CREATE INDEX idx_course_instructor ON Course(instructor_id);
 CREATE INDEX idx_course_category ON Course(course_category);
 CREATE INDEX idx_course_owner ON Course(owned_by);
@@ -286,55 +344,104 @@ CREATE INDEX idx_course_status ON Course(status);
 CREATE INDEX idx_course_instructor_category ON Course(instructor_id, course_category);
 CREATE INDEX idx_course_owner_category ON Course(owned_by, course_category);
 
--- Course Category indexes
+-- Course category indexes
 CREATE INDEX idx_category_name ON Course_Category(category_name);
 CREATE INDEX idx_category_created_at ON Course_Category(created_at);
 
--- namespace_consumer indexes
+-- -----------------------------------------------------------------------------
+-- Module and content indexes
+-- -----------------------------------------------------------------------------
+CREATE INDEX idx_module_course ON Module(course_id);
+CREATE INDEX idx_module_name ON Module(module_name);
+CREATE INDEX idx_module_sequence ON Module(course_id, sequence_order);
+
+CREATE INDEX idx_lesson_module ON Lesson(module_id);
+CREATE INDEX idx_lesson_title ON Lesson(title);
+CREATE INDEX idx_lesson_sequence ON Lesson(module_id, sequence_order);
+
+CREATE INDEX idx_quiz_module ON Quiz(module_id);
+
+CREATE INDEX idx_assignment_course ON Assignment(course_id);
+CREATE INDEX idx_assignment_due_date ON Assignment(due_date);
+
+-- -----------------------------------------------------------------------------
+-- Student activity indexes
+-- -----------------------------------------------------------------------------
+CREATE INDEX idx_enrollment_student ON enrollment(student_id);
+CREATE INDEX idx_enrollment_course ON enrollment(course_id);
+CREATE INDEX idx_enrollment_status ON enrollment(status);
+CREATE INDEX idx_enrollment_date ON enrollment(enrollment_date);
+CREATE INDEX idx_enrollment_student_status ON enrollment(student_id, status);
+
+CREATE INDEX idx_student_quiz_student ON Student_Quiz(student_id);
+CREATE INDEX idx_student_quiz_quiz ON Student_Quiz(quiz_id);
+CREATE INDEX idx_student_quiz_score ON Student_Quiz(score);
+
+CREATE INDEX idx_submission_assignment ON Submission(assignment_id);
+CREATE INDEX idx_submission_student ON Submission(student_id);
+CREATE INDEX idx_submission_date ON Submission(submitted_at);
+
+-- -----------------------------------------------------------------------------
+-- Feedback and analytics indexes
+-- -----------------------------------------------------------------------------
+CREATE INDEX idx_rating_user ON Rating(user_id);
+CREATE INDEX idx_rating_course ON Rating(course_id);
+CREATE INDEX idx_rating_count ON Rating(rating_count);
+
+CREATE INDEX idx_review_course ON Review(course_id);
+CREATE INDEX idx_review_user ON Review(user_id);
+
+CREATE INDEX idx_report_generated_by ON Report(generated_by_user_id);
+CREATE INDEX idx_report_date ON Report(generated_date);
+CREATE INDEX idx_report_type ON Report(report_type);
+
+-- -----------------------------------------------------------------------------
+-- Namespace consumer indexes
+-- -----------------------------------------------------------------------------
 CREATE INDEX idx_namespace_consumer_user ON namespace_consumer(lms_user_id);
 CREATE INDEX idx_namespace_consumer_namespace ON namespace_consumer(namespace);
 CREATE INDEX idx_namespace_consumer_active ON namespace_consumer(is_active);
 CREATE INDEX idx_namespace_consumer_joined_date ON namespace_consumer(joined_date);
 
--- Enrollment indexes
-CREATE INDEX idx_enrollment_student ON enrollment(student_id);
-CREATE INDEX idx_enrollment_course ON enrollment(course_id);
-CREATE INDEX idx_enrollment_status ON enrollment(status);
-CREATE INDEX idx_enrollment_date ON enrollment(enrollment_date);
+-- =============================================================================
+-- Initial Data Setup
+-- =============================================================================
 
--- Rating indexes
-CREATE INDEX idx_rating_user ON Rating(user_id);
-CREATE INDEX idx_rating_course ON Rating(course_id);
-CREATE INDEX idx_rating_count ON Rating(rating_count);
+-- Insert default roles
+INSERT INTO LMS_USER_Role (lms_role_name) VALUES
+                                              ('LMS_ADMIN'),
+                                              ('INSTRUCTOR'),
+                                              ('STUDENT'),
+                                              ('USER');
 
--- Module indexes
-CREATE INDEX idx_module_course ON Module(course_id);
-CREATE INDEX idx_module_name ON Module(module_name);
+-- =============================================================================
+-- Sample Queries for User Registration
+-- =============================================================================
 
--- Quiz indexes
-CREATE INDEX idx_quiz_module ON Quiz(module_id);
+-- Register a new user with default roles (STUDENT and USER)
+-- name: RegisterLMSUser :one
+-- INSERT INTO lms_user (
+--     lms_user_name,
+--     lms_user_email,
+--     password,
+--     address,
+--     phone_number
+-- ) VALUES (
+--     $1, $2, $3, $4, $5
+-- ) RETURNING
+--     lms_user_id,
+--     lms_user_name,
+--     lms_user_email,
+--     address,
+--     phone_number,
+--     registration_date,
+--     updated_at;
 
--- Student_Quiz indexes
-CREATE INDEX idx_student_quiz_student ON Student_Quiz(student_id);
-CREATE INDEX idx_student_quiz_quiz ON Student_Quiz(quiz_id);
-CREATE INDEX idx_student_quiz_score ON Student_Quiz(score);
-
--- Lesson indexes
-CREATE INDEX idx_lesson_module ON Lesson(module_id);
-CREATE INDEX idx_lesson_title ON Lesson(title);
-
--- Assignment indexes
-CREATE INDEX idx_assignment_course ON Assignment(course_id);
-
--- Submission indexes
-CREATE INDEX idx_submission_assignment ON Submission(assignment_id);
-CREATE INDEX idx_submission_student ON Submission(student_id);
-CREATE INDEX idx_submission_date ON Submission(submitted_at);
-
--- Review indexes
-CREATE INDEX idx_review_course ON Review(course_id);
-CREATE INDEX idx_review_user ON Review(user_id);
-
--- Report indexes
-CREATE INDEX idx_report_generated_by ON Report(generated_by_user_id);
-CREATE INDEX idx_report_date ON Report(generated_date);
+-- Assign default roles to new user
+-- name: AssignDefaultRoles :exec
+-- WITH role_ids AS (
+--     SELECT lms_role_id FROM LMS_USER_Role
+--     WHERE lms_role_name IN ('STUDENT', 'USER')
+-- )
+-- INSERT INTO lms_user_roles_map (lms_user_id, lms_role_id)
+-- SELECT $1, lms_role_id FROM role_ids;

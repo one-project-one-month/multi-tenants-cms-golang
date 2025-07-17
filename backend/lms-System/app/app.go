@@ -31,41 +31,34 @@ func NewApp(
 }
 
 func (app *App) Run() error {
-	// Create context that cancels on interrupt signals
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Channel for errors from goroutines
 	errChan := make(chan error, 2)
 
-	// WaitGroup to wait for both servers to shutdown
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	// Start gRPC server
 	go func() {
 		defer wg.Done()
 		app.logger.Info("Starting gRPC server...")
 		if err := app.grpcServer.Run(); err != nil {
 			errChan <- err
-			cancel() // Trigger shutdown on error
+			cancel()
 		}
 	}()
 
-	// Brief delay to ensure gRPC server is up before gateway
 	time.Sleep(1 * time.Second)
 
-	// Start gRPC gateway
 	go func() {
 		defer wg.Done()
 		app.logger.Info("Starting gRPC gateway...")
 		if err := app.grpcGateway.Start(); err != nil {
 			errChan <- err
-			cancel() // Trigger shutdown on error
+			cancel()
 		}
 	}()
 
-	// Signal handling for graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
@@ -78,17 +71,14 @@ func (app *App) Run() error {
 		cancel()
 		return err
 	case <-ctx.Done():
-		// Normal shutdown
 	}
 
-	// Wait for servers to shutdown
 	done := make(chan struct{})
 	go func() {
 		wg.Wait()
 		close(done)
 	}()
 
-	// Add shutdown timeout
 	select {
 	case <-done:
 		app.logger.Info("Servers stopped gracefully")

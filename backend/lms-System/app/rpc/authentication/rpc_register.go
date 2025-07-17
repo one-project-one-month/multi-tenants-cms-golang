@@ -2,21 +2,16 @@ package authentication
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
-	"fmt"
-	"net/url"
-	"strings"
-	"sync"
-	"time"
-
+	"database/sql"
+	"github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	convertor "github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/convert"
-	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/nats"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/redis"
 	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"strings"
+	"time"
 )
 
 const (
@@ -26,6 +21,15 @@ const (
 	RateLimitWindow         = time.Hour
 )
 
+func toRegisterSql(reqModel *authenticationpb.RegisterRequest) *repo.RegisterUserWithRolesParams {
+	return &repo.RegisterUserWithRolesParams{
+		LmsUserName:  reqModel.Username,
+		LmsUserEmail: reqModel.Email,
+		Password:     reqModel.Password,
+		Address:      sql.NullString{String: reqModel.Address, Valid: reqModel.Address == ""},
+		PhoneNumber:  sql.NullString{String: reqModel.PhoneNumber, Valid: true},
+	}
+}
 func (s *AuthenticationService) Register(
 	ctx context.Context,
 	req *authenticationpb.RegisterRequest,
@@ -38,36 +42,54 @@ func (s *AuthenticationService) Register(
 		return nil, err
 	}
 
-	//incomingContext, _ := metadata.FromIncomingContext(ctx)
 	s.logger.WithFields(logrus.Fields{
 		"method": "Register",
 		"email":  req.GetEmail(),
 	}).Info("processing registration request")
-
-	modelToBeCreated := convertor.RegisterProtoToModel(req)
-	user, err := s.store.RegisterLMSUser(s.databaseCtx, *modelToBeCreated)
+	modelToBeCreated := toRegisterSql(req)
+	userCreated, err := s.store.RegisterUserWithRoles(s.databaseCtx, *modelToBeCreated)
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"error": err.Error(),
 			"email": req.GetEmail(),
 		}).Error("failed to register user")
+
+		if strings.Contains(err.Error(), "duplicate key") {
+			return nil, status.Error(codes.AlreadyExists, "user with this email already exists")
+		}
+
 		return nil, status.Error(codes.Internal, "failed to create user account")
 	}
 
-	if err := s.processEmailVerification(ctx, user.LmsUserEmail); err != nil {
-		s.logger.WithFields(logrus.Fields{
-			"error": err.Error(),
-			"email": user.LmsUserEmail,
-		}).Error("failed to process email verification")
-	}
+	go func() {
+		if err := s.processEmailVerification(context.Background(), req.Email); err != nil {
+			s.logger.WithFields(logrus.Fields{
+				"error": err.Error(),
+				"email": req.Email,
+			}).Error("failed to process email verification")
+		}
+	}()
 
-	return convertor.RegisterModelToProto(&user), nil
+	return &authenticationpb.RegisterResponse{
+		RegisteredUser: &authenticationpb.SystemUser{
+			Id:               userCreated.LmsUserID.String(),
+			Username:         userCreated.LmsUserName,
+			Email:            userCreated.LmsUserEmail,
+			PhoneNumber:      convertor.NullableStringToString(userCreated.PhoneNumber),
+			Address:          convertor.NullableStringToString(userCreated.Address),
+			RegistrationDate: convertor.NullTimeToProtoTimestamp(userCreated.RegistrationDate),
+			CreatedAt:        convertor.NullTimeToProtoTimestamp(userCreated.CreatedAt),
+			UpdatedAt:        convertor.NullTimeToProtoTimestamp(userCreated.UpdatedAt),
+		},
+		Message: "user created successfully. email is sent to the registered mail",
+	}, nil
 }
 
 func (s *AuthenticationService) VerifyEmail(
 	ctx context.Context,
 	req *authenticationpb.EmailVerifyRequest,
 ) (*authenticationpb.EmailVerifyResponse, error) {
+
 	if err := s.validateEmailVerifyRequest(req); err != nil {
 		return nil, err
 	}
@@ -78,7 +100,7 @@ func (s *AuthenticationService) VerifyEmail(
 			"error": err.Error(),
 			"email": req.GetEmail(),
 		}).Error("failed to retrieve token from Redis")
-		return nil, status.Error(codes.Internal, "verification failed")
+		return nil, status.Error(codes.NotFound, "verification token not found or expired")
 	}
 
 	if storedToken != req.GetToken() {
@@ -111,194 +133,4 @@ func (s *AuthenticationService) VerifyEmail(
 	return &authenticationpb.EmailVerifyResponse{
 		Message: "Email verified successfully",
 	}, nil
-}
-
-func (s *AuthenticationService) processEmailVerification(ctx context.Context, email string) error {
-	var wg sync.WaitGroup
-	errChan := make(chan error, 2)
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := s.generateAndStoreToken(email); err != nil {
-			errChan <- fmt.Errorf("failed to generate token: %w", err)
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		token, err := redis.GetRedis(email)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to retrieve token for email: %w", err)
-			return
-		}
-		if err := s.sendVerificationEmail(email, token); err != nil {
-			errChan <- fmt.Errorf("failed to send verification email: %w", err)
-		}
-	}()
-
-	go func() {
-		wg.Wait()
-		close(errChan)
-	}()
-
-	var errors []error
-	for err := range errChan {
-		if err != nil {
-			errors = append(errors, err)
-		}
-	}
-
-	if len(errors) > 0 {
-		return fmt.Errorf("email verification processing failed: %v", errors)
-	}
-
-	return nil
-}
-
-func (s *AuthenticationService) generateAndStoreToken(email string) error {
-	tokenLength := s.cfg.TokenLength
-	if tokenLength == 0 {
-		tokenLength = DefaultTokenLength
-	}
-
-	emailCode, err := s.generateToken(tokenLength)
-	if err != nil {
-		return fmt.Errorf("failed to generate token: %w", err)
-	}
-
-	ttl := s.cfg.TokenTTL
-	if ttl == 0 {
-		ttl = TokenTTL
-	}
-
-	if err := redis.SetRedis(email, emailCode, ttl); err != nil {
-		return fmt.Errorf("failed to store token in Redis: %w", err)
-	}
-
-	return nil
-}
-
-func (s *AuthenticationService) generateToken(length int) (string, error) {
-	if length <= 0 {
-		return "", fmt.Errorf("invalid token length: %d", length)
-	}
-
-	bytes := make([]byte, length)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", fmt.Errorf("failed to generate random bytes: %w", err)
-	}
-
-	return hex.EncodeToString(bytes), nil
-}
-
-func (s *AuthenticationService) sendVerificationEmail(email, token string) error {
-	if email == "" || token == "" {
-		return fmt.Errorf("email and token are required")
-	}
-
-	baseURL := s.cfg.BaseURL
-	if baseURL == "" {
-		baseURL = "http://localhost:8098"
-	}
-
-	verifyURL := fmt.Sprintf("%s/verify-email?email=%s&token=%s",
-		baseURL, url.QueryEscape(email), url.QueryEscape(token))
-
-	emailBody := fmt.Sprintf(`
-       <html>
-       <body>
-           <h2>Email Verification</h2>
-           <p>Please click the link below to verify your email address:</p>
-           <a href="%s">Verify Email</a>
-           <p>This link will expire in 15 minutes.</p>
-           <p>If you did not request this verification, please ignore this email.</p>
-       </body>
-       </html>
-   `, verifyURL)
-
-	return nats.Publish("lms.email.verify", []byte(emailBody))
-}
-
-func (s *AuthenticationService) validateRegisterRequest(req *authenticationpb.RegisterRequest) error {
-	if req == nil {
-		return status.Error(codes.InvalidArgument, "request is required")
-	}
-
-	if req.GetEmail() == "" {
-		return status.Error(codes.InvalidArgument, "email is required")
-	}
-
-	if !s.isValidEmail(req.GetEmail()) {
-		return status.Error(codes.InvalidArgument, "invalid email format")
-	}
-
-	if req.GetPassword() == "" {
-		return status.Error(codes.InvalidArgument, "password is required")
-	}
-
-	if len(req.GetPassword()) < 8 {
-		return status.Error(codes.InvalidArgument, "password must be at least 8 characters")
-	}
-
-	return nil
-}
-
-func (s *AuthenticationService) validateEmailVerifyRequest(req *authenticationpb.EmailVerifyRequest) error {
-	if req == nil {
-		return status.Error(codes.InvalidArgument, "request is required")
-	}
-
-	if req.GetEmail() == "" {
-		return status.Error(codes.InvalidArgument, "email is required")
-	}
-
-	if !s.isValidEmail(req.GetEmail()) {
-		return status.Error(codes.InvalidArgument, "invalid email format")
-	}
-
-	if req.GetToken() == "" {
-		return status.Error(codes.InvalidArgument, "token is required")
-	}
-
-	return nil
-}
-
-func (s *AuthenticationService) isValidEmail(email string) bool {
-	return strings.Contains(email, "@") && strings.Contains(email, ".")
-}
-
-func (s *AuthenticationService) checkRateLimit(ctx context.Context, email string) error {
-	key := fmt.Sprintf("rate_limit:register:%s", email)
-	count, err := redis.GetRedis(key)
-	if err != nil {
-		return status.Error(codes.Internal, "rate limit check failed")
-	}
-
-	maxAttempts := s.cfg.RateLimitAttempts
-	if maxAttempts == 0 {
-		maxAttempts = MaxRegistrationAttempts
-	}
-
-	if count != "" {
-		s.logger.WithFields(logrus.Fields{
-			"email": email,
-			"count": count,
-		}).Info("checking rate limit")
-	}
-
-	window := s.cfg.RateLimitWindow
-	if window == 0 {
-		window = RateLimitWindow
-	}
-
-	if err := redis.SetRedis(key, "1", window); err != nil {
-		s.logger.WithFields(logrus.Fields{
-			"error": err.Error(),
-			"email": email,
-		}).Error("failed to set rate limit counter")
-	}
-
-	return nil
 }

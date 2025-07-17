@@ -26,24 +26,39 @@ var File_authentication_service_authentication_proto protoreflect.FileDescriptor
 
 const file_authentication_service_authentication_proto_rawDesc = "" +
 	"\n" +
-	"+authentication/service.authentication.proto\x12\x12lms.authentication\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a!authentication/rpc_register.proto\x1a%authentication/rpc_email_verify.proto2\x90\x03\n" +
-	"\x15AuthenticationService\x12\xb5\x01\n" +
-	"\bRegister\x12#.lms.authentication.RegisterRequest\x1a$.lms.authentication.RegisterResponse\"^\x92A1\x1a/LMS user registration with respective namespace\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/lms/v1/{organisation}/register\x12\xbe\x01\n" +
-	"\vVerifyEmail\x12&.lms.authentication.EmailVerifyRequest\x1a'.lms.authentication.EmailVerifyResponse\"^\x92A\x1d\x1a\x1bLMS user Email Verification\x82\xd3\xe4\x93\x028:\x01*\"3/lms/v1/{organisation}/verify-email/{email}/{token}BDZBgithub.com/multi-tenant-cms-golang/lms-sys/protogen/authenticationb\x06proto3"
+	"+authentication/service.authentication.proto\x12\x12lms.authentication\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a!authentication/rpc_register.proto\x1a%authentication/rpc_email_verify.proto\x1a\x1eauthentication/rpc_login.proto\x1a2authentication/rpc_resend_email_verification.proto\x1a\x1fauthentication/rpc_logout.proto2\xfd\x06\n" +
+	"\x15AuthenticationService\x12\xba\x01\n" +
+	"\bRegister\x12#.lms.authentication.RegisterRequest\x1a$.lms.authentication.RegisterResponse\"c\x92A1\x1a/LMS user registration with respective namespace\x82\xd3\xe4\x93\x02):\x01*\"$/lms/v1/auth/{organisation}/register\x12\xc3\x01\n" +
+	"\vVerifyEmail\x12&.lms.authentication.EmailVerifyRequest\x1a'.lms.authentication.EmailVerifyResponse\"c\x92A\x1d\x1a\x1bLMS user Email Verification\x82\xd3\xe4\x93\x02=:\x01*\"8/lms/v1/auth/{organisation}/verify-email/{email}/{token}\x12\x8d\x01\n" +
+	"\x05Login\x12 .lms.authentication.LoginRequest\x1a!.lms.authentication.LoginResponse\"?\x92A\x10\x1a\x0eLMS User login\x82\xd3\xe4\x93\x02&:\x01*\"!/lms/v1/auth/{organisation}/login\x12\xbd\x01\n" +
+	"\x17ResendVerificationEmail\x12-.lms.authentication.ResendVerificationRequest\x1a..lms.authentication.ResendVerificationResponse\"C\x92A\x13\x1a\x11User email resend\x82\xd3\xe4\x93\x02'\"%/lms/v1/{organisation}/resend/{email}\x12\x90\x01\n" +
+	"\x06LogOut\x12#.lms.authentication.LoginOutRequest\x1a\".lms.authentication.LogoutResponse\"=\x92A\r\x1a\vUser logout\x82\xd3\xe4\x93\x02':\x01*\"\"/lms/v1/auth/{organisation}/logoutBDZBgithub.com/multi-tenant-cms-golang/lms-sys/protogen/authenticationb\x06proto3"
 
 var file_authentication_service_authentication_proto_goTypes = []any{
-	(*RegisterRequest)(nil),     // 0: lms.authentication.RegisterRequest
-	(*EmailVerifyRequest)(nil),  // 1: lms.authentication.EmailVerifyRequest
-	(*RegisterResponse)(nil),    // 2: lms.authentication.RegisterResponse
-	(*EmailVerifyResponse)(nil), // 3: lms.authentication.EmailVerifyResponse
+	(*RegisterRequest)(nil),            // 0: lms.authentication.RegisterRequest
+	(*EmailVerifyRequest)(nil),         // 1: lms.authentication.EmailVerifyRequest
+	(*LoginRequest)(nil),               // 2: lms.authentication.LoginRequest
+	(*ResendVerificationRequest)(nil),  // 3: lms.authentication.ResendVerificationRequest
+	(*LoginOutRequest)(nil),            // 4: lms.authentication.LoginOutRequest
+	(*RegisterResponse)(nil),           // 5: lms.authentication.RegisterResponse
+	(*EmailVerifyResponse)(nil),        // 6: lms.authentication.EmailVerifyResponse
+	(*LoginResponse)(nil),              // 7: lms.authentication.LoginResponse
+	(*ResendVerificationResponse)(nil), // 8: lms.authentication.ResendVerificationResponse
+	(*LogoutResponse)(nil),             // 9: lms.authentication.LogoutResponse
 }
 var file_authentication_service_authentication_proto_depIdxs = []int32{
 	0, // 0: lms.authentication.AuthenticationService.Register:input_type -> lms.authentication.RegisterRequest
 	1, // 1: lms.authentication.AuthenticationService.VerifyEmail:input_type -> lms.authentication.EmailVerifyRequest
-	2, // 2: lms.authentication.AuthenticationService.Register:output_type -> lms.authentication.RegisterResponse
-	3, // 3: lms.authentication.AuthenticationService.VerifyEmail:output_type -> lms.authentication.EmailVerifyResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	2, // 2: lms.authentication.AuthenticationService.Login:input_type -> lms.authentication.LoginRequest
+	3, // 3: lms.authentication.AuthenticationService.ResendVerificationEmail:input_type -> lms.authentication.ResendVerificationRequest
+	4, // 4: lms.authentication.AuthenticationService.LogOut:input_type -> lms.authentication.LoginOutRequest
+	5, // 5: lms.authentication.AuthenticationService.Register:output_type -> lms.authentication.RegisterResponse
+	6, // 6: lms.authentication.AuthenticationService.VerifyEmail:output_type -> lms.authentication.EmailVerifyResponse
+	7, // 7: lms.authentication.AuthenticationService.Login:output_type -> lms.authentication.LoginResponse
+	8, // 8: lms.authentication.AuthenticationService.ResendVerificationEmail:output_type -> lms.authentication.ResendVerificationResponse
+	9, // 9: lms.authentication.AuthenticationService.LogOut:output_type -> lms.authentication.LogoutResponse
+	5, // [5:10] is the sub-list for method output_type
+	0, // [0:5] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -56,6 +71,9 @@ func file_authentication_service_authentication_proto_init() {
 	}
 	file_authentication_rpc_register_proto_init()
 	file_authentication_rpc_email_verify_proto_init()
+	file_authentication_rpc_login_proto_init()
+	file_authentication_rpc_resend_email_verification_proto_init()
+	file_authentication_rpc_logout_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

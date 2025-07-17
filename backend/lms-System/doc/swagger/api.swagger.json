@@ -16,7 +16,85 @@
     "application/json"
   ],
   "paths": {
-    "/lms/v1/{organisation}/register": {
+    "/lms/v1/auth/{organisation}/login": {
+      "post": {
+        "description": "LMS User login",
+        "operationId": "AuthenticationService_Login",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authenticationLoginResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organisation",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AuthenticationServiceLoginBody"
+            }
+          }
+        ],
+        "tags": [
+          "AuthenticationService"
+        ]
+      }
+    },
+    "/lms/v1/auth/{organisation}/logout": {
+      "post": {
+        "description": "User logout",
+        "operationId": "AuthenticationService_LogOut",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authenticationLogoutResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organisation",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AuthenticationServiceLogOutBody"
+            }
+          }
+        ],
+        "tags": [
+          "AuthenticationService"
+        ]
+      }
+    },
+    "/lms/v1/auth/{organisation}/register": {
       "post": {
         "description": "LMS user registration with respective namespace",
         "operationId": "AuthenticationService_Register",
@@ -55,7 +133,7 @@
         ]
       }
     },
-    "/lms/v1/{organisation}/verify-email/{email}/{token}": {
+    "/lms/v1/auth/{organisation}/verify-email/{email}/{token}": {
       "post": {
         "description": "LMS user Email Verification",
         "operationId": "AuthenticationService_VerifyEmail",
@@ -105,9 +183,65 @@
           "AuthenticationService"
         ]
       }
+    },
+    "/lms/v1/{organisation}/resend/{email}": {
+      "post": {
+        "description": "User email resend",
+        "operationId": "AuthenticationService_ResendVerificationEmail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authenticationResendVerificationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organisation",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AuthenticationService"
+        ]
+      }
     }
   },
   "definitions": {
+    "AuthenticationServiceLogOutBody": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        }
+      }
+    },
+    "AuthenticationServiceLoginBody": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
     "AuthenticationServiceRegisterBody": {
       "type": "object",
       "properties": {
@@ -142,6 +276,29 @@
         }
       }
     },
+    "authenticationLoginResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "authenticationLogoutResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "authenticationRegisterResponse": {
       "type": "object",
       "properties": {
@@ -150,6 +307,17 @@
         },
         "message": {
           "type": "string"
+        }
+      }
+    },
+    "authenticationResendVerificationResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
         }
       }
     },

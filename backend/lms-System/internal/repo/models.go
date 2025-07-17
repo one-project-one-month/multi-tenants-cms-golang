@@ -105,6 +105,7 @@ const (
 	LmsRoleTypeLMSADMIN   LmsRoleType = "LMS_ADMIN"
 	LmsRoleTypeSTUDENT    LmsRoleType = "STUDENT"
 	LmsRoleTypeINSTRUCTOR LmsRoleType = "INSTRUCTOR"
+	LmsRoleTypeUSER       LmsRoleType = "USER"
 )
 
 func (e *LmsRoleType) Scan(src interface{}) error {
@@ -233,17 +234,20 @@ type Assignment struct {
 	CourseID     uuid.UUID      `json:"course_id"`
 	Title        string         `json:"title"`
 	Instructions sql.NullString `json:"instructions"`
+	DueDate      sql.NullTime   `json:"due_date"`
+	MaxScore     sql.NullInt32  `json:"max_score"`
 	CreatedAt    sql.NullTime   `json:"created_at"`
 	UpdatedAt    sql.NullTime   `json:"updated_at"`
 }
 
 type Certificate struct {
-	CertificateID  uuid.UUID      `json:"certificate_id"`
-	EnrollmentID   uuid.UUID      `json:"enrollment_id"`
-	IssueDate      sql.NullTime   `json:"issue_date"`
-	CertificateUrl sql.NullString `json:"certificate_url"`
-	CreatedAt      sql.NullTime   `json:"created_at"`
-	UpdatedAt      sql.NullTime   `json:"updated_at"`
+	CertificateID    uuid.UUID      `json:"certificate_id"`
+	EnrollmentID     uuid.UUID      `json:"enrollment_id"`
+	IssueDate        sql.NullTime   `json:"issue_date"`
+	CertificateUrl   sql.NullString `json:"certificate_url"`
+	VerificationCode sql.NullString `json:"verification_code"`
+	CreatedAt        sql.NullTime   `json:"created_at"`
+	UpdatedAt        sql.NullTime   `json:"updated_at"`
 }
 
 type Course struct {
@@ -251,7 +255,7 @@ type Course struct {
 	CourseTitle      string           `json:"course_title"`
 	Description      sql.NullString   `json:"description"`
 	InstructorID     uuid.UUID        `json:"instructor_id"`
-	OverallRating    sql.NullInt32    `json:"overall_rating"`
+	OverallRating    sql.NullString   `json:"overall_rating"`
 	CourseCategory   uuid.UUID        `json:"course_category"`
 	Status           NullCourseStatus `json:"status"`
 	DurationDayCount sql.NullInt32    `json:"duration_day_count"`
@@ -281,13 +285,14 @@ type Enrollment struct {
 }
 
 type Lesson struct {
-	LessonID     uuid.UUID        `json:"lesson_id"`
-	Title        string           `json:"title"`
-	Content      sql.NullString   `json:"content"`
-	MaterialType NullMaterialType `json:"material_type"`
-	ModuleID     uuid.UUID        `json:"module_id"`
-	CreatedAt    sql.NullTime     `json:"created_at"`
-	UpdatedAt    sql.NullTime     `json:"updated_at"`
+	LessonID      uuid.UUID        `json:"lesson_id"`
+	Title         string           `json:"title"`
+	Content       sql.NullString   `json:"content"`
+	MaterialType  NullMaterialType `json:"material_type"`
+	ModuleID      uuid.UUID        `json:"module_id"`
+	SequenceOrder sql.NullInt32    `json:"sequence_order"`
+	CreatedAt     sql.NullTime     `json:"created_at"`
+	UpdatedAt     sql.NullTime     `json:"updated_at"`
 }
 
 type LmsUser struct {
@@ -295,7 +300,6 @@ type LmsUser struct {
 	LmsUserName      string         `json:"lms_user_name"`
 	LmsUserEmail     string         `json:"lms_user_email"`
 	Password         string         `json:"password"`
-	LmsRoleID        uuid.UUID      `json:"lms_role_id"`
 	TenantID         uuid.NullUUID  `json:"tenant_id"`
 	Address          sql.NullString `json:"address"`
 	PhoneNumber      sql.NullString `json:"phone_number"`
@@ -311,13 +315,24 @@ type LmsUserRole struct {
 	LmsRoleName LmsRoleType `json:"lms_role_name"`
 }
 
+type LmsUserRolesMap struct {
+	UserRoleID   uuid.UUID    `json:"user_role_id"`
+	LmsUserID    uuid.UUID    `json:"lms_user_id"`
+	LmsRoleID    uuid.UUID    `json:"lms_role_id"`
+	AssignedDate sql.NullTime `json:"assigned_date"`
+	IsActive     sql.NullBool `json:"is_active"`
+	CreatedAt    sql.NullTime `json:"created_at"`
+	UpdatedAt    sql.NullTime `json:"updated_at"`
+}
+
 type Module struct {
-	ModuleID    uuid.UUID      `json:"module_id"`
-	ModuleName  string         `json:"module_name"`
-	CourseID    uuid.UUID      `json:"course_id"`
-	Description sql.NullString `json:"description"`
-	CreatedAt   sql.NullTime   `json:"created_at"`
-	UpdatedAt   sql.NullTime   `json:"updated_at"`
+	ModuleID      uuid.UUID      `json:"module_id"`
+	ModuleName    string         `json:"module_name"`
+	CourseID      uuid.UUID      `json:"course_id"`
+	Description   sql.NullString `json:"description"`
+	SequenceOrder sql.NullInt32  `json:"sequence_order"`
+	CreatedAt     sql.NullTime   `json:"created_at"`
+	UpdatedAt     sql.NullTime   `json:"updated_at"`
 }
 
 type NamespaceConsumer struct {
@@ -338,12 +353,12 @@ type Quiz struct {
 }
 
 type Rating struct {
-	RatingID    uuid.UUID     `json:"rating_id"`
-	UserID      uuid.UUID     `json:"user_id"`
-	CourseID    uuid.UUID     `json:"course_id"`
-	RatingCount sql.NullInt32 `json:"rating_count"`
-	CreatedAt   sql.NullTime  `json:"created_at"`
-	UpdatedAt   sql.NullTime  `json:"updated_at"`
+	RatingID    uuid.UUID    `json:"rating_id"`
+	UserID      uuid.UUID    `json:"user_id"`
+	CourseID    uuid.UUID    `json:"course_id"`
+	RatingCount int32        `json:"rating_count"`
+	CreatedAt   sql.NullTime `json:"created_at"`
+	UpdatedAt   sql.NullTime `json:"updated_at"`
 }
 
 type Report struct {
@@ -352,6 +367,7 @@ type Report struct {
 	GeneratedByUserID uuid.UUID      `json:"generated_by_user_id"`
 	GeneratedDate     sql.NullTime   `json:"generated_date"`
 	DataSnapshot      sql.NullString `json:"data_snapshot"`
+	ReportType        sql.NullString `json:"report_type"`
 	CreatedAt         sql.NullTime   `json:"created_at"`
 	UpdatedAt         sql.NullTime   `json:"updated_at"`
 }
@@ -382,6 +398,8 @@ type Submission struct {
 	StudentID    uuid.UUID      `json:"student_id"`
 	SubmittedAt  sql.NullTime   `json:"submitted_at"`
 	FileUrl      sql.NullString `json:"file_url"`
+	Grade        sql.NullInt32  `json:"grade"`
+	Feedback     sql.NullString `json:"feedback"`
 	CreatedAt    sql.NullTime   `json:"created_at"`
 	UpdatedAt    sql.NullTime   `json:"updated_at"`
 }

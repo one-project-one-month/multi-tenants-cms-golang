@@ -8,6 +8,8 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
 	github.com/hashicorp/consul/api v1.32.1
 	github.com/jackc/pgx/v5 v5.7.5
+	github.com/joho/godotenv v1.5.1
+	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/nats-io/nats.go v1.43.0
 	github.com/rakyll/statik v0.1.7
 	github.com/redis/go-redis/v9 v9.11.0
@@ -20,6 +22,7 @@ require (
 )
 
 require (
+	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
@@ -48,4 +51,5 @@ require (
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )
