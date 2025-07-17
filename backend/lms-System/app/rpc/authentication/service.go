@@ -15,7 +15,7 @@ import (
 type AuthenticationService struct {
 	authenticationpb.UnimplementedAuthenticationServiceServer
 	databaseCtx context.Context
-	store       *repo.Store
+	store       repo.Store
 	logger      *logrus.Logger
 	cfg         *types.Config
 	//redisClient *redis.Client
@@ -23,7 +23,7 @@ type AuthenticationService struct {
 }
 
 func NewAuthenticationService(
-	store *repo.Store,
+	store repo.Store,
 	logger *logrus.Logger,
 	config *types.Config,
 ) *AuthenticationService {

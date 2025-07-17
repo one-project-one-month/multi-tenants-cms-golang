@@ -3,7 +3,9 @@ package authentication
 import (
 	"context"
 	"database/sql"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils"
 	convertor "github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/convert"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/redis"
 	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
@@ -27,8 +29,14 @@ func toRegisterSql(reqModel *authenticationpb.RegisterRequest) *repo.RegisterUse
 		LmsUserName:  reqModel.Username,
 		LmsUserEmail: reqModel.Email,
 		Password:     reqModel.Password,
-		Address:      sql.NullString{String: reqModel.Address, Valid: reqModel.Address == ""},
-		PhoneNumber:  sql.NullString{String: reqModel.PhoneNumber, Valid: true},
+		Address: pgtype.Text(sql.NullString{
+			String: reqModel.Address,
+			Valid:  reqModel.Address == "",
+		}),
+		PhoneNumber: pgtype.Text(sql.NullString{
+			String: reqModel.PhoneNumber,
+			Valid:  true,
+		}),
 	}
 }
 func (s *AuthenticationService) Register(
@@ -87,11 +95,11 @@ func (s *AuthenticationService) Register(
 			Id:               userCreated.LmsUserID.String(),
 			Username:         userCreated.LmsUserName,
 			Email:            userCreated.LmsUserEmail,
-			PhoneNumber:      convertor.NullableStringToString(userCreated.PhoneNumber),
-			Address:          convertor.NullableStringToString(userCreated.Address),
-			RegistrationDate: convertor.NullTimeToProtoTimestamp(userCreated.RegistrationDate),
-			CreatedAt:        convertor.NullTimeToProtoTimestamp(userCreated.CreatedAt),
-			UpdatedAt:        convertor.NullTimeToProtoTimestamp(userCreated.UpdatedAt),
+			PhoneNumber:      convertor.NullableStringToString(sql.NullString(userCreated.PhoneNumber)),
+			Address:          convertor.NullableStringToString(sql.NullString(userCreated.Address)),
+			RegistrationDate: utils.ParseTimestamp(userCreated.RegistrationDate),
+			CreatedAt:        utils.ParseTimestamp(userCreated.CreatedAt),
+			UpdatedAt:        utils.ParseTimestamp(userCreated.UpdatedAt),
 		},
 		Message: "user created successfully. email is sent to the registered mail",
 	}, nil

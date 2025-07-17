@@ -5,7 +5,7 @@
 -- -----------------------------------------------------------------------------
 -- Custom Types
 -- -----------------------------------------------------------------------------
-CREATE TYPE lms_role_type AS ENUM ('LMS_ADMIN', 'STUDENT', 'INSTRUCTOR', 'USER');
+CREATE TYPE lms_role_type AS ENUM ('ADMIN', 'INSTRUCTOR', 'STUDENT', 'VIEWER');
 CREATE TYPE system_type AS ENUM ('LMS', 'EMS');
 CREATE TYPE enrollment_type AS ENUM ('ENROLLED', 'COMPLETED', 'DROPPED');
 CREATE TYPE material_type AS ENUM ('Video', 'PDF', 'Slide', 'Link');

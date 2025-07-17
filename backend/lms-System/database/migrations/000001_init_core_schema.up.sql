@@ -1,5 +1,11 @@
 BEGIN;
 
+-- Create ENUM types
+CREATE TYPE lms_role_type AS ENUM ('ADMIN', 'INSTRUCTOR', 'STUDENT', 'VIEWER');
+CREATE TYPE course_status AS ENUM ('Pending', 'Active', 'Completed', 'Cancelled');
+CREATE TYPE enrollment_type AS ENUM ('Active', 'Completed', 'Dropped', 'Pending');
+CREATE TYPE material_type AS ENUM ('Video', 'Document', 'Quiz', 'Assignment', 'Link');
+
 -- 1. Create Role Type Table
 CREATE TABLE LMS_USER_Role (
                                lms_role_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -18,20 +24,22 @@ CREATE TABLE Tenants (
 -- 3. Create Users Table
 CREATE TABLE LMS_USER (
                           lms_user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                          lms_user_name varchar(100) NOT NULL ,
+                          lms_user_name VARCHAR(100) NOT NULL,
                           lms_user_email VARCHAR(255) UNIQUE NOT NULL,
                           password VARCHAR(255) NOT NULL,
                           lms_role_id UUID NOT NULL,
                           tenant_id UUID,
                           address TEXT,
                           phone_number VARCHAR(100),
-                          registration_date DATE,
+                          mfa_enable BOOLEAN DEFAULT FALSE,
+                          email_verified BOOLEAN DEFAULT FALSE,
+                          registration_date DATE DEFAULT CURRENT_DATE,
                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                          CONSTRAINT fk_lms_user_role FOREIGN KEY (lms_role_id)
-                              REFERENCES LMS_USER_Role(lms_role_id) ON DELETE RESTRICT,
                           CONSTRAINT fk_lms_user_tenant FOREIGN KEY (tenant_id)
-                              REFERENCES Tenants(tenant_id) ON DELETE SET NULL
+                              REFERENCES Tenants(tenant_id) ON DELETE SET NULL,
+                          CONSTRAINT fk_lms_user_role FOREIGN KEY (lms_role_id)
+                              REFERENCES LMS_USER_Role(lms_role_id) ON DELETE RESTRICT
 );
 
 -- 4. Tenant Members
@@ -242,3 +250,141 @@ CREATE TABLE Report (
 );
 
 COMMIT;
+
+-- Create indexes for better performance
+CREATE INDEX idx_lms_user_email ON LMS_USER(lms_user_email);
+CREATE INDEX idx_lms_user_role ON LMS_USER(lms_role_id);
+CREATE INDEX idx_lms_user_created_at ON LMS_USER(created_at);
+CREATE INDEX idx_lms_user_registration_date ON LMS_USER(registration_date);
+CREATE INDEX idx_lms_user_phone ON LMS_USER(phone_number);
+CREATE INDEX idx_lms_user_role_active ON LMS_USER(lms_role_id, created_at);
+
+CREATE INDEX idx_tenants_namespace ON Tenants(namespace);
+CREATE INDEX idx_tenants_owner ON Tenants(cms_owner_id);
+CREATE INDEX idx_tenants_active ON Tenants(is_active);
+CREATE INDEX idx_tenants_created_at ON Tenants(created_at);
+CREATE INDEX idx_tenants_active_true ON Tenants(tenant_id) WHERE is_active = TRUE;
+
+CREATE INDEX idx_tenant_members_user ON Tenants_Members(lms_user_id);
+CREATE INDEX idx_tenant_members_tenant ON Tenants_Members(tenant_id);
+CREATE INDEX idx_tenant_members_joined_date ON Tenants_Members(joined_date);
+CREATE INDEX idx_tenant_members_active ON Tenants_Members(is_active);
+CREATE INDEX idx_tenant_members_active_user ON Tenants_Members(is_active, lms_user_id);
+CREATE INDEX idx_tenant_members_active_tenant ON Tenants_Members(is_active, tenant_id);
+CREATE INDEX idx_tenant_members_active_true ON Tenants_Members(lms_user_id, tenant_id) WHERE is_active = TRUE;
+
+CREATE INDEX idx_course_instructor ON Course(instructor_id);
+CREATE INDEX idx_course_category ON Course(course_category);
+CREATE INDEX idx_course_owner ON Course(owned_by);
+CREATE INDEX idx_course_title ON Course(course_title);
+CREATE INDEX idx_course_created_at ON Course(created_at);
+CREATE INDEX idx_course_rating ON Course(overall_rating);
+CREATE INDEX idx_course_status ON Course(status);
+CREATE INDEX idx_course_instructor_category ON Course(instructor_id, course_category);
+CREATE INDEX idx_course_owner_category ON Course(owned_by, course_category);
+
+CREATE INDEX idx_category_name ON Course_Category(category_name);
+CREATE INDEX idx_category_created_at ON Course_Category(created_at);
+
+CREATE INDEX idx_namespace_consumer_user ON namespace_consumer(lms_user_id);
+CREATE INDEX idx_namespace_consumer_namespace ON namespace_consumer(namespace);
+CREATE INDEX idx_namespace_consumer_active ON namespace_consumer(is_active);
+CREATE INDEX idx_namespace_consumer_joined_date ON namespace_consumer(joined_date);
+
+CREATE INDEX idx_enrollment_student ON enrollment(student_id);
+CREATE INDEX idx_enrollment_course ON enrollment(course_id);
+CREATE INDEX idx_enrollment_status ON enrollment(status);
+CREATE INDEX idx_enrollment_date ON enrollment(enrollment_date);
+
+CREATE INDEX idx_rating_user ON Rating(user_id);
+CREATE INDEX idx_rating_course ON Rating(course_id);
+CREATE INDEX idx_rating_count ON Rating(rating_count);
+
+CREATE INDEX idx_module_course ON Module(course_id);
+CREATE INDEX idx_module_name ON Module(module_name);
+
+CREATE INDEX idx_quiz_module ON Quiz(module_id);
+
+CREATE INDEX idx_student_quiz_student ON Student_Quiz(student_id);
+CREATE INDEX idx_student_quiz_quiz ON Student_Quiz(quiz_id);
+CREATE INDEX idx_student_quiz_score ON Student_Quiz(score);
+
+CREATE INDEX idx_lesson_module ON Lesson(module_id);
+CREATE INDEX idx_lesson_title ON Lesson(title);
+
+CREATE INDEX idx_assignment_course ON Assignment(course_id);
+
+CREATE INDEX idx_submission_assignment ON Submission(assignment_id);
+CREATE INDEX idx_submission_student ON Submission(student_id);
+CREATE INDEX idx_submission_date ON Submission(submitted_at);
+
+CREATE INDEX idx_review_course ON Review(course_id);
+CREATE INDEX idx_review_user ON Review(user_id);
+
+CREATE INDEX idx_report_generated_by ON Report(generated_by_user_id);
+CREATE INDEX idx_report_date ON Report(generated_date);
+
+-- Create function to prevent students from being tenant members
+CREATE OR REPLACE FUNCTION prevent_student_tenant_membership()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM LMS_USER u
+        JOIN LMS_USER_Role r ON r.lms_role_id = u.lms_role_id
+        WHERE u.lms_user_id = NEW.lms_user_id
+        AND r.lms_role_name = 'STUDENT'
+    ) THEN
+        RAISE EXCEPTION 'Students cannot be tenant members';
+END IF;
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create function to auto assign student to namespace_consumer
+CREATE OR REPLACE FUNCTION auto_assign_student_to_namespace_consumer()
+RETURNS TRIGGER AS $$
+DECLARE
+student_namespace VARCHAR(255);
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM LMS_USER_Role r
+        WHERE r.lms_role_id = NEW.lms_role_id
+        AND r.lms_role_name = 'STUDENT'
+    ) THEN
+        IF NEW.tenant_id IS NOT NULL THEN
+SELECT namespace INTO student_namespace
+FROM Tenants
+WHERE tenant_id = NEW.tenant_id
+  AND is_active = TRUE;
+
+IF student_namespace IS NOT NULL THEN
+                INSERT INTO namespace_consumer (lms_user_id, namespace)
+                VALUES (NEW.lms_user_id, student_namespace)
+                ON CONFLICT (lms_user_id, namespace) DO NOTHING;
+END IF;
+END IF;
+END IF;
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger to prevent student tenant membership
+CREATE TRIGGER trg_prevent_student_tenant_membership
+    BEFORE INSERT OR UPDATE ON Tenants_Members
+                         FOR EACH ROW
+                         EXECUTE FUNCTION prevent_student_tenant_membership();
+
+-- Create trigger to auto assign student to namespace_consumer
+CREATE TRIGGER trg_auto_assign_student_insert
+    AFTER INSERT ON LMS_USER
+    FOR EACH ROW
+    EXECUTE FUNCTION auto_assign_student_to_namespace_consumer();
+
+-- Create trigger to auto assign student to namespace_consumer on update
+CREATE TRIGGER trg_auto_assign_student_update
+    AFTER UPDATE OF tenant_id ON LMS_USER
+    FOR EACH ROW
+    WHEN (OLD.tenant_id IS DISTINCT FROM NEW.tenant_id)
+    EXECUTE FUNCTION auto_assign_student_to_namespace_consumer();

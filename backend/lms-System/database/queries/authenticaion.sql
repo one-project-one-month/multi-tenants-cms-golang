@@ -15,7 +15,7 @@ WITH inserted_user AS (
      role_ids AS (
          SELECT lms_role_id
          FROM LMS_USER_Role
-         WHERE lms_role_name IN ('STUDENT', 'USER')
+         WHERE lms_role_name IN ('STUDENT', 'VIEWER')
      ),
      role_assignments AS (
          INSERT INTO lms_user_roles_map (lms_user_id, lms_role_id)

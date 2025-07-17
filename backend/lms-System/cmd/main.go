@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/nats"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/redis"
 	"io"
 	"os"
 	"runtime"
@@ -22,16 +24,13 @@ import (
 )
 
 func initLogger() *logrus.Logger {
-	// Load environment variables
 	if err := godotenv.Load(); err != nil {
 		logrus.WithError(err).Fatal("Failed to load .env")
 	}
 
-	// Initialize logger
 	logger := logrus.New()
 	logger.Info("Initializing logger with rotation and JSON formatting")
 
-	// Configure Lumberjack for log rotation
 	logFile := &lumberjack.Logger{
 		Filename:   "logs/lms-system.log",
 		MaxSize:    100, // MB
@@ -43,11 +42,9 @@ func initLogger() *logrus.Logger {
 	logger.Infof("Configured log rotation: file=%s, maxSize=%dMB, maxBackups=%d, maxAge=%ddays, compress=%t",
 		logFile.Filename, logFile.MaxSize, logFile.MaxBackups, logFile.MaxAge, logFile.Compress)
 
-	// Set output to both file and stdout
 	logger.Info("Setting dual output to stdout and log file")
 	logger.SetOutput(io.MultiWriter(os.Stdout, logFile))
 
-	// Configure JSON formatter with enhanced caller info
 	logger.Info("Configuring JSON formatter with custom fields")
 	logger.SetFormatter(&logrus.JSONFormatter{
 		TimestampFormat: "2006-01-02T15:04:05.999Z07:00",
@@ -113,12 +110,22 @@ func main() {
 	jwtIssuer := env.GetEnv("LMS_JWT_ISSUER", "lms-system")
 	jwtAudience := env.GetEnv("LMS_JWT_AUDIENCE", "lms-client")
 	consulAddress := env.GetEnv("LMS_CONSUL_ADDRESS", "localhost:8500")
+	redisAddress := env.GetEnv("LMS_REDIS_ADDRESS", "localhost:6379")
+	redisPassword := env.GetEnv("LMS_REDIS_PASSWORD", "")
+	dbRedis := env.GetEnvAsInt("LMS_DB_REDIS_ADDRESS", 0)
+	natsUrl := env.GetEnv("LMS_NATS_URL", "nats://localhost:4222")
 	//serviceName := env.GetEnv("LMS_SERVICE_NAME", "lms-service")
 	serviceID := env.GetEnv("LMS_SERVICE_ID", "lms-srvice-1")
 
 	dbConn := DatabaseConn(logger)
 	defer dbConn.Close()
 
+	redis.InitRedis(redisAddress, redisPassword, dbRedis)
+	err := nats.InitNATS(natsUrl)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to connect to NATS")
+		return
+	}
 	dbStore := db.NewStore(dbConn)
 
 	consulClient, err := NewConsulClient(consulAddress)

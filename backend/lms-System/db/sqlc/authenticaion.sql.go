@@ -3,11 +3,12 @@
 //   sqlc v1.29.0
 // source: authenticaion.sql
 
-package repo
+package db
 
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -28,7 +29,7 @@ WITH inserted_user AS (
      role_ids AS (
          SELECT lms_role_id
          FROM LMS_USER_Role
-         WHERE lms_role_name IN ('STUDENT', 'USER')
+         WHERE lms_role_name IN ('STUDENT', 'VIEWER')
      ),
      role_assignments AS (
          INSERT INTO lms_user_roles_map (lms_user_id, lms_role_id)
@@ -50,7 +51,7 @@ type RegisterUserWithRolesParams struct {
 }
 
 type RegisterUserWithRolesRow struct {
-	LmsUserID        pgtype.UUID      `json:"lms_user_id"`
+	LmsUserID        uuid.UUID        `json:"lms_user_id"`
 	LmsUserName      string           `json:"lms_user_name"`
 	LmsUserEmail     string           `json:"lms_user_email"`
 	Address          pgtype.Text      `json:"address"`
