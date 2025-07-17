@@ -25,7 +25,7 @@ import (
 
 type AuthService interface {
 	Login(email, password string) (*types.AuthResponse, error)
-	Register(req *types.RegisterRequest) (*types.AuthResponse, error)
+	Register(req *types.RegisterRequest, address string) (*types.AuthResponse, error)
 	RefreshToken(refreshToken string) (*types.TokenResponse, error)
 	GetUserProfile(userID uuid.UUID) (*types.UserResponse, error)
 	GetMe(req types.GetMeRequest) (*types.UserResponse, error)
@@ -35,7 +35,7 @@ type AuthService interface {
 	VerifyMFALogin(userID uuid.UUID, verificationCode string) (*types.AuthResponse, error)
 	VerifyMFASetup(userID uuid.UUID, tokenID uint, verificationCode string) error
 	VerifyCredentials(email string, password string) (*types.CMSUser, error)
-	EmailServiceCommunication(userId uuid.UUID) error
+	EmailServiceCommunication(userId uuid.UUID, info *utils.LocationInfo) error
 	VerifyEmail(email string, code string) error
 }
 
@@ -117,7 +117,11 @@ func (s *Service) Login(email, password string) (*types.AuthResponse, error) {
 	}, nil
 }
 
-func (s *Service) Register(req *types.RegisterRequest) (*types.AuthResponse, error) {
+func (s *Service) Register(req *types.RegisterRequest, address string) (*types.AuthResponse, error) {
+	locationInfo, err := utils.GetLocationFromIP(address)
+	if err != nil {
+		s.log.WithError(err).Error("Failed to get location info")
+	}
 	exists, err := s.repo.EmailExists(req.Email)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check email availability: %w", err)
@@ -147,7 +151,7 @@ func (s *Service) Register(req *types.RegisterRequest) (*types.AuthResponse, err
 	}
 
 	if !s.isAutoVerifyEnabled() {
-		if err := s.sendVerificationEmail(user.CMSUserID); err != nil {
+		if err := s.sendVerificationEmail(user.CMSUserID, locationInfo); err != nil {
 			return nil, fmt.Errorf("failed to send verification email: %w", err)
 		}
 	}
@@ -164,6 +168,7 @@ func (s *Service) Register(req *types.RegisterRequest) (*types.AuthResponse, err
 		},
 	}, nil
 }
+
 func (s *Service) RefreshToken(refreshToken string) (*types.TokenResponse, error) {
 	claims, err := utils.ValidateToken(
 		refreshToken,
@@ -521,7 +526,8 @@ func (s *Service) VerifyMFALogin(userID uuid.UUID, verificationCode string) (*ty
 		ExpiresAt:    time.Now().Add(15 * time.Minute),
 	}, nil
 }
-func (s *Service) EmailServiceCommunication(userId uuid.UUID) error {
+
+func (s *Service) EmailServiceCommunication(userId uuid.UUID, info *utils.LocationInfo) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -537,6 +543,14 @@ func (s *Service) EmailServiceCommunication(userId uuid.UUID) error {
 		return err
 	}
 
+	userLoc, err := time.LoadLocation(info.Timezone)
+	if err != nil {
+		s.log.WithError(err).Error("Failed to load timezone")
+	}
+
+	expirationDuration := time.Minute * 10
+	expirationTimeLocal := time.Now().In(userLoc).Add(expirationDuration)
+	expirationUnix := expirationTimeLocal.UTC()
 	var redisErr, natsErr error
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -551,10 +565,18 @@ func (s *Service) EmailServiceCommunication(userId uuid.UUID) error {
 
 	go func() {
 		defer wg.Done()
-		emailPayload := EmailRequest{
-			To:      user.CMSUserEmail,
-			Subject: "verification code",
-			Body:    "verification code is " + code,
+		emailPayload := types.EmailRequest{
+			To:           user.CMSUserEmail,
+			Subject:      "verification code",
+			TemplateName: "verification",
+			Data: map[string]interface{}{
+				"CompanyNameLogo": "CMS System",
+				"CompanyName":     "CMS System",
+				"Subject":         "Email verification",
+				"Code":            code,
+				"ExpirationTime":  expirationUnix,
+				"CurrentYear":     time.Now().Year(),
+			},
 		}
 
 		data, _ := json.Marshal(emailPayload)
@@ -651,19 +673,20 @@ func (s *Service) determineUserRole(requestedRole string) string {
 }
 
 func (s *Service) isAutoVerifyEnabled() bool {
-	return s.appStatus == "development"
+	switch s.appStatus {
+	case "development":
+		return true
+	case "staging", "production":
+		return false
+	default:
+		return false
+	}
 }
 
-func (s *Service) sendVerificationEmail(userID uuid.UUID) error {
+func (s *Service) sendVerificationEmail(userID uuid.UUID, info *utils.LocationInfo) error {
 	if s.appStatus == "development" {
 		s.log.Info("Skipping email sending in development mode")
 		return nil
 	}
-	return s.EmailServiceCommunication(userID)
-}
-
-type EmailRequest struct {
-	To      string `json:"to"`
-	Subject string `json:"subject"`
-	Body    string `json:"body"`
+	return s.EmailServiceCommunication(userID, info)
 }

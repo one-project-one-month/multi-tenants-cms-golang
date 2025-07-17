@@ -1,0 +1,191 @@
+version: '3.8'
+
+services:
+  consul:
+    image: hashicorp/consul:1.17
+    networks:
+      - railway-network
+    ports:
+      - "8500:8500"
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+      - CONSUL_CLIENT_INTERFACE=eth0
+    command: >
+      consul agent -dev
+      -client=0.0.0.0
+      -bind=0.0.0.0
+      -datacenter=railway
+      -ui
+      -log-level=WARN
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: ./backend/gateway
+      dockerfile: Dockerfile
+    networks:
+      - railway-network
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=railway
+      - PORT=${PORT:-8080}
+    depends_on:
+      - consul
+    restart: unless-stopped
+
+  cms-main-system:
+    build:
+      context: ./backend/cms-sys
+      dockerfile: Dockerfile
+    networks:
+      - railway-network
+    environment:
+      # Use Railway's managed PostgreSQL
+      - DB_HOST=${PGHOST}
+      - DB_PORT=${PGPORT}
+      - DB_NAME=${PGDATABASE}
+      - DB_USER=${PGUSER}
+      - DB_PASSWORD=${PGPASSWORD}
+
+      # Use Railway's managed Redis
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_DB=0
+
+      # Application settings
+      - CMS_APP_STATUS=staging
+      - APP_ENV=staging
+      - LOG_LEVEL=info
+      - LOG_CONSOLE=true
+      - LOG_FILE_PATH=/tmp/app.log
+      - LOG_MAX_SIZE=100
+      - LOG_MAX_BACKUPS=3
+      - LOG_MAX_AGE=28
+      - LOG_COMPRESS=true
+
+      # NATS
+      - NATS_URL=nats://nats:4222
+
+      # Consul
+      - CONSUL_ENABLED=true
+      - CONSUL_ADDRESS=consul:8500
+      - CONSUL_DATACENTER=railway
+      - CONSUL_SCHEME=http
+      - CONSUL_SERVICE_ID=cms-doc-api-1
+      - CONSUL_SERVICE_NAME=cms-doc-service
+      - CONSUL_SERVICE_TAGS=cms,multi-tenant,api,v1,environment:staging
+      - CONSUL_CHECK_TTL=30s
+      - CONSUL_CHECK_ID=service-check-cms-doc-api-1
+      - PORT=8080
+    ports:
+      - "8081:8080"
+    depends_on:
+      - consul
+    restart: unless-stopped
+
+  email-service:
+    build:
+      context: ./backend/email-service
+      dockerfile: Dockerfile
+    networks:
+      - railway-network
+    ports:
+      - "8082:8080"
+    environment:
+      - NATS_URL=nats://nats:4222
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - FROM_EMAIL=${FROM_EMAIL}
+      - FROM_NAME=${FROM_NAME}
+      - FROM_ADDR=${FROM_ADDR}
+      - ENVIRONMENT=staging
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER}
+      - STREAM_NAME=email.notification
+      - SUBJECT_TO=email.send
+      - CONSUMER_NAME=email-consumer
+      - TEMPLATE_DIR=./templates
+      - SERVER_PORT=8080
+
+      # SMTP Configuration
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+
+      # Consul
+      - CONSUL_ENABLED=true
+      - CONSUL_ADDRESS=consul:8500
+      - CONSUL_DATACENTER=railway
+      - CONSUL_SCHEME=http
+      - CONSUL_SERVICE_ID=email-service-1
+      - CONSUL_SERVICE_NAME=email-service
+      - CONSUL_SERVICE_TAGS=email,messaging,service,v1,environment:staging
+      - CONSUL_CHECK_TTL=30s
+    depends_on:
+      - nats
+      - consul
+    restart: unless-stopped
+
+  file-service:
+    build:
+      context: backend/file-service
+      dockerfile: Dockerfile
+    networks:
+      - railway-network
+    environment:
+      - TOKEN=${GITHUB_TOKEN}
+      - GITHUB_OWNER=${GITHUB_OWNER}
+      - GITHUB_REPO=${GITHUB_REPO}
+      - PORT=9009
+      - APP_ENV=staging
+      - LOG_LEVEL=info
+      - LOG_CONSOLE=true
+
+      # Consul
+      - CONSUL_ENABLED=true
+      - CONSUL_ADDRESS=consul:8500
+      - CONSUL_DATACENTER=railway
+      - CONSUL_SCHEME=http
+      - CONSUL_SERVICE_ID=sss-1
+      - CONSUL_SERVICE_NAME=sss
+      - CONSUL_SERVICE_TAGS=file,storage,service,v1,environment:staging
+      - CONSUL_CHECK_TTL=30s
+      - CONSUL_CHECK_ID=service-check-sss-1
+    expose:
+      - "9009"
+    depends_on:
+      - consul
+    restart: unless-stopped
+
+  nats:
+    image: nats:latest
+    networks:
+      - railway-network
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["-js", "-m", "8222"]
+    restart: unless-stopped
+
+  # Optional: Remove dozzle for production/staging or use Railway's built-in logs
+  # dozzle:
+  #   image: amir20/dozzle:latest
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   ports:
+  #     - "8083:8080"
+  #   networks:
+  #     - railway-network
+  #   restart: unless-stopped
+
+networks:
+  railway-network:
+    driver: bridge

@@ -72,7 +72,7 @@ VALUES
     ('ROOT_ADMIN'),
     ('CMS_CUSTOMER');
 
--- Insert admin users
+-- Insert admin lms_user
 INSERT INTO cms_user (cms_user_name, cms_user_email, password, verified, cms_user_role_id)
 VALUES
     ('Super Admin', 'superadmin@company.com',
@@ -148,7 +148,7 @@ FROM cms_user u
 WHERE r.role_name = 'CMS_CUSTOMER'
 ORDER BY u.created_at DESC;
 
--- Query to view all users
+-- Query to view all lms_user
 SELECT * FROM cms_user;
 
 -- Query to view purchase data

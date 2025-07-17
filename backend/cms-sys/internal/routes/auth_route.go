@@ -6,7 +6,7 @@ import (
 )
 
 func SetupRoutes(app *fiber.App, handler handler.AuthHandle) {
-	auth := app.Group("/cms/auth")
+	auth := app.Group("/cms/authentication")
 	auth.Post("/login", handler.Login)
 	auth.Post("/login/mfa/:userid", handler.LoginWithMFA)
 	auth.Post("/register", handler.Register)

@@ -1,0 +1,214 @@
+syntax = "proto3";
+package lms.authentication;
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/authentication";
+
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "google/api/annotations.proto";
+import "authentication/rpc_register.proto";
+import "authentication/rpc_email_verify.proto";
+import "authentication/rpc_login.proto";
+import "authentication/rpc_resend_email_verification.proto";
+import "authentication/rpc_logout.proto";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "LMS Authentication Service";
+    version: "1.0";
+    description: "API for user authentication in the Learning Management System";
+    contact: {
+      name: "LMS Team";
+      url: "https://lms.example.com/support";
+      email: "support@lms.example.com";
+    };
+    license: {
+      name: "Apache 2.0";
+      url: "https://www.apache.org/licenses/LICENSE-2.0.html";
+    };
+  };
+  schemes: HTTPS;
+  schemes: HTTP;
+  consumes: "application/json";
+  produces: "application/json";
+  host: "api.lms.example.com";
+  base_path: "/v1";
+  security_definitions: {
+    security: {
+      key: "Bearer";
+      value: {
+        type: TYPE_API_KEY;
+        in: IN_HEADER;
+        name: "Authorization";
+        description: "Authentication token, prefixed with Bearer";
+      }
+    }
+  };
+  security: {
+    security_requirement: {
+      key: "Bearer";
+      value: {};
+    }
+  }
+};
+
+service AuthenticationService {
+  // Register a new user account
+  rpc Register(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/auth/register"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Register new user"
+      description: "Creates a new user account in the LMS system"
+      tags: "Authentication"
+      responses: {
+        key: "201"
+        value: {
+          description: "User successfully registered"
+          schema: {
+            json_schema: {
+              ref: "#/definitions/RegisterResponse"
+            }
+          }
+        }
+      }
+      responses: {
+        key: "400"
+        value: {
+          description: "Invalid request parameters"
+        }
+      }
+      responses: {
+        key: "409"
+        value: {
+          description: "User already exists"
+        }
+      }
+    };
+  }
+
+  // Verify user email address
+  rpc VerifyEmail(EmailVerifyRequest) returns (EmailVerifyResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/auth/verify-email/{email}/{token}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Verify email address"
+      description: "Verifies a user's email address using the token sent to their email"
+      tags: "Authentication"
+      responses: {
+        key: "200"
+        value: {
+          description: "Email successfully verified"
+          schema: {
+            json_schema: {
+              ref: "#/definitions/EmailVerifyResponse"
+            }
+          }
+        }
+      }
+      responses: {
+        key: "400"
+        value: {
+          description: "Invalid or expired token"
+        }
+      }
+    };
+  }
+
+  // Authenticate user
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/auth/login"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "User login"
+      description: "Authenticates user credentials and returns access tokens"
+      tags: "Authentication"
+      responses: {
+        key: "200"
+        value: {
+          description: "Login successful"
+          schema: {
+            json_schema: {
+              ref: "#/definitions/LoginResponse"
+            }
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Invalid credentials"
+        }
+      }
+    };
+  }
+
+  // Resend verification email
+  rpc ResendVerificationEmail(ResendVerificationRequest) returns (ResendVerificationResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/auth/resend/{email}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Resend verification email"
+      description: "Resends the email verification token to the specified email address"
+      tags: "Authentication"
+      responses: {
+        key: "200"
+        value: {
+          description: "Verification email resent"
+          schema: {
+            json_schema: {
+              ref: "#/definitions/ResendVerificationResponse"
+            }
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Email not found"
+        }
+      }
+    };
+  }
+
+  // Logout user
+  rpc LogOut(LoginOutRequest) returns (LogoutResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/auth/logout"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "User logout"
+      description: "Invalidates the user's authentication tokens"
+      tags: "Authentication"
+      security: {
+        security_requirement: {
+          key: "Bearer";
+          value: {};
+        }
+      }
+      responses: {
+        key: "200"
+        value: {
+          description: "Logout successful"
+          schema: {
+            json_schema: {
+              ref: "#/definitions/LogoutResponse"
+            }
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Invalid or missing token"
+        }
+      }
+    };
+  }
+}

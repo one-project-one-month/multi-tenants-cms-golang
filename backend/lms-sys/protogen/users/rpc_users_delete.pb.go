@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v5.29.3
-// source: users/rpc_users_delete.proto
+// source: lms_user/rpc_users_delete.proto
 
 package users
 

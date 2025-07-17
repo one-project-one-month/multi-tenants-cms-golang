@@ -25,8 +25,8 @@ type CMSWholeSysRole struct {
 	RoleID   uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"role_id"`
 	RoleName string    `gorm:"type:varchar(15);not null;unique" json:"role_name"`
 
-	// One-to-many relationship: One role can have many users
-	Users []CMSUser `gorm:"foreignKey:CMSUserRole;references:RoleName" json:"users,omitempty"`
+	// One-to-many relationship: One role can have many lms_user
+	Users []CMSUser `gorm:"foreignKey:CMSUserRole;references:RoleName" json:"lms_user,omitempty"`
 }
 
 func (CMSWholeSysRole) TableName() string {
@@ -168,7 +168,7 @@ func SeedUsers(db *gorm.DB) error {
 }
 
 func SeedPurchases(db *gorm.DB) error {
-	// First, get some users to create purchases for
+	// First, get some lms_user to create purchases for
 	var customers []CMSUser
 	if err := db.Where("cms_user_role = ?", string(CMSCustomer)).Find(&customers).Error; err != nil {
 		return err

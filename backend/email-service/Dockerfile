@@ -16,7 +16,11 @@ FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
+# Copy the built binary
 COPY --from=builder /app/server /server
+
+# Copy the templates directory
+COPY --from=builder /app/templates /templates
 
 EXPOSE 8085
 

@@ -18,6 +18,7 @@ type PageRequestService interface {
 	CreatePageRequest(req types.CreatePageRequest, logourl *string) (*types.PageRequestResponse, error)
 	GetAllPageRequests(req *types.PaginateRequest) ([]*types.PageRequestResponse, *utils.Pagination, error)
 	ChangeStatus(req types.ChangeStatusPageRequest) error
+	ApprovePageRequest(req *types.ApprovePageRequest) (err error)
 }
 
 type PageRequestServiceImpl struct {
@@ -91,10 +92,22 @@ func (s *PageRequestServiceImpl) GetAllPageRequests(req *types.PaginateRequest) 
 }
 
 func (s *PageRequestServiceImpl) ChangeStatus(req types.ChangeStatusPageRequest) error {
-    requestUUID, err := uuid.Parse(req.RequestID)
-    if err != nil {
-        return errors.New("invalid request ID format")
-    }
+	requestUUID, err := uuid.Parse(req.RequestID)
+	if err != nil {
+		return errors.New("invalid request ID format")
+	}
 
-    return s.repo.UpdateStatus(requestUUID, req.Status)
+	return s.repo.UpdateStatus(requestUUID, req.Status)
+}
+func (s *PageRequestServiceImpl) ApprovePageRequest(req *types.ApprovePageRequest) (err error) {
+	//pageRequest , err := s.repo.GetById(req.PageRequestID)
+	//if err != nil {
+	//	if errors.Is(err, gorm.ErrRecordNotFound) {
+	//		return errors.New("page request not found")
+	//	}
+	//}
+	//s.repo
+	//resp := utils.CreateTenant(req)
+
+	return errors.New("invalid request ID format")
 }

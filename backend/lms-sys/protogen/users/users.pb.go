@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v5.29.3
-// source: users/users.proto
+// source: lms_user/lms_user.proto
 
 package users
 
@@ -134,7 +134,7 @@ var File_users_users_proto protoreflect.FileDescriptor
 
 const file_users_users_proto_rawDesc = "" +
 	"\n" +
-	"\x11users/users.proto\x12\tlms.users\x1a\x1fgoogle/protobuf/timestamp.proto\"\xef\x02\n" +
+	"\x11users/lms_user.proto\x12\tlms.lms_user\x1a\x1fgoogle/protobuf/timestamp.proto\"\xef\x02\n" +
 	"\x05Users\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tlms_email\x18\x02 \x01(\tR\blmsEmail\x12\x1e\n" +
@@ -163,13 +163,13 @@ func file_users_users_proto_rawDescGZIP() []byte {
 
 var file_users_users_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_users_users_proto_goTypes = []any{
-	(*Users)(nil),                 // 0: lms.users.Users
+	(*Users)(nil),                 // 0: lms.lms_user.Users
 	(*timestamppb.Timestamp)(nil), // 1: google.protobuf.Timestamp
 }
 var file_users_users_proto_depIdxs = []int32{
-	1, // 0: lms.users.Users.registration_date:type_name -> google.protobuf.Timestamp
-	1, // 1: lms.users.Users.created_at:type_name -> google.protobuf.Timestamp
-	1, // 2: lms.users.Users.updated_at:type_name -> google.protobuf.Timestamp
+	1, // 0: lms.lms_user.Users.registration_date:type_name -> google.protobuf.Timestamp
+	1, // 1: lms.lms_user.Users.created_at:type_name -> google.protobuf.Timestamp
+	1, // 2: lms.lms_user.Users.updated_at:type_name -> google.protobuf.Timestamp
 	3, // [3:3] is the sub-list for method output_type
 	3, // [3:3] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name

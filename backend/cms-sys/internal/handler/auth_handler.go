@@ -90,7 +90,8 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 		return utils.BadRequestResponse(c, "Validation failed", err.Error())
 	}
 
-	authResponse, err := h.service.Register(&req)
+	ipAddress := c.IP()
+	authResponse, err := h.service.Register(&req, ipAddress)
 	if err != nil {
 		switch {
 		case errors.Is(err, errors.New("email already exists")):
@@ -187,7 +188,7 @@ func (h *Handler) Refresh(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, "Token refreshed successfully", tokenResponse)
 }
 
-// Note: Update the auth me method to get userId from JWT token
+// Note: Update the authentication me method to get userId from JWT token
 // By Swan Htet Aung Phyo
 
 func (h *Handler) GetMe(c *fiber.Ctx) error {
