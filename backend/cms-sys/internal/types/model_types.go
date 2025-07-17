@@ -142,7 +142,7 @@ type Page struct {
 	CreatedAt          time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt          time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 
-	Owner            CMSUser     `gorm:"foreignKey:OwnerID;references:CMSUserID" json:"owner,omitempty"`
+	OwnerUser        CMSUser     `gorm:"foreignKey:OwnerID;references:CMSUserID" json:"owner,omitempty"`
 	PublishedByStaff *CMSUser    `gorm:"foreignKey:PublishedByStaffID;references:CMSUserID" json:"published_by_staff,omitempty"`
 	PageRequest      PageRequest `gorm:"foreignKey:PageRequestID;references:RequestID" json:"page_request,omitempty"`
 }
