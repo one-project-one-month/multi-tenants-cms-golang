@@ -16,6 +16,39 @@
     "application/json"
   ],
   "paths": {
+    "/lms/v1/auth/register": {
+      "post": {
+        "description": "LMS user registration with respective namespace",
+        "operationId": "AuthenticationService_Register",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authenticationRegisterResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authenticationRegisterRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthenticationService"
+        ]
+      }
+    },
     "/lms/v1/auth/{organisation}/login": {
       "post": {
         "description": "LMS User login",
@@ -86,45 +119,6 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/AuthenticationServiceLogOutBody"
-            }
-          }
-        ],
-        "tags": [
-          "AuthenticationService"
-        ]
-      }
-    },
-    "/lms/v1/auth/{organisation}/register": {
-      "post": {
-        "description": "LMS user registration with respective namespace",
-        "operationId": "AuthenticationService_Register",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/authenticationRegisterResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "organisation",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/AuthenticationServiceRegisterBody"
             }
           }
         ],
@@ -242,29 +236,6 @@
         }
       }
     },
-    "AuthenticationServiceRegisterBody": {
-      "type": "object",
-      "properties": {
-        "username": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
-        },
-        "password": {
-          "type": "string"
-        },
-        "address": {
-          "type": "string"
-        },
-        "phoneNumber": {
-          "type": "string"
-        },
-        "mfaVerificationOption": {
-          "type": "boolean"
-        }
-      }
-    },
     "AuthenticationServiceVerifyEmailBody": {
       "type": "object"
     },
@@ -296,6 +267,32 @@
       "properties": {
         "message": {
           "type": "string"
+        }
+      }
+    },
+    "authenticationRegisterRequest": {
+      "type": "object",
+      "properties": {
+        "organisation": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "phoneNumber": {
+          "type": "string"
+        },
+        "mfaVerificationOption": {
+          "type": "boolean"
         }
       }
     },

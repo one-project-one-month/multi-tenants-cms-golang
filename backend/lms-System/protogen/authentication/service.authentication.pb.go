@@ -26,9 +26,9 @@ var File_authentication_service_authentication_proto protoreflect.FileDescriptor
 
 const file_authentication_service_authentication_proto_rawDesc = "" +
 	"\n" +
-	"+authentication/service.authentication.proto\x12\x12lms.authentication\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a!authentication/rpc_register.proto\x1a%authentication/rpc_email_verify.proto\x1a\x1eauthentication/rpc_login.proto\x1a2authentication/rpc_resend_email_verification.proto\x1a\x1fauthentication/rpc_logout.proto2\xfd\x06\n" +
-	"\x15AuthenticationService\x12\xba\x01\n" +
-	"\bRegister\x12#.lms.authentication.RegisterRequest\x1a$.lms.authentication.RegisterResponse\"c\x92A1\x1a/LMS user registration with respective namespace\x82\xd3\xe4\x93\x02):\x01*\"$/lms/v1/auth/{organisation}/register\x12\xc3\x01\n" +
+	"+authentication/service.authentication.proto\x12\x12lms.authentication\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a!authentication/rpc_register.proto\x1a%authentication/rpc_email_verify.proto\x1a\x1eauthentication/rpc_login.proto\x1a2authentication/rpc_resend_email_verification.proto\x1a\x1fauthentication/rpc_logout.proto2\xee\x06\n" +
+	"\x15AuthenticationService\x12\xab\x01\n" +
+	"\bRegister\x12#.lms.authentication.RegisterRequest\x1a$.lms.authentication.RegisterResponse\"T\x92A1\x1a/LMS user registration with respective namespace\x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/lms/v1/auth/register\x12\xc3\x01\n" +
 	"\vVerifyEmail\x12&.lms.authentication.EmailVerifyRequest\x1a'.lms.authentication.EmailVerifyResponse\"c\x92A\x1d\x1a\x1bLMS user Email Verification\x82\xd3\xe4\x93\x02=:\x01*\"8/lms/v1/auth/{organisation}/verify-email/{email}/{token}\x12\x8d\x01\n" +
 	"\x05Login\x12 .lms.authentication.LoginRequest\x1a!.lms.authentication.LoginResponse\"?\x92A\x10\x1a\x0eLMS User login\x82\xd3\xe4\x93\x02&:\x01*\"!/lms/v1/auth/{organisation}/login\x12\xbd\x01\n" +
 	"\x17ResendVerificationEmail\x12-.lms.authentication.ResendVerificationRequest\x1a..lms.authentication.ResendVerificationResponse\"C\x92A\x13\x1a\x11User email resend\x82\xd3\xe4\x93\x02'\"%/lms/v1/{organisation}/resend/{email}\x12\x90\x01\n" +

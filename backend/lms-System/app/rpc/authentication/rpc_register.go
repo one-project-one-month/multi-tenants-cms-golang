@@ -9,6 +9,7 @@ import (
 	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"strings"
 	"time"
@@ -34,6 +35,17 @@ func (s *AuthenticationService) Register(
 	ctx context.Context,
 	req *authenticationpb.RegisterRequest,
 ) (*authenticationpb.RegisterResponse, error) {
+	org, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.logger.WithFields(logrus.Fields{
+			"method": "Register",
+		}).Info("missing context")
+	}
+	get := org.Get("x-organization")
+	s.logger.WithFields(logrus.Fields{
+		"method": "Register",
+		"org":    get,
+	}).Info("organization found")
 	if err := s.validateRegisterRequest(req); err != nil {
 		return nil, err
 	}

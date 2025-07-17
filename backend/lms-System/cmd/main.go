@@ -152,9 +152,9 @@ func main() {
 		logger,
 		grpcServerAddress,
 		grpcGatewayAddress,
-		jwtSecret,
-		jwtIssuer,
-		jwtAudience,
+		//jwtSecret,
+		//jwtIssuer,
+		//jwtAudience,
 	)
 
 	server := app.NewApp(

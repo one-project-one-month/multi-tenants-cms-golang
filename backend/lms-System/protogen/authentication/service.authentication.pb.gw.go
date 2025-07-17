@@ -39,21 +39,12 @@ func request_AuthenticationService_Register_0(ctx context.Context, marshaler run
 	var (
 		protoReq RegisterRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if req.Body != nil {
 		_, _ = io.Copy(io.Discard, req.Body)
-	}
-	val, ok := pathParams["organisation"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organisation")
-	}
-	protoReq.Organisation, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "organisation", err)
 	}
 	msg, err := client.Register(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -63,18 +54,9 @@ func local_request_AuthenticationService_Register_0(ctx context.Context, marshal
 	var (
 		protoReq RegisterRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["organisation"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organisation")
-	}
-	protoReq.Organisation, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "organisation", err)
 	}
 	msg, err := server.Register(ctx, &protoReq)
 	return msg, metadata, err
@@ -314,7 +296,7 @@ func RegisterAuthenticationServiceHandlerServer(ctx context.Context, mux *runtim
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.authentication.AuthenticationService/Register", runtime.WithHTTPPathPattern("/lms/v1/auth/{organisation}/register"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.authentication.AuthenticationService/Register", runtime.WithHTTPPathPattern("/lms/v1/auth/register"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -452,7 +434,7 @@ func RegisterAuthenticationServiceHandlerClient(ctx context.Context, mux *runtim
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.authentication.AuthenticationService/Register", runtime.WithHTTPPathPattern("/lms/v1/auth/{organisation}/register"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.authentication.AuthenticationService/Register", runtime.WithHTTPPathPattern("/lms/v1/auth/register"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -537,7 +519,7 @@ func RegisterAuthenticationServiceHandlerClient(ctx context.Context, mux *runtim
 }
 
 var (
-	pattern_AuthenticationService_Register_0                = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"lms", "v1", "auth", "organisation", "register"}, ""))
+	pattern_AuthenticationService_Register_0                = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"lms", "v1", "auth", "register"}, ""))
 	pattern_AuthenticationService_VerifyEmail_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6}, []string{"lms", "v1", "auth", "organisation", "verify-email", "email", "token"}, ""))
 	pattern_AuthenticationService_Login_0                   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"lms", "v1", "auth", "organisation", "login"}, ""))
 	pattern_AuthenticationService_ResendVerificationEmail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"lms", "v1", "organisation", "resend", "email"}, ""))

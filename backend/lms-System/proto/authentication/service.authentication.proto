@@ -12,7 +12,7 @@ import  "authentication/rpc_logout.proto";
 service  AuthenticationService {
   rpc Register(RegisterRequest) returns (RegisterResponse) {
     option (google.api.http) = {
-     post: "/lms/v1/auth/{organisation}/register";
+     post: "/lms/v1/auth/register";
      body: "*";
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {

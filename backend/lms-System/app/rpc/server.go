@@ -50,7 +50,7 @@ func (s *Server) Run() error {
 	}
 
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(s.unaryInterceptor()),
+	//grpc.UnaryInterceptor(s.unaryInterceptor()),
 	)
 
 	authService := authSrv.NewAuthenticationService(s.store, s.logger, &types.Config{})
@@ -60,7 +60,7 @@ func (s *Server) Run() error {
 		return fmt.Errorf("failed to serve: %v", err)
 	}
 	return nil
-	
+
 }
 
 func (s *Server) unaryInterceptor() grpc.UnaryServerInterceptor {

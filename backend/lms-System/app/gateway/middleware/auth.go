@@ -68,16 +68,13 @@ var (
 		regexp.MustCompile(`^/lms/v1/[^/]+/login/?$`),
 		regexp.MustCompile(`^/lms/v1/[^/]+/verify-email/?`),
 		regexp.MustCompile(`^/lms/v1/[^/]+/resend/?`),
-		regexp.MustCompile(`^/lms/v1/auth/[^/]+/?$`), // General auth pattern
+		regexp.MustCompile(`^/lms/v1/auth/[^/]+/?$`),
 	}
 )
 
 // shouldSkipAuth checks if a path should skip authentication
 func shouldSkipAuth(path string) bool {
-	// Normalize the path
 	normalizedPath := strings.ToLower(strings.TrimRight(path, "/"))
-
-	// Check exact matches first
 	if exactSkipPaths[normalizedPath] {
 		return true
 	}
