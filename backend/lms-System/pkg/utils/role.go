@@ -1,21 +1,13 @@
 package utils
 
 import (
+	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"time"
 )
 
-func ParseTimestamp(value interface{}) *timestamppb.Timestamp {
-	if value == nil {
+func ParsePgTimestamp(t pgtype.Timestamptz) *timestamppb.Timestamp {
+	if !t.Valid {
 		return nil
 	}
-	str, ok := value.(string)
-	if !ok {
-		return nil
-	}
-	t, err := time.Parse(time.RFC3339, str)
-	if err != nil {
-		return nil
-	}
-	return timestamppb.New(t)
+	return timestamppb.New(t.Time)
 }

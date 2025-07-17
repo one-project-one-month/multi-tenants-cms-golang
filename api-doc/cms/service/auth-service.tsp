@@ -20,28 +20,28 @@ namespace Services.Auth {
     @doc("User login")
     @post
     @route("/login")
-    authLogin(
+    login(
       @body @doc("Login credentials") request: LoginRequest
     ): ApiResponse<AuthResponse> | BadRequest | Unauthorized;
 
     @doc("User registration")
     @post
     @route("/register")
-    authRegister(
+    register(
       @body @doc("Registration details") request: RegisterRequest
     ): ApiResponse<{user: UserResponse, next_step: "email_verification", message: string, expires_in: string}> | BadRequest | Conflict | InternalServerError;
 
     @doc("Email verification")
     @post
     @route("/verify-email")
-    authVerifyEmail(
+    verifyEmail(
       @body @doc("Email verification details") request: EmailVerificationRequest
     ): ApiResponse<never> | BadRequest | InternalServerError;
 
     @doc("User logout")
     @post
     @route("/logout")
-    authLogout(
+    logout(
       @header("Authorization") @doc("Bearer token") authorization?: string,
       @body @doc("Refresh token (optional)") request?: {refresh_token?: string}
     ): ApiResponse<never> | BadRequest | InternalServerError;
@@ -49,7 +49,7 @@ namespace Services.Auth {
     @doc("Refresh access token")
     @post
     @route("/refresh")
-    authRefresh(
+    refresh(
       @body @doc("Refresh token") request: RefreshTokenRequest
     ): ApiResponse<TokenResponse> | BadRequest | Unauthorized | InternalServerError;
 
@@ -57,13 +57,13 @@ namespace Services.Auth {
     @post
     @route("/me")
     @useAuth(BearerAuth)
-    authGetMe(): ApiResponse<UserResponse> | Unauthorized | NotFound | InternalServerError;
+    getMe(): ApiResponse<UserResponse> | Unauthorized | NotFound | InternalServerError;
 
     @doc("Update user profile")
     @put
     @route("/profile/{id}")
     @useAuth(BearerAuth)
-    authUpdateProfile(
+    updateProfile(
       @path @doc("User ID") id: uuid,
       @body @doc("Profile update data") request: UserUpdateRequest
     ): ApiResponse<UserResponse> | BadRequest | Unauthorized | Forbidden | NotFound | InternalServerError;
@@ -72,7 +72,7 @@ namespace Services.Auth {
     @post
     @route("/mfa/setup/{userid}")
     @useAuth(BearerAuth)
-    authSetupMFA(
+    setupMFA(
       @path @doc("User ID") userid: uuid
     ): ApiResponse<{setup_data: MFASetupResponse, next_step: "verify_mfa_setup", message: string}> | BadRequest | Conflict | InternalServerError;
 
@@ -80,7 +80,7 @@ namespace Services.Auth {
     @post
     @route("/mfa/verify/{userid}")
     @useAuth(BearerAuth)
-    authVerifyMFASetup(
+    verifyMFASetup(
       @path @doc("User ID") userid: uuid,
       @body @doc("MFA verification details") request: MFAVerificationRequest
     ): ApiResponse<never> | BadRequest | NotFound | InternalServerError;
@@ -88,7 +88,7 @@ namespace Services.Auth {
     @doc("Login with MFA")
     @post
     @route("/login/mfa/{userid}")
-    authLoginWithMFA(
+    loginWithMFA(
       @path @doc("User ID") userid: uuid,
       @body @doc("MFA login details") request: MFALoginRequest
     ): ApiResponse<AuthResponse> | BadRequest | Unauthorized | InternalServerError;

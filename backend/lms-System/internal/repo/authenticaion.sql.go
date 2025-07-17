@@ -8,84 +8,200 @@ package repo
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const registerUserWithRoles = `-- name: RegisterUserWithRoles :one
-WITH inserted_user AS (
-    INSERT INTO lms_user (
-                          lms_user_name,
-                          lms_user_email,
-                          password,
-                          address,
-                          phone_number,
-                          registration_date,
-                          email_verified
-        ) VALUES (
-                     $1, $2, $3, $4, $5, CURRENT_DATE, FALSE
-                 ) RETURNING lms_user_id, lms_user_name, lms_user_email,address,phone_number,registration_date,created_at,updated_at
-),
-     role_ids AS (
-         SELECT lms_role_id
-         FROM LMS_USER_Role
-         WHERE lms_role_name IN ('STUDENT', 'USER')
-     ),
-     role_assignments AS (
-         INSERT INTO lms_user_roles_map (lms_user_id, lms_role_id)
-             SELECT iu.lms_user_id, ri.lms_role_id
-             FROM inserted_user iu
-                      CROSS JOIN role_ids ri
-             RETURNING lms_user_id
-     )
-SELECT lms_user_id, lms_user_name, lms_user_email,address,registration_date,created_at,updated_at,phone_number
-FROM inserted_user
+const assignMultipleRolesToUser = `-- name: AssignMultipleRolesToUser :exec
+INSERT INTO lms_user_roles_map (lms_user_id, lms_role_id)
+SELECT $1, unnest($2::int[])
 `
 
-type RegisterUserWithRolesParams struct {
+type AssignMultipleRolesToUserParams struct {
+	LmsUserID uuid.UUID `json:"lms_user_id"`
+	Column2   []int32   `json:"column_2"`
+}
+
+func (q *Queries) AssignMultipleRolesToUser(ctx context.Context, arg AssignMultipleRolesToUserParams) error {
+	_, err := q.db.Exec(ctx, assignMultipleRolesToUser, arg.LmsUserID, arg.Column2)
+	return err
+}
+
+const assignRolesToUser = `-- name: AssignRolesToUser :exec
+INSERT INTO lms_user_roles_map (lms_user_id, lms_role_id)
+VALUES ($1, $2)
+`
+
+type AssignRolesToUserParams struct {
+	LmsUserID uuid.UUID `json:"lms_user_id"`
+	LmsRoleID uuid.UUID `json:"lms_role_id"`
+}
+
+func (q *Queries) AssignRolesToUser(ctx context.Context, arg AssignRolesToUserParams) error {
+	_, err := q.db.Exec(ctx, assignRolesToUser, arg.LmsUserID, arg.LmsRoleID)
+	return err
+}
+
+const checkNameSpaceFromMetaData = `-- name: CheckNameSpaceFromMetaData :one
+SELECT  1 FROM tenants WHERE  namespace = $1
+`
+
+func (q *Queries) CheckNameSpaceFromMetaData(ctx context.Context, namespace string) (int32, error) {
+	row := q.db.QueryRow(ctx, checkNameSpaceFromMetaData, namespace)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const checkTenantsMemberExistenceByEmail = `-- name: CheckTenantsMemberExistenceByEmail :one
+SELECT  1 FROM tenants_members WHERE lms_user_email = $1
+`
+
+func (q *Queries) CheckTenantsMemberExistenceByEmail(ctx context.Context, lmsUserEmail string) (int32, error) {
+	row := q.db.QueryRow(ctx, checkTenantsMemberExistenceByEmail, lmsUserEmail)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const createUser = `-- name: CreateUser :one
+INSERT INTO lms_user (
+    lms_user_name,
+    lms_user_email,
+    password,
+    address,
+    tenant_id,
+    phone_number,
+    registration_date,
+    email_verified
+) VALUES (
+             $1, $2, $3, $4, $5, $6,CURRENT_DATE, FALSE
+         )
+RETURNING lms_user_id, lms_user_name, lms_user_email, address, phone_number, registration_date, email_verified, mfa_enable, created_at, updated_at
+`
+
+type CreateUserParams struct {
 	LmsUserName  string      `json:"lms_user_name"`
 	LmsUserEmail string      `json:"lms_user_email"`
 	Password     string      `json:"password"`
 	Address      pgtype.Text `json:"address"`
+	TenantID     pgtype.UUID `json:"tenant_id"`
 	PhoneNumber  pgtype.Text `json:"phone_number"`
 }
 
-type RegisterUserWithRolesRow struct {
-	LmsUserID        pgtype.UUID      `json:"lms_user_id"`
+type CreateUserRow struct {
+	LmsUserID        uuid.UUID        `json:"lms_user_id"`
 	LmsUserName      string           `json:"lms_user_name"`
 	LmsUserEmail     string           `json:"lms_user_email"`
 	Address          pgtype.Text      `json:"address"`
+	PhoneNumber      pgtype.Text      `json:"phone_number"`
 	RegistrationDate pgtype.Date      `json:"registration_date"`
+	EmailVerified    pgtype.Bool      `json:"email_verified"`
+	MfaEnable        pgtype.Bool      `json:"mfa_enable"`
 	CreatedAt        pgtype.Timestamp `json:"created_at"`
 	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
-	PhoneNumber      pgtype.Text      `json:"phone_number"`
 }
 
-func (q *Queries) RegisterUserWithRoles(ctx context.Context, arg RegisterUserWithRolesParams) (RegisterUserWithRolesRow, error) {
-	row := q.db.QueryRow(ctx, registerUserWithRoles,
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
+	row := q.db.QueryRow(ctx, createUser,
 		arg.LmsUserName,
 		arg.LmsUserEmail,
 		arg.Password,
 		arg.Address,
+		arg.TenantID,
 		arg.PhoneNumber,
 	)
-	var i RegisterUserWithRolesRow
+	var i CreateUserRow
 	err := row.Scan(
 		&i.LmsUserID,
 		&i.LmsUserName,
 		&i.LmsUserEmail,
 		&i.Address,
+		&i.PhoneNumber,
+		&i.RegistrationDate,
+		&i.EmailVerified,
+		&i.MfaEnable,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getDefaultRoleIDs = `-- name: GetDefaultRoleIDs :many
+SELECT lms_role_id FROM lms_user_role
+WHERE lms_role_name IN ('STUDENT', 'VIEWER')
+`
+
+func (q *Queries) GetDefaultRoleIDs(ctx context.Context) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, getDefaultRoleIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []uuid.UUID{}
+	for rows.Next() {
+		var lms_role_id uuid.UUID
+		if err := rows.Scan(&lms_role_id); err != nil {
+			return nil, err
+		}
+		items = append(items, lms_role_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRoleIdByName = `-- name: GetRoleIdByName :one
+SELECT lms_role_id FROM lms_user_role WHERE  lms_role_name = $1
+`
+
+func (q *Queries) GetRoleIdByName(ctx context.Context, lmsRoleName LmsRoleType) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, getRoleIdByName, lmsRoleName)
+	var lms_role_id uuid.UUID
+	err := row.Scan(&lms_role_id)
+	return lms_role_id, err
+}
+
+const getTenantIdByNameSpace = `-- name: GetTenantIdByNameSpace :one
+SELECT tenant_id FROM tenants WHERE  namespace = $1
+`
+
+func (q *Queries) GetTenantIdByNameSpace(ctx context.Context, namespace string) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, getTenantIdByNameSpace, namespace)
+	var tenant_id uuid.UUID
+	err := row.Scan(&tenant_id)
+	return tenant_id, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT  lms_user_id, lms_user_name, lms_user_email, password, tenant_id, address, phone_number, mfa_enable, email_verified, registration_date, created_at, updated_at FROM lms_user WHERE  lms_user_email = $1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, lmsUserEmail string) (LmsUser, error) {
+	row := q.db.QueryRow(ctx, getUserByEmail, lmsUserEmail)
+	var i LmsUser
+	err := row.Scan(
+		&i.LmsUserID,
+		&i.LmsUserName,
+		&i.LmsUserEmail,
+		&i.Password,
+		&i.TenantID,
+		&i.Address,
+		&i.PhoneNumber,
+		&i.MfaEnable,
+		&i.EmailVerified,
 		&i.RegistrationDate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.PhoneNumber,
 	)
 	return i, err
 }
 
 const updateEmailVerification = `-- name: UpdateEmailVerification :exec
-UPDATE  lms_user
-SET  email_verified = true ,updated_at = now()
-WHERE  lms_user_email = $1
+UPDATE lms_user
+SET email_verified = true, updated_at = now()
+WHERE lms_user_email = $1
 `
 
 func (q *Queries) UpdateEmailVerification(ctx context.Context, lmsUserEmail string) error {

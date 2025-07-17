@@ -131,20 +131,19 @@ func (UserPageRequest) TableName() string {
 }
 
 type Page struct {
-	PageID             uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"page_id"`
-	PageRequestID      uuid.UUID  `gorm:"type:uuid;not null" json:"page_request_id"`
-	Title              string     `gorm:"type:varchar(255);not null" json:"title"`
-	Content            string     `gorm:"type:text" json:"content"`
-	ImageURL           *string    `gorm:"type:varchar(255)" json:"image_url,omitempty"`
-	Status             PageStatus `gorm:"type:varchar(50);default:'DRAFT'" json:"status"`
-	OwnerID            uuid.UUID  `gorm:"type:uuid;not null" json:"owner_id"`
-	PublishedByStaffID *uuid.UUID `gorm:"type:uuid" json:"published_by_staff_id,omitempty"`
-	CreatedAt          time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt          time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-
-	Owner            CMSUser     `gorm:"foreignKey:OwnerID;references:CMSUserID" json:"owner,omitempty"`
-	PublishedByStaff *CMSUser    `gorm:"foreignKey:PublishedByStaffID;references:CMSUserID" json:"published_by_staff,omitempty"`
-	PageRequest      PageRequest `gorm:"foreignKey:PageRequestID;references:RequestID" json:"page_request,omitempty"`
+	PageID             uuid.UUID   `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"page_id"`
+	PageRequestID      uuid.UUID   `gorm:"type:uuid;not null" json:"page_request_id"`
+	Title              string      `gorm:"type:varchar(255);not null" json:"title"`
+	Content            string      `gorm:"type:text" json:"content"`
+	ImageURL           *string     `gorm:"type:varchar(255)" json:"image_url,omitempty"`
+	Status             PageStatus  `gorm:"type:varchar(50);default:'DRAFT'" json:"status"`
+	OwnerID            uuid.UUID   `gorm:"type:uuid;not null" json:"owner_id"`
+	PublishedByStaffID *uuid.UUID  `gorm:"type:uuid" json:"published_by_staff_id,omitempty"`
+	CreatedAt          time.Time   `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt          time.Time   `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
+	Owner              CMSUser     `gorm:"foreignKey:OwnerID;references:CMSUserID" json:"owner,omitempty"`
+	PublishedByStaff   *CMSUser    `gorm:"foreignKey:PublishedByStaffID;references:CMSUserID" json:"published_by_staff,omitempty"`
+	PageRequest        PageRequest `gorm:"foreignKey:PageRequestID;references:RequestID" json:"page_request,omitempty"`
 }
 
 func (Page) TableName() string {

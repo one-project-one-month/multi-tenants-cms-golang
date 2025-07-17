@@ -1,151 +1,188 @@
-# Makefile for LMS Application with Database Migrations
+# ==============================================================================
+# LMS Application Makefile
+# ==============================================================================
 
-# Application Variables
-PROTO_DIR = proto
-PROTOGEN_DIR = protogen
-APP_DIR = app
-BINARY_NAME = server
-MAIN_FILE = cmd/main.go
+# ------------------------------------------------------------------------------
+# Configuration
+# ------------------------------------------------------------------------------
 
-# Database Variables
-DB_URL = postgresql://neondb_owner:npg_MEB4CYJS7TKh@ep-withered-salad-a27oo7gn-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-MIGRATION_DIR = database/migrations
+# Application
+PROTO_DIR       = proto
+PROTOGEN_DIR    = protogen
+APP_DIR         = app
+BINARY_NAME     = server
+MAIN_FILE       = cmd/main.go
+BUILD_DIR       = bin
+
+# Database
+DB_URL          = postgresql://neondb_owner:npg_MEB4CYJS7TKh@ep-withered-salad-a27oo7gn-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+MIGRATION_DIR   = database/migrations
 
 # Colors
-RED = \033[0;31m
-GREEN = \033[0;32m
-YELLOW = \033[0;33m
-NC = \033[0m
+RED             = \033[0;31m
+GREEN           = \033[0;32m
+YELLOW          = \033[0;33m
+BLUE            = \033[0;34m
+NC              = \033[0m
 
-# Default target
+# ------------------------------------------------------------------------------
+# Targets
+# ------------------------------------------------------------------------------
+
 .PHONY: all
-all: build
+all: deps lint test build ## Build everything (default target)
 
-#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Database Migration Targets
-#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
-## Create a new migration file
-migrate-create:
+.PHONY: migrate-create
+migrate-create: ## Create a new migration file
+	@echo "${YELLOW}Creating new migration...${NC}"
 	@read -p "Enter migration name: " name; \
 	migrate create -ext sql -dir $(MIGRATION_DIR) -seq $${name}
+	@echo "${GREEN}Migration file created${NC}"
 
-## Apply all up migrations
-migrate-up:
-	@echo "$(YELLOW)Applying migrations...$(NC)"
+.PHONY: migrate-up
+migrate-up: ## Apply all pending migrations
+	@echo "${YELLOW}Applying migrations...${NC}"
 	@migrate -path $(MIGRATION_DIR) -database "$(DB_URL)" up
-	@echo "$(GREEN)Migrations applied successfully$(NC)"
+	@echo "${GREEN}Migrations applied successfully${NC}"
 
-## Apply one down migration
-migrate-down:
-	@echo "$(YELLOW)Rolling back last migration...$(NC)"
+.PHONY: migrate-down
+migrate-down: ## Rollback the last migration
+	@echo "${YELLOW}Rolling back last migration...${NC}"
 	@migrate -path $(MIGRATION_DIR) -database "$(DB_URL)" down 1
-	@echo "$(GREEN)Migration rolled back successfully$(NC)"
+	@echo "${GREEN}Migration rolled back successfully${NC}"
 
-## Force a specific migration version (to fix dirty state)
-migrate-force:
+.PHONY: migrate-force
+migrate-force: ## Force a specific migration version
+	@echo "${YELLOW}Forcing migration version...${NC}"
 	@read -p "Enter version to force: " version; \
 	migrate -path $(MIGRATION_DIR) -database "$(DB_URL)" force $${version}
+	@echo "${GREEN}Migration version forced${NC}"
 
-## Drop everything in the database
-migrate-drop:
-	@echo "$(RED)Dropping all database objects...$(NC)"
+.PHONY: migrate-drop
+migrate-drop: ## Drop all database objects (DESTRUCTIVE)
+	@echo "${RED}WARNING: Dropping all database objects${NC}"
 	@migrate -path $(MIGRATION_DIR) -database "$(DB_URL)" drop
-	@echo "$(GREEN)Database objects dropped successfully$(NC)"
+	@echo "${GREEN}Database objects dropped${NC}"
 
-## Show current migration version
-migrate-version:
+.PHONY: migrate-version
+migrate-version: ## Show current migration version
 	@migrate -path $(MIGRATION_DIR) -database "$(DB_URL)" version
 
-## Fix permissions on migration files
-fix-migration-perms:
+.PHONY: migrate-reset
+migrate-reset: migrate-drop migrate-up ## Reset database (drop all then migrate up)
+
+.PHONY: fix-migration-perms
+fix-migration-perms: ## Fix permissions on migration files
+	@echo "${YELLOW}Fixing migration file permissions...${NC}"
 	@chmod -R 755 $(MIGRATION_DIR)
+	@echo "${GREEN}Permissions fixed${NC}"
 
-## Reset database (drop, create, migrate)
-migrate-reset: migrate-drop migrate-up
-	@echo "$(GREEN)Database reset complete$(NC)"
+# ------------------------------------------------------------------------------
+# Build Targets
+# ------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# Application Build Targets
-#-------------------------------------------------------------------------------
+.PHONY: build
+build: ## Build the application
+	@echo "${YELLOW}Building application...${NC}"
+	@mkdir -p $(BUILD_DIR)
+	@go build -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_FILE)
+	@echo "${GREEN}Build successful${NC}"
 
-## Build the application
-build:
-	@echo "$(YELLOW)Building application...$(NC)"
-	@go build -o bin/$(BINARY_NAME) $(MAIN_FILE)
-	@echo "$(GREEN)Build successful$(NC)"
-
-## Run the application
-run:
-	@echo "$(YELLOW)Starting application...$(NC)"
+.PHONY: run
+run: ## Run the application
+	@echo "${YELLOW}Starting application...${NC}"
 	@go run $(MAIN_FILE)
 
-## Generate protobuf files
-proto:
-	@echo "$(YELLOW)Generating protobuf files...$(NC)"
-	@cd proto && protoc --go_out=../protogen --go_opt=paths=source_relative \
-	--go-grpc_out=../protogen --go-grpc_opt=paths=source_relative \
-	--grpc-gateway_out=../protogen --grpc-gateway_opt paths=source_relative \
-	--grpc-gateway_opt generate_unbound_methods=true \
-	--openapiv2_out=../doc/swagger --openapiv2_opt=allow_merge=true,merge_file_name=api \
-	--experimental_allow_proto3_optional \
-	./**/*.proto
-	@echo "$(YELLOW)Generating swagger statik...$(NC)"
-	@statik -src=doc/swagger -dest=doc -f
-	@echo "$(GREEN)Protobuf generation complete$(NC)"
-
-## Generate database code with sqlc
-sqlc:
-	@echo "$(YELLOW)Generating database code...$(NC)"
-	@sqlc generate
-	@echo "$(GREEN)Database code generation complete$(NC)"
-
-## Clean build artifacts
-clean:
-	@echo "$(YELLOW)Cleaning build artifacts...$(NC)"
-	@rm -rf bin/
+.PHONY: clean
+clean: ## Clean build artifacts
+	@echo "${YELLOW}Cleaning build artifacts...${NC}"
+	@rm -rf $(BUILD_DIR)
 	@rm -rf $(PROTOGEN_DIR)/*
-	@echo "$(GREEN)Clean complete$(NC)"
+	@echo "${GREEN}Clean complete${NC}"
 
-## Install dependencies
-deps:
-	@echo "$(YELLOW)Installing dependencies...$(NC)"
+# ------------------------------------------------------------------------------
+# Code Generation Targets
+# ------------------------------------------------------------------------------
+
+.PHONY: protoc
+protoc: ## Generate protobuf files
+	@echo "${YELLOW}Generating protobuf files...${NC}"
+	@cd $(PROTO_DIR) && protoc \
+		--go_out=../$(PROTOGEN_DIR) --go_opt=paths=source_relative \
+		--go-grpc_out=../$(PROTOGEN_DIR) --go-grpc_opt=paths=source_relative \
+		--grpc-gateway_out=../$(PROTOGEN_DIR) --grpc-gateway_opt paths=source_relative \
+		--grpc-gateway_opt generate_unbound_methods=true \
+		--openapiv2_out=../doc/swagger --openapiv2_opt=allow_merge=true,merge_file_name=api \
+		--experimental_allow_proto3_optional \
+		./**/*.proto
+	@echo "${YELLOW}Generating swagger docs...${NC}"
+	@statik -src=doc/swagger -dest=doc -f
+	@echo "${GREEN}Protobuf generation complete${NC}"
+
+.PHONY: sqlc
+sqlc: ## Generate database code with sqlc
+	@echo "${YELLOW}Generating database code...${NC}"
+	@sqlc generate
+	@echo "${GREEN}Database code generation complete${NC}"
+
+# ------------------------------------------------------------------------------
+# Development Targets
+# ------------------------------------------------------------------------------
+
+.PHONY: deps
+deps: ## Download and tidy dependencies
+	@echo "${YELLOW}Installing dependencies...${NC}"
 	@go mod download
 	@go mod tidy
-	@echo "$(GREEN)Dependencies installed$(NC)"
+	@echo "${GREEN}Dependencies installed${NC}"
 
-## Run tests
-test:
-	@echo "$(YELLOW)Running tests...$(NC)"
-	@go test ./...
-	@echo "$(GREEN)Tests completed$(NC)"
+.PHONY: test
+test: ## Run tests
+	@echo "${YELLOW}Running tests...${NC}"
+	@go test -v -cover ./...
+	@echo "${GREEN}Tests completed${NC}"
 
-## Format code
-fmt:
-	@echo "$(YELLOW)Formatting code...$(NC)"
+.PHONY: fmt
+fmt: ## Format code
+	@echo "${YELLOW}Formatting code...${NC}"
 	@go fmt ./...
-	@echo "$(GREEN)Formatting complete$(NC)"
+	@echo "${GREEN}Formatting complete${NC}"
 
-## Lint code
-lint:
-	@echo "$(YELLOW)Linting code...$(NC)"
+.PHONY: lint
+lint: ## Lint code
+	@echo "${YELLOW}Linting code...${NC}"
 	@golangci-lint run
-	@echo "$(GREEN)Linting complete$(NC)"
+	@echo "${GREEN}Linting complete${NC}"
 
-## Docker build
-docker-build:
-	@echo "$(YELLOW)Building Docker image...$(NC)"
+.PHONY: dev
+dev: fmt lint test build ## Run standard development checks
+
+# ------------------------------------------------------------------------------
+# Docker Targets
+# ------------------------------------------------------------------------------
+
+.PHONY: docker-build
+docker-build: ## Build Docker image
+	@echo "${YELLOW}Building Docker image...${NC}"
 	@docker build -t $(BINARY_NAME) .
-	@echo "$(GREEN)Docker build complete$(NC)"
+	@echo "${GREEN}Docker build complete${NC}"
 
-## Docker run
-docker-run:
-	@echo "$(YELLOW)Starting Docker container...$(NC)"
+.PHONY: docker-run
+docker-run: ## Run Docker container
+	@echo "${YELLOW}Starting Docker container...${NC}"
 	@docker run -p 8082:8082 -p 8083:8083 $(BINARY_NAME)
 
-## Setup development environment (run once)
-setup: deps
-	@echo "$(YELLOW)Setting up development environment...$(NC)"
+# ------------------------------------------------------------------------------
+# Setup Targets
+# ------------------------------------------------------------------------------
+
+.PHONY: setup
+setup: deps ## Setup development environment
+	@echo "${YELLOW}Setting up development tools...${NC}"
 	@go install github.com/golang/mock/mockgen@latest
 	@go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 	@go install github.com/golang/protobuf/protoc-gen-go@latest
@@ -153,33 +190,18 @@ setup: deps
 	@go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
 	@go install github.com/rakyll/statik@latest
 	@go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-	@echo "$(GREEN)Development environment setup complete$(NC)"
+	@echo "${GREEN}Development environment setup complete${NC}"
 
-## Show help message
-help:
-	@echo "Available targets:"
+# ------------------------------------------------------------------------------
+# Help
+# ------------------------------------------------------------------------------
+
+.PHONY: grp-sqlc
+grp-sqlc:
+	@grpcframe sqlc generate
+.PHONY: help
+help: ## Show this help message
+	@echo "${BLUE}Available targets:${NC}"
 	@echo ""
-	@echo "Database Migration:"
-	@echo "  migrate-create      - Create a new migration file"
-	@echo "  migrate-up         - Apply all up migrations"
-	@echo "  migrate-down       - Rollback the last migration"
-	@echo "  migrate-force      - Force a specific migration version"
-	@echo "  migrate-drop       - Drop all database objects"
-	@echo "  migrate-version    - Show current migration version"
-	@echo "  migrate-reset      - Reset database (drop, create, migrate)"
-	@echo "  fix-migration-perms - Fix migration file permissions"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  ${YELLOW}%-20s${NC} %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
 	@echo ""
-	@echo "Application:"
-	@echo "  build              - Build the application"
-	@echo "  run                - Run the application"
-	@echo "  proto              - Generate protobuf files"
-	@echo "  sqlc               - Generate database code"
-	@echo "  clean              - Clean build artifacts"
-	@echo "  deps               - Install dependencies"
-	@echo "  test               - Run tests"
-	@echo "  fmt                - Format code"
-	@echo "  lint               - Lint code"
-	@echo "  docker-build       - Build Docker image"
-	@echo "  docker-run         - Run Docker container"
-	@echo "  setup              - Setup development environment"
-	@echo "  help               - Show this help message"

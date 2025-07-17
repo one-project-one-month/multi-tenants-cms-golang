@@ -385,6 +385,12 @@
         "address": {
           "type": "string"
         },
+        "emailVerified": {
+          "type": "boolean"
+        },
+        "mfaEnable": {
+          "type": "boolean"
+        },
         "registrationDate": {
           "type": "string",
           "format": "date-time"

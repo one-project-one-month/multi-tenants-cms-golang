@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/multi-tenants-cms-golang/lms-sys/app/cornServer"
 	gate "github.com/multi-tenants-cms-golang/lms-sys/app/gateway"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/rpc"
 	"github.com/sirupsen/logrus"
@@ -16,16 +17,19 @@ type App struct {
 	grpcServer  *rpc.Server
 	grpcGateway *gate.Gateway
 	logger      *logrus.Logger
+	cronServer  *cornServer.Server
 }
 
 func NewApp(
 	grpcServer *rpc.Server,
 	grpcGateway *gate.Gateway,
+	backupServer *cornServer.Server,
 	logger *logrus.Logger,
 ) *App {
 	return &App{
 		grpcServer:  grpcServer,
 		grpcGateway: grpcGateway,
+		cronServer:  backupServer,
 		logger:      logger,
 	}
 }
@@ -34,11 +38,19 @@ func (app *App) Run() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	errChan := make(chan error, 2)
+	errChan := make(chan error, 3)
 
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
 
+	go func() {
+		defer wg.Done()
+		app.logger.Info("Starting cron  cron server...")
+		if err := app.cronServer.RunServer(); err != nil {
+			errChan <- err
+			cancel()
+		}
+	}()
 	go func() {
 		defer wg.Done()
 		app.logger.Info("Starting gRPC server...")
