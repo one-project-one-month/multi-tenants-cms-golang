@@ -5,4 +5,4 @@ INSERT INTO "Enrollment" (
 ) VALUES (
              $1,
              $2
-         ) RETURNING *;
+         ) RETURNING *;       

@@ -13,3 +13,11 @@ message  GetCourseRequest {
 message GetCourseResponse {
   string  course_title = 1;
 }
+
+message GetCourseByIDRequest {
+  int64 course_id = 1;
+}
+
+message GetCourseByIDResponse {
+  Course course = 1;
+}
