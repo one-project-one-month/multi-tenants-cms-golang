@@ -12,8 +12,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/gateway/middleware"
 	authSrv "github.com/multi-tenants-cms-golang/lms-sys/app/rpc/authentication"
+	msv "github.com/multi-tenants-cms-golang/lms-sys/app/rpc/module"
 	"github.com/multi-tenants-cms-golang/lms-sys/internal/types"
 	authpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
+	mspb "github.com/multi-tenants-cms-golang/lms-sys/protogen/modules"
 	"github.com/oklog/run"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -60,7 +62,10 @@ func (s *Server) Run() error {
 		RateLimitAttempts: 100,
 		RateLimitWindow:   time.Second * 20,
 	})
+
+	moduleService := msv.NewModuleService(s.store, s.logger)
 	authpb.RegisterAuthenticationServiceServer(grpcServer, authService)
+	mspb.RegisterModuleServiceServer(grpcServer, moduleService)
 
 	var g run.Group
 

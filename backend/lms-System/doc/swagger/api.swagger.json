@@ -17,6 +17,9 @@
   "tags": [
     {
       "name": "AuthenticationService"
+    },
+    {
+      "name": "ModuleService"
     }
   ],
   "host": "api.lms.example.com",
@@ -252,6 +255,172 @@
           "Authentication"
         ]
       }
+    },
+    "/lms/v1/module": {
+      "get": {
+        "summary": "Get all module",
+        "description": "List/Get all module",
+        "operationId": "ModuleService_ListModules",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/modulesListModulesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ModuleService"
+        ]
+      },
+      "delete": {
+        "summary": "Delete module",
+        "description": "Delete single or multiple module",
+        "operationId": "ModuleService_DeleteModules",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/modulesDeleteModulesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "forceDelete",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "ModuleService"
+        ]
+      },
+      "post": {
+        "summary": "Create module",
+        "description": "Create a new module",
+        "operationId": "ModuleService_CreateModule",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/modulesCreateModuleResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/modulesCreateModuleRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ModuleService"
+        ]
+      }
+    },
+    "/lms/v1/module/{moduleId}": {
+      "get": {
+        "summary": "Get a module",
+        "description": "Get a module",
+        "operationId": "ModuleService_GetModule",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/modulesGetModuleResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "moduleId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ModuleService"
+        ]
+      },
+      "put": {
+        "summary": "Update module",
+        "description": "Update an existing module",
+        "operationId": "ModuleService_UpdateModule",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/modulesUpdateModuleResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "moduleId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ModuleServiceUpdateModuleBody"
+            }
+          }
+        ],
+        "tags": [
+          "ModuleService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -259,6 +428,20 @@
       "type": "object",
       "properties": {
         "organisation": {
+          "type": "string"
+        }
+      }
+    },
+    "ModuleServiceUpdateModuleBody": {
+      "type": "object",
+      "properties": {
+        "moduleName": {
+          "type": "string"
+        },
+        "courseId": {
+          "type": "string"
+        },
+        "description": {
           "type": "string"
         }
       }
@@ -405,6 +588,89 @@
         }
       },
       "title": "Is equal to the LMS USER"
+    },
+    "modulesCreateModuleRequest": {
+      "type": "object",
+      "properties": {
+        "moduleName": {
+          "type": "string"
+        },
+        "courseId": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "modulesCreateModuleResponse": {
+      "type": "object",
+      "properties": {
+        "module": {
+          "$ref": "#/definitions/modulesModule"
+        }
+      }
+    },
+    "modulesDeleteModulesResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "modulesGetModuleResponse": {
+      "type": "object",
+      "properties": {
+        "module": {
+          "$ref": "#/definitions/modulesModule"
+        }
+      }
+    },
+    "modulesListModulesResponse": {
+      "type": "object",
+      "properties": {
+        "modules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/modulesModule"
+          }
+        }
+      }
+    },
+    "modulesModule": {
+      "type": "object",
+      "properties": {
+        "moduleId": {
+          "type": "string"
+        },
+        "moduleName": {
+          "type": "string"
+        },
+        "courseId": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "modulesUpdateModuleResponse": {
+      "type": "object",
+      "properties": {
+        "module": {
+          "$ref": "#/definitions/modulesModule"
+        }
+      }
     },
     "protobufAny": {
       "type": "object",
