@@ -2,18 +2,16 @@ package authentication
 
 import (
 	"context"
-	"database/sql"
-	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
-	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils"
-	convertor "github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/convert"
+
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/nats"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/redis"
 	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"strings"
+
+	"sync"
 	"time"
 )
 
@@ -24,21 +22,6 @@ const (
 	RateLimitWindow         = time.Hour
 )
 
-func toRegisterSql(reqModel *authenticationpb.RegisterRequest) *repo.RegisterUserWithRolesParams {
-	return &repo.RegisterUserWithRolesParams{
-		LmsUserName:  reqModel.Username,
-		LmsUserEmail: reqModel.Email,
-		Password:     reqModel.Password,
-		Address: pgtype.Text(sql.NullString{
-			String: reqModel.Address,
-			Valid:  reqModel.Address == "",
-		}),
-		PhoneNumber: pgtype.Text(sql.NullString{
-			String: reqModel.PhoneNumber,
-			Valid:  true,
-		}),
-	}
-}
 func (s *AuthenticationService) Register(
 	ctx context.Context,
 	req *authenticationpb.RegisterRequest,
@@ -66,43 +49,49 @@ func (s *AuthenticationService) Register(
 		"method": "Register",
 		"email":  req.GetEmail(),
 	}).Info("processing registration request")
-	modelToBeCreated := toRegisterSql(req)
-	userCreated, err := s.store.RegisterUserWithRoles(s.databaseCtx, *modelToBeCreated)
+	nameSpace := org.Get("x-organization")[0]
+	flow, err := s.store.WholeRegistrationFlow(s.databaseCtx, req, nameSpace)
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"error": err.Error(),
-			"email": req.GetEmail(),
-		}).Error("failed to register user")
-
-		if strings.Contains(err.Error(), "duplicate key") {
-			return nil, status.Error(codes.AlreadyExists, "user with this email already exists")
-		}
-
-		return nil, status.Error(codes.Internal, "failed to create user account")
+		}).Info("failed to process registration request")
+		return nil, err
 	}
-
+	var wg sync.WaitGroup
+	code, _ := s.generateToken(6)
+	wg.Add(2)
 	go func() {
-		if err := s.processEmailVerification(context.Background(), req.Email); err != nil {
+		defer wg.Done()
+		err := s.sendEmailVerificationCode(req.GetEmail(), code)
+		if err != nil {
 			s.logger.WithFields(logrus.Fields{
 				"error": err.Error(),
-				"email": req.Email,
-			}).Error("failed to process email verification")
+			}).Error("failed to send email verification code")
+			return
 		}
 	}()
+	go func() {
+		defer wg.Done()
+		payload := map[string]interface{}{
+			"title":        "Email Verification From LMS",
+			"to":           req.GetEmail(),
+			"code":         code,
+			"organisation": org,
+		}
+		err := nats.Publish("lms.email.verification.code", payload)
+		if err != nil {
+			s.logger.WithFields(logrus.Fields{
+				"error": err.Error(),
+			}).Error("failed to send email verification code")
+		}
+	}()
+	wg.Wait()
+	return flow, nil
+}
 
-	return &authenticationpb.RegisterResponse{
-		RegisteredUser: &authenticationpb.SystemUser{
-			Id:               userCreated.LmsUserID.String(),
-			Username:         userCreated.LmsUserName,
-			Email:            userCreated.LmsUserEmail,
-			PhoneNumber:      convertor.NullableStringToString(sql.NullString(userCreated.PhoneNumber)),
-			Address:          convertor.NullableStringToString(sql.NullString(userCreated.Address)),
-			RegistrationDate: utils.ParseTimestamp(userCreated.RegistrationDate),
-			CreatedAt:        utils.ParseTimestamp(userCreated.CreatedAt),
-			UpdatedAt:        utils.ParseTimestamp(userCreated.UpdatedAt),
-		},
-		Message: "user created successfully. email is sent to the registered mail",
-	}, nil
+func (s *AuthenticationService) sendEmailVerificationCode(email, code string) error {
+	return redis.SetRedis("verify-token"+email, code, time.Minute*10)
+
 }
 
 func (s *AuthenticationService) VerifyEmail(

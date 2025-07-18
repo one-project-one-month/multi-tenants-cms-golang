@@ -30,9 +30,11 @@ type SystemUser struct {
 	Email            string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
 	PhoneNumber      string                 `protobuf:"bytes,4,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
 	Address          string                 `protobuf:"bytes,5,opt,name=address,proto3" json:"address,omitempty"`
-	RegistrationDate *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=registration_date,json=registrationDate,proto3" json:"registration_date,omitempty"`
-	CreatedAt        *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt        *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	EmailVerified    bool                   `protobuf:"varint,6,opt,name=email_verified,json=emailVerified,proto3" json:"email_verified,omitempty"`
+	MfaEnable        bool                   `protobuf:"varint,7,opt,name=mfa_enable,json=mfaEnable,proto3" json:"mfa_enable,omitempty"`
+	RegistrationDate *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=registration_date,json=registrationDate,proto3" json:"registration_date,omitempty"`
+	CreatedAt        *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt        *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -102,6 +104,20 @@ func (x *SystemUser) GetAddress() string {
 	return ""
 }
 
+func (x *SystemUser) GetEmailVerified() bool {
+	if x != nil {
+		return x.EmailVerified
+	}
+	return false
+}
+
+func (x *SystemUser) GetMfaEnable() bool {
+	if x != nil {
+		return x.MfaEnable
+	}
+	return false
+}
+
 func (x *SystemUser) GetRegistrationDate() *timestamppb.Timestamp {
 	if x != nil {
 		return x.RegistrationDate
@@ -127,19 +143,23 @@ var File_authentication_authentication_proto protoreflect.FileDescriptor
 
 const file_authentication_authentication_proto_rawDesc = "" +
 	"\n" +
-	"#authentication/authentication.proto\x12\x12lms.authentication\x1a\x1fgoogle/protobuf/timestamp.proto\"\xca\x02\n" +
+	"#authentication/authentication.proto\x12\x12lms.authentication\x1a\x1fgoogle/protobuf/timestamp.proto\"\x90\x03\n" +
 	"\n" +
 	"SystemUser\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12!\n" +
 	"\fphone_number\x18\x04 \x01(\tR\vphoneNumber\x12\x18\n" +
-	"\aaddress\x18\x05 \x01(\tR\aaddress\x12G\n" +
-	"\x11registration_date\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x10registrationDate\x129\n" +
+	"\aaddress\x18\x05 \x01(\tR\aaddress\x12%\n" +
+	"\x0eemail_verified\x18\x06 \x01(\bR\remailVerified\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"mfa_enable\x18\a \x01(\bR\tmfaEnable\x12G\n" +
+	"\x11registration_date\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\x10registrationDate\x129\n" +
 	"\n" +
-	"updated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtBDZBgithub.com/multi-tenant-cms-golang/lms-sys/protogen/authenticationb\x06proto3"
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtBDZBgithub.com/multi-tenant-cms-golang/lms-sys/protogen/authenticationb\x06proto3"
 
 var (
 	file_authentication_authentication_proto_rawDescOnce sync.Once

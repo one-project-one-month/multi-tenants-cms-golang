@@ -3,6 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/jackc/pgx/v5"
+	"github.com/multi-tenants-cms-golang/lms-sys/app/cornServer"
+	"github.com/multi-tenants-cms-golang/lms-sys/app/cornServer/handler"
+	db "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/nats"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/redis"
 	"io"
@@ -17,7 +21,6 @@ import (
 	"github.com/multi-tenants-cms-golang/lms-sys/app"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/gateway"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/rpc"
-	db "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/env"
 	"github.com/natefinch/lumberjack"
 	"github.com/sirupsen/logrus"
@@ -33,7 +36,7 @@ func initLogger() *logrus.Logger {
 
 	logFile := &lumberjack.Logger{
 		Filename:   "logs/lms-system.log",
-		MaxSize:    100, // MB
+		MaxSize:    100,
 		MaxBackups: 3,
 		MaxAge:     28, // days
 		Compress:   true,
@@ -46,7 +49,7 @@ func initLogger() *logrus.Logger {
 	logger.SetOutput(io.MultiWriter(os.Stdout, logFile))
 
 	logger.Info("Configuring JSON formatter with custom fields")
-	logger.SetFormatter(&logrus.JSONFormatter{
+	logger.SetFormatter(&logrus.TextFormatter{
 		TimestampFormat: "2006-01-02T15:04:05.999Z07:00",
 		FieldMap: logrus.FieldMap{
 			logrus.FieldKeyTime:  "timestamp",
@@ -59,7 +62,7 @@ func initLogger() *logrus.Logger {
 			funcName := f.Function[strings.LastIndex(f.Function, ".")+1:]
 			return file, funcName + ":" + string(rune(f.Line))
 		},
-		PrettyPrint: true,
+		ForceColors: true,
 	})
 
 	// Enable caller reporting
@@ -80,7 +83,6 @@ func initLogger() *logrus.Logger {
 	}
 	logger.SetLevel(level)
 
-	// Verify logger configuration
 	logger.WithFields(logrus.Fields{
 		"logLevel":    logger.GetLevel(),
 		"outputs":     "stdout+file",
@@ -102,6 +104,9 @@ func main() {
 		}
 	}()
 
+	if err := godotenv.Load(); err != nil {
+		logger.WithError(err).Fatal("Failed to load .env")
+	}
 	logger.Info("Application starting with log rotation enabled")
 
 	grpcServerAddress := env.GetEnv("LMS_GRPC_SERVER_ADDRESS", ":9001")
@@ -126,7 +131,16 @@ func main() {
 		logger.WithError(err).Fatal("Failed to connect to NATS")
 		return
 	}
-	dbStore := db.NewStore(dbConn)
+	dbUrl := "postgresql://neondb_owner:npg_MEB4CYJS7TKh@ep-withered-salad-a27oo7gn-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+
+	backupHanlder := handler.NewCornHandler(logger)
+	cronServer := cornServer.NewServer(
+		logger,
+		redisAddress,
+		backupHanlder,
+		dbUrl,
+	)
+	dbStore := db.NewStore(logger, dbConn)
 
 	consulClient, err := NewConsulClient(consulAddress)
 	if err != nil {
@@ -167,6 +181,7 @@ func main() {
 	server := app.NewApp(
 		grpcServer,
 		grpcGateway,
+		cronServer,
 		logger,
 	)
 	if err := server.Run(); err != nil {
@@ -217,18 +232,18 @@ func getPortFromAddress(address string) int {
 }
 
 func DatabaseConn(logger *logrus.Logger) *pgxpool.Pool {
-	user := env.GetEnv("LMS_DB_USER", "lms_user")
-	password := env.GetEnv("LMS_DB_PASSWORD", "lms_password")
-	dbName := env.GetEnv("LMS_DB_NAME", "lms_db")
-	host := env.GetEnv("LMS_DB_HOST", "localhost")
-	port := env.GetEnv("LMS_DB_PORT", "5433")
+	//user := env.GetEnv("LMS_DB_USER", "")
+	//password := env.GetEnv("LMS_DB_PASSWORD", "")
+	//dbName := env.GetEnv("LMS_DB_NAME", "")
+	//host := env.GetEnv("LMS_DB_HOST", "")
+	//port := env.GetEnv("LMS_DB_PORT", "")
 	maxConns := env.GetEnvAsInt("LMS_DB_MAX_CONNS", 10)
 	minConns := env.GetEnvAsInt("LMS_DB_MIN_CONNS", 2)
 	maxConnLifetime := env.GetEnvAsDuration("LMS_DB_MAX_CONN_LIFETIME", time.Hour)
 	maxConnIdleTime := env.GetEnvAsDuration("LMS_DB_MAX_CONN_IDLE_TIME", 30*time.Minute)
 
-	dbUrl := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, password, host, port, dbName)
-
+	/*dbUrl := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, password, host, port, dbName)*/
+	dbUrl := "postgresql://neondb_owner:npg_MEB4CYJS7TKh@ep-withered-salad-a27oo7gn-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 	config, err := pgxpool.ParseConfig(dbUrl)
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to parse database configuration")
@@ -238,6 +253,17 @@ func DatabaseConn(logger *logrus.Logger) *pgxpool.Pool {
 	config.MinConns = int32(minConns)
 	config.MaxConnLifetime = maxConnLifetime
 	config.MaxConnIdleTime = maxConnIdleTime
+	config.HealthCheckPeriod = 1 * time.Minute
+
+	config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeCacheStatement
+
+	config.BeforeAcquire = func(ctx context.Context, conn *pgx.Conn) bool {
+		err := conn.Ping(ctx)
+		if err != nil {
+			logger.WithError(err).Warn("Releasing unhealthy connection")
+		}
+		return err == nil
+	}
 
 	var connPool *pgxpool.Pool
 	maxRetries := 5

@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/encoding/protojson"
 	"net/http"
 	"os"
 	"os/signal"
@@ -41,11 +42,19 @@ func NewGateway(
 func (g *Gateway) Start() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
+	jsonOption := runtime.WithMarshalerOption(
+		runtime.MIMEWildcard,
+		&runtime.JSONPb{
+			MarshalOptions: protojson.MarshalOptions{
+				EmitUnpopulated: true,
+			},
+		},
+	)
 	gwMux := runtime.NewServeMux(
 		runtime.WithErrorHandler(g.errorHandler),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{}),
 		runtime.WithIncomingHeaderMatcher(g.headerMatcher),
+		jsonOption,
 	)
 
 	opts := []grpc.DialOption{

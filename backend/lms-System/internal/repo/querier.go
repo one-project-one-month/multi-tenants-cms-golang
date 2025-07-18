@@ -6,11 +6,20 @@ package repo
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type Querier interface {
+	AssignMultipleRolesToUser(ctx context.Context, arg AssignMultipleRolesToUserParams) error
+	AssignRolesToUser(ctx context.Context, arg AssignRolesToUserParams) error
+	CheckNameSpaceFromMetaData(ctx context.Context, namespace string) (int32, error)
+	CheckTenantsMemberExistenceByEmail(ctx context.Context, lmsUserEmail string) (int32, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
+	GetDefaultRoleIDs(ctx context.Context) ([]uuid.UUID, error)
+	GetRoleIdByName(ctx context.Context, lmsRoleName LmsRoleType) (uuid.UUID, error)
+	GetTenantIdByNameSpace(ctx context.Context, namespace string) (uuid.UUID, error)
 	GetUserByEmail(ctx context.Context, lmsUserEmail string) (LmsUser, error)
-	RegisterUserWithRoles(ctx context.Context, arg RegisterUserWithRolesParams) (RegisterUserWithRolesRow, error)
 	UpdateEmailVerification(ctx context.Context, lmsUserEmail string) error
 }
 

@@ -12,7 +12,9 @@ message  SystemUser {
   string email = 3;
   string phone_number = 4;
   string address = 5;
-  google.protobuf.Timestamp registration_date = 6;
-  google.protobuf.Timestamp created_at = 7;
-  google.protobuf.Timestamp updated_at = 8;
+  bool  email_verified = 6;
+  bool  mfa_enable = 7;
+  google.protobuf.Timestamp registration_date = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
 }

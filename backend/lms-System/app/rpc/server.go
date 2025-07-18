@@ -3,13 +3,15 @@ package rpc
 import (
 	"context"
 	"fmt"
+	"github.com/multi-tenants-cms-golang/lms-sys/app/rpc/interceptor"
+	db "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	"net"
 	"syscall"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/gateway/middleware"
 	authSrv "github.com/multi-tenants-cms-golang/lms-sys/app/rpc/authentication"
-	db "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	"github.com/multi-tenants-cms-golang/lms-sys/internal/types"
 	authpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	"github.com/oklog/run"
@@ -46,14 +48,22 @@ func NewServer(
 }
 
 func (s *Server) Run() error {
-	grpcServer := grpc.NewServer()
-
-	authService := authSrv.NewAuthenticationService(s.store, s.logger, &types.Config{})
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptor.MetadataLoggerInterceptor(s.logger)),
+	)
+	authService := authSrv.NewAuthenticationService(s.store, s.logger, &types.Config{
+		BaseURL:           "http://localhost:9001",
+		TokenLength:       0,
+		TokenTTL:          0,
+		MaxRetries:        1000,
+		RetryDelay:        0,
+		RateLimitAttempts: 100,
+		RateLimitWindow:   time.Second * 20,
+	})
 	authpb.RegisterAuthenticationServiceServer(grpcServer, authService)
 
 	var g run.Group
 
-	// gRPC server
 	g.Add(func() error {
 		listener, err := net.Listen("tcp", grpcAddr)
 		if err != nil {
@@ -65,13 +75,11 @@ func (s *Server) Run() error {
 		grpcServer.GracefulStop()
 	})
 
-	// Signal handler
 	g.Add(run.SignalHandler(context.Background(), syscall.SIGINT, syscall.SIGTERM))
 
 	return g.Run()
 }
 
-// JWT verification helper
 func (s *Server) verifyToken(tokenString string) (*middleware.UserContext, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

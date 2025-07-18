@@ -8,16 +8,17 @@ import (
 	"database/sql/driver"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type CourseStatus string
 
 const (
-	CourseStatusPending     CourseStatus = "Pending"
-	CourseStatusPublished   CourseStatus = "Published"
-	CourseStatusUnpublished CourseStatus = "Unpublished"
-	CourseStatusArchived    CourseStatus = "Archived"
+	CourseStatusPending   CourseStatus = "Pending"
+	CourseStatusActive    CourseStatus = "Active"
+	CourseStatusCompleted CourseStatus = "Completed"
+	CourseStatusCancelled CourseStatus = "Cancelled"
 )
 
 func (e *CourseStatus) Scan(src interface{}) error {
@@ -55,12 +56,22 @@ func (ns NullCourseStatus) Value() (driver.Value, error) {
 	return string(ns.CourseStatus), nil
 }
 
+func AllCourseStatusValues() []CourseStatus {
+	return []CourseStatus{
+		CourseStatusPending,
+		CourseStatusActive,
+		CourseStatusCompleted,
+		CourseStatusCancelled,
+	}
+}
+
 type EnrollmentType string
 
 const (
-	EnrollmentTypeENROLLED  EnrollmentType = "ENROLLED"
-	EnrollmentTypeCOMPLETED EnrollmentType = "COMPLETED"
-	EnrollmentTypeDROPPED   EnrollmentType = "DROPPED"
+	EnrollmentTypeActive    EnrollmentType = "Active"
+	EnrollmentTypeCompleted EnrollmentType = "Completed"
+	EnrollmentTypeDropped   EnrollmentType = "Dropped"
+	EnrollmentTypePending   EnrollmentType = "Pending"
 )
 
 func (e *EnrollmentType) Scan(src interface{}) error {
@@ -98,13 +109,22 @@ func (ns NullEnrollmentType) Value() (driver.Value, error) {
 	return string(ns.EnrollmentType), nil
 }
 
+func AllEnrollmentTypeValues() []EnrollmentType {
+	return []EnrollmentType{
+		EnrollmentTypeActive,
+		EnrollmentTypeCompleted,
+		EnrollmentTypeDropped,
+		EnrollmentTypePending,
+	}
+}
+
 type LmsRoleType string
 
 const (
-	LmsRoleTypeLMSADMIN   LmsRoleType = "LMS_ADMIN"
-	LmsRoleTypeSTUDENT    LmsRoleType = "STUDENT"
+	LmsRoleTypeADMIN      LmsRoleType = "ADMIN"
 	LmsRoleTypeINSTRUCTOR LmsRoleType = "INSTRUCTOR"
-	LmsRoleTypeUSER       LmsRoleType = "USER"
+	LmsRoleTypeSTUDENT    LmsRoleType = "STUDENT"
+	LmsRoleTypeVIEWER     LmsRoleType = "VIEWER"
 )
 
 func (e *LmsRoleType) Scan(src interface{}) error {
@@ -142,13 +162,23 @@ func (ns NullLmsRoleType) Value() (driver.Value, error) {
 	return string(ns.LmsRoleType), nil
 }
 
+func AllLmsRoleTypeValues() []LmsRoleType {
+	return []LmsRoleType{
+		LmsRoleTypeADMIN,
+		LmsRoleTypeINSTRUCTOR,
+		LmsRoleTypeSTUDENT,
+		LmsRoleTypeVIEWER,
+	}
+}
+
 type MaterialType string
 
 const (
-	MaterialTypeVideo MaterialType = "Video"
-	MaterialTypePDF   MaterialType = "PDF"
-	MaterialTypeSlide MaterialType = "Slide"
-	MaterialTypeLink  MaterialType = "Link"
+	MaterialTypeVideo      MaterialType = "Video"
+	MaterialTypeDocument   MaterialType = "Document"
+	MaterialTypeQuiz       MaterialType = "Quiz"
+	MaterialTypeAssignment MaterialType = "Assignment"
+	MaterialTypeLink       MaterialType = "Link"
 )
 
 func (e *MaterialType) Scan(src interface{}) error {
@@ -186,85 +216,50 @@ func (ns NullMaterialType) Value() (driver.Value, error) {
 	return string(ns.MaterialType), nil
 }
 
-type SystemType string
-
-const (
-	SystemTypeLMS SystemType = "LMS"
-	SystemTypeEMS SystemType = "EMS"
-)
-
-func (e *SystemType) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = SystemType(s)
-	case string:
-		*e = SystemType(s)
-	default:
-		return fmt.Errorf("unsupported scan type for SystemType: %T", src)
+func AllMaterialTypeValues() []MaterialType {
+	return []MaterialType{
+		MaterialTypeVideo,
+		MaterialTypeDocument,
+		MaterialTypeQuiz,
+		MaterialTypeAssignment,
+		MaterialTypeLink,
 	}
-	return nil
-}
-
-type NullSystemType struct {
-	SystemType SystemType `json:"system_type"`
-	Valid      bool       `json:"valid"` // Valid is true if SystemType is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullSystemType) Scan(value interface{}) error {
-	if value == nil {
-		ns.SystemType, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.SystemType.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullSystemType) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.SystemType), nil
 }
 
 type Assignment struct {
-	AssignmentID pgtype.UUID      `json:"assignment_id"`
-	CourseID     pgtype.UUID      `json:"course_id"`
+	AssignmentID uuid.UUID        `json:"assignment_id"`
+	CourseID     uuid.UUID        `json:"course_id"`
 	Title        string           `json:"title"`
 	Instructions pgtype.Text      `json:"instructions"`
-	DueDate      pgtype.Timestamp `json:"due_date"`
-	MaxScore     pgtype.Int4      `json:"max_score"`
 	CreatedAt    pgtype.Timestamp `json:"created_at"`
 	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
 }
 
 type Certificate struct {
-	CertificateID    pgtype.UUID      `json:"certificate_id"`
-	EnrollmentID     pgtype.UUID      `json:"enrollment_id"`
-	IssueDate        pgtype.Timestamp `json:"issue_date"`
-	CertificateUrl   pgtype.Text      `json:"certificate_url"`
-	VerificationCode pgtype.Text      `json:"verification_code"`
-	CreatedAt        pgtype.Timestamp `json:"created_at"`
-	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
+	CertificateID  uuid.UUID        `json:"certificate_id"`
+	EnrollmentID   uuid.UUID        `json:"enrollment_id"`
+	IssueDate      pgtype.Timestamp `json:"issue_date"`
+	CertificateUrl pgtype.Text      `json:"certificate_url"`
+	CreatedAt      pgtype.Timestamp `json:"created_at"`
+	UpdatedAt      pgtype.Timestamp `json:"updated_at"`
 }
 
 type Course struct {
-	CourseID         pgtype.UUID      `json:"course_id"`
+	CourseID         uuid.UUID        `json:"course_id"`
 	CourseTitle      string           `json:"course_title"`
 	Description      pgtype.Text      `json:"description"`
-	InstructorID     pgtype.UUID      `json:"instructor_id"`
-	OverallRating    pgtype.Numeric   `json:"overall_rating"`
-	CourseCategory   pgtype.UUID      `json:"course_category"`
+	InstructorID     uuid.UUID        `json:"instructor_id"`
+	OverallRating    pgtype.Int4      `json:"overall_rating"`
+	CourseCategory   uuid.UUID        `json:"course_category"`
 	Status           NullCourseStatus `json:"status"`
 	DurationDayCount pgtype.Int4      `json:"duration_day_count"`
 	CreatedAt        pgtype.Timestamp `json:"created_at"`
 	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
-	OwnedBy          pgtype.UUID      `json:"owned_by"`
+	OwnedBy          uuid.UUID        `json:"owned_by"`
 }
 
 type CourseCategory struct {
-	CategoryID   pgtype.UUID      `json:"category_id"`
+	CategoryID   uuid.UUID        `json:"category_id"`
 	CategoryName string           `json:"category_name"`
 	Description  pgtype.Text      `json:"description"`
 	CreatedAt    pgtype.Timestamp `json:"created_at"`
@@ -272,9 +267,9 @@ type CourseCategory struct {
 }
 
 type Enrollment struct {
-	EnrollmentID   pgtype.UUID      `json:"enrollment_id"`
-	StudentID      pgtype.UUID      `json:"student_id"`
-	CourseID       pgtype.UUID      `json:"course_id"`
+	EnrollmentID   uuid.UUID        `json:"enrollment_id"`
+	StudentID      uuid.UUID        `json:"student_id"`
+	CourseID       uuid.UUID        `json:"course_id"`
 	EnrollmentDate pgtype.Timestamp `json:"enrollment_date"`
 	Progress       pgtype.Numeric   `json:"progress"`
 	Status         EnrollmentType   `json:"status"`
@@ -284,18 +279,17 @@ type Enrollment struct {
 }
 
 type Lesson struct {
-	LessonID      pgtype.UUID      `json:"lesson_id"`
-	Title         string           `json:"title"`
-	Content       pgtype.Text      `json:"content"`
-	MaterialType  NullMaterialType `json:"material_type"`
-	ModuleID      pgtype.UUID      `json:"module_id"`
-	SequenceOrder pgtype.Int4      `json:"sequence_order"`
-	CreatedAt     pgtype.Timestamp `json:"created_at"`
-	UpdatedAt     pgtype.Timestamp `json:"updated_at"`
+	LessonID     uuid.UUID        `json:"lesson_id"`
+	Title        string           `json:"title"`
+	Content      pgtype.Text      `json:"content"`
+	MaterialType NullMaterialType `json:"material_type"`
+	ModuleID     uuid.UUID        `json:"module_id"`
+	CreatedAt    pgtype.Timestamp `json:"created_at"`
+	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
 }
 
 type LmsUser struct {
-	LmsUserID        pgtype.UUID      `json:"lms_user_id"`
+	LmsUserID        uuid.UUID        `json:"lms_user_id"`
 	LmsUserName      string           `json:"lms_user_name"`
 	LmsUserEmail     string           `json:"lms_user_email"`
 	Password         string           `json:"password"`
@@ -310,71 +304,70 @@ type LmsUser struct {
 }
 
 type LmsUserRole struct {
-	LmsRoleID   pgtype.UUID `json:"lms_role_id"`
+	LmsRoleID   uuid.UUID   `json:"lms_role_id"`
 	LmsRoleName LmsRoleType `json:"lms_role_name"`
 }
 
 type LmsUserRolesMap struct {
-	UserRoleID   pgtype.UUID      `json:"user_role_id"`
-	LmsUserID    pgtype.UUID      `json:"lms_user_id"`
-	LmsRoleID    pgtype.UUID      `json:"lms_role_id"`
+	UserRoleID   uuid.UUID        `json:"user_role_id"`
+	LmsUserID    uuid.UUID        `json:"lms_user_id"`
+	LmsRoleID    uuid.UUID        `json:"lms_role_id"`
 	AssignedDate pgtype.Timestamp `json:"assigned_date"`
 	IsActive     pgtype.Bool      `json:"is_active"`
+	LmsUserEmail string           `json:"lms_user_email"`
 	CreatedAt    pgtype.Timestamp `json:"created_at"`
 	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
 }
 
 type Module struct {
-	ModuleID      pgtype.UUID      `json:"module_id"`
-	ModuleName    string           `json:"module_name"`
-	CourseID      pgtype.UUID      `json:"course_id"`
-	Description   pgtype.Text      `json:"description"`
-	SequenceOrder pgtype.Int4      `json:"sequence_order"`
-	CreatedAt     pgtype.Timestamp `json:"created_at"`
-	UpdatedAt     pgtype.Timestamp `json:"updated_at"`
+	ModuleID    uuid.UUID        `json:"module_id"`
+	ModuleName  string           `json:"module_name"`
+	CourseID    uuid.UUID        `json:"course_id"`
+	Description pgtype.Text      `json:"description"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
 }
 
 type NamespaceConsumer struct {
-	ConsumerID pgtype.UUID      `json:"consumer_id"`
-	LmsUserID  pgtype.UUID      `json:"lms_user_id"`
+	ConsumerID uuid.UUID        `json:"consumer_id"`
+	LmsUserID  uuid.UUID        `json:"lms_user_id"`
 	Namespace  string           `json:"namespace"`
 	JoinedDate pgtype.Timestamp `json:"joined_date"`
 	IsActive   pgtype.Bool      `json:"is_active"`
 }
 
 type Quiz struct {
-	QuizID    pgtype.UUID      `json:"quiz_id"`
+	QuizID    uuid.UUID        `json:"quiz_id"`
 	Question  string           `json:"question"`
 	Answer    string           `json:"answer"`
-	ModuleID  pgtype.UUID      `json:"module_id"`
+	ModuleID  uuid.UUID        `json:"module_id"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
 
 type Rating struct {
-	RatingID    pgtype.UUID      `json:"rating_id"`
-	UserID      pgtype.UUID      `json:"user_id"`
-	CourseID    pgtype.UUID      `json:"course_id"`
-	RatingCount int32            `json:"rating_count"`
+	RatingID    uuid.UUID        `json:"rating_id"`
+	UserID      uuid.UUID        `json:"user_id"`
+	CourseID    uuid.UUID        `json:"course_id"`
+	RatingCount pgtype.Int4      `json:"rating_count"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
 }
 
 type Report struct {
-	ReportID          pgtype.UUID      `json:"report_id"`
+	ReportID          uuid.UUID        `json:"report_id"`
 	ReportName        string           `json:"report_name"`
-	GeneratedByUserID pgtype.UUID      `json:"generated_by_user_id"`
+	GeneratedByUserID uuid.UUID        `json:"generated_by_user_id"`
 	GeneratedDate     pgtype.Timestamp `json:"generated_date"`
 	DataSnapshot      pgtype.Text      `json:"data_snapshot"`
-	ReportType        pgtype.Text      `json:"report_type"`
 	CreatedAt         pgtype.Timestamp `json:"created_at"`
 	UpdatedAt         pgtype.Timestamp `json:"updated_at"`
 }
 
 type Review struct {
-	ReviewID    pgtype.UUID      `json:"review_id"`
-	CourseID    pgtype.UUID      `json:"course_id"`
-	UserID      pgtype.UUID      `json:"user_id"`
+	ReviewID    uuid.UUID        `json:"review_id"`
+	CourseID    uuid.UUID        `json:"course_id"`
+	UserID      uuid.UUID        `json:"user_id"`
 	Title       pgtype.Text      `json:"title"`
 	Description pgtype.Text      `json:"description"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
@@ -382,9 +375,9 @@ type Review struct {
 }
 
 type StudentQuiz struct {
-	StudentQuizID pgtype.UUID      `json:"student_quiz_id"`
-	StudentID     pgtype.UUID      `json:"student_id"`
-	QuizID        pgtype.UUID      `json:"quiz_id"`
+	StudentQuizID uuid.UUID        `json:"student_quiz_id"`
+	StudentID     uuid.UUID        `json:"student_id"`
+	QuizID        uuid.UUID        `json:"quiz_id"`
 	Score         pgtype.Int4      `json:"score"`
 	Attempt       pgtype.Int4      `json:"attempt"`
 	CreatedAt     pgtype.Timestamp `json:"created_at"`
@@ -392,29 +385,28 @@ type StudentQuiz struct {
 }
 
 type Submission struct {
-	SubmissionID pgtype.UUID      `json:"submission_id"`
-	AssignmentID pgtype.UUID      `json:"assignment_id"`
-	StudentID    pgtype.UUID      `json:"student_id"`
+	SubmissionID uuid.UUID        `json:"submission_id"`
+	AssignmentID uuid.UUID        `json:"assignment_id"`
+	StudentID    uuid.UUID        `json:"student_id"`
 	SubmittedAt  pgtype.Timestamp `json:"submitted_at"`
 	FileUrl      pgtype.Text      `json:"file_url"`
-	Grade        pgtype.Int4      `json:"grade"`
-	Feedback     pgtype.Text      `json:"feedback"`
 	CreatedAt    pgtype.Timestamp `json:"created_at"`
 	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
 }
 
-type Tenant struct {
-	TenantID   pgtype.UUID      `json:"tenant_id"`
+type Tenants struct {
+	TenantID   uuid.UUID        `json:"tenant_id"`
 	Namespace  string           `json:"namespace"`
-	CmsOwnerID pgtype.UUID      `json:"cms_owner_id"`
+	CmsOwnerID uuid.UUID        `json:"cms_owner_id"`
 	CreatedAt  pgtype.Timestamp `json:"created_at"`
 	IsActive   pgtype.Bool      `json:"is_active"`
 }
 
-type TenantsMember struct {
-	TmID       pgtype.UUID      `json:"tm_id"`
-	LmsUserID  pgtype.UUID      `json:"lms_user_id"`
-	TenantID   pgtype.UUID      `json:"tenant_id"`
-	JoinedDate pgtype.Timestamp `json:"joined_date"`
-	IsActive   pgtype.Bool      `json:"is_active"`
+type TenantsMembers struct {
+	TmID         uuid.UUID        `json:"tm_id"`
+	LmsUserID    uuid.UUID        `json:"lms_user_id"`
+	TenantID     uuid.UUID        `json:"tenant_id"`
+	JoinedDate   pgtype.Timestamp `json:"joined_date"`
+	IsActive     pgtype.Bool      `json:"is_active"`
+	LmsUserEmail string           `json:"lms_user_email"`
 }

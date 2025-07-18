@@ -27,7 +27,7 @@ CREATE TABLE LMS_USER (
                           lms_user_name VARCHAR(100) NOT NULL,
                           lms_user_email VARCHAR(255) UNIQUE NOT NULL,
                           password VARCHAR(255) NOT NULL,
-                          lms_role_id UUID NOT NULL,
+--
                           tenant_id UUID,
                           address TEXT,
                           phone_number VARCHAR(100),
@@ -42,7 +42,22 @@ CREATE TABLE LMS_USER (
                               REFERENCES LMS_USER_Role(lms_role_id) ON DELETE RESTRICT
 );
 
--- 4. Tenant Members
+-- 4. User Roles Mapping Table (Many-to-Many)
+CREATE TABLE lms_user_roles_map (
+                                    user_role_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                                    lms_user_id UUID NOT NULL,
+                                    lms_role_id UUID NOT NULL,
+                                    assigned_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                    is_active BOOLEAN DEFAULT TRUE,
+                                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                    CONSTRAINT fk_user_roles_user FOREIGN KEY (lms_user_id)
+                                        REFERENCES LMS_USER(lms_user_id) ON DELETE CASCADE,
+                                    CONSTRAINT fk_user_roles_role FOREIGN KEY (lms_role_id)
+                                        REFERENCES LMS_USER_Role(lms_role_id) ON DELETE CASCADE,
+                                    UNIQUE(lms_user_id, lms_role_id)
+);
+-- 5. Tenant Members
 CREATE TABLE Tenants_Members (
                                  tm_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                  lms_user_id UUID NOT NULL,
@@ -56,7 +71,7 @@ CREATE TABLE Tenants_Members (
                                  UNIQUE(lms_user_id, tenant_id)
 );
 
--- 5. Course Category
+-- 6. Course Category
 CREATE TABLE Course_Category (
                                  category_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                  category_name VARCHAR(100) NOT NULL,
@@ -65,7 +80,7 @@ CREATE TABLE Course_Category (
                                  updated_at TIMESTAMP
 );
 
--- 6. Course
+-- 7. Course
 CREATE TABLE Course (
                         course_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                         course_title VARCHAR(150) NOT NULL,

@@ -1,0 +1,13 @@
+### Register a new user
+POST http://localhost:8082/lms/v1/auth/register
+accept: application/json
+Content-Type: application/json
+
+{
+  "username": "SwanhtetAungphyo",
+  "email": "swanhtetaungp@gmail.com",
+  "password": "SwanHtet12@",
+  "address": "Swan Krakow",
+  "phoneNumber": "48608422691",
+  "mfaVerificationOption": true
+}
