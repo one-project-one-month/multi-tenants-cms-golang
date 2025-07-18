@@ -49,7 +49,7 @@ func (s *Server) RunServer() error {
 			Location: time.UTC,
 		},
 	)
-	backupTask, err := task.NewDatabaseBackupTask(s.dbUrl, "/Users/swanhtet/Desktop/multi-tenants-cms-golang/backend/lms-System/backups")
+	backupTask, err := task.NewDatabaseBackupTask(s.dbUrl, "/Users/swanhtet/Desktop/multi-tenants-cms-golang/backend/lms-main-system/backups")
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"err": err,

@@ -58,7 +58,7 @@ func initLogger() *logrus.Logger {
 			logrus.FieldKeyFunc:  "caller",
 		},
 		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
-			file := strings.TrimPrefix(f.File, "/Users/swanhtet/Desktop/multi-tenants-cms-golang/backend/lms-System/")
+			file := strings.TrimPrefix(f.File, "/Users/swanhtet/Desktop/multi-tenants-cms-golang/backend/lms-main-system/")
 			funcName := f.Function[strings.LastIndex(f.Function, ".")+1:]
 			return file, funcName + ":" + string(rune(f.Line))
 		},
