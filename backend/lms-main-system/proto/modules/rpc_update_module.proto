@@ -7,12 +7,12 @@ option go_package = "github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/mod
 import "modules/module.proto";
 
 message UpdateModuleRequest {
-    string module_id   = 1;
-    string module_name = 2;
-    string course_id   = 3;
-    string description = 4;
+  string module_id = 1;
+  string module_name = 2;
+  string course_id = 3;
+  string description = 4;
 }
 
 message UpdateModuleResponse {
-    Module module = 1;
+  Module module = 1;
 }

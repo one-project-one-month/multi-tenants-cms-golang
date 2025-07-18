@@ -12,6 +12,27 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type AuthenticationInterface interface {
+	buildLoginCookies(user *types.UserInfo, tokens *types.TokenPair) []string
+	generateSessionID() string
+	generateCSRFToken() string
+	buildLogoutCookies() []string
+	Register(ctx context.Context, req *authenticationpb.RegisterRequest) (*authenticationpb.RegisterResponse, error)
+	sendEmailVerificationCode(email string, code string) error
+	VerifyEmail(ctx context.Context, req *authenticationpb.EmailVerifyRequest) (*authenticationpb.EmailVerifyResponse, error)
+	processEmailVerification(ctx context.Context, email string) error
+	generateAndStoreToken(email string) error
+	generateToken(length int) (string, error)
+	sendVerificationEmail(email string, token string) error
+	validateRegisterRequest(req *authenticationpb.RegisterRequest) error
+	validateEmailVerifyRequest(req *authenticationpb.EmailVerifyRequest) error
+	isValidEmail(email string) bool
+	isValidPassword(password string) bool
+	checkRateLimit(ctx context.Context, email string) error
+	checkResendRateLimit(ctx context.Context, email string) error
+	ResendVerificationEmail(ctx context.Context, req *authenticationpb.ResendVerificationRequest) (*authenticationpb.ResendVerificationResponse, error)
+}
+
 type AuthenticationService struct {
 	authenticationpb.UnimplementedAuthenticationServiceServer
 	databaseCtx context.Context

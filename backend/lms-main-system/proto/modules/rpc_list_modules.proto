@@ -7,5 +7,5 @@ option go_package = "github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/mod
 import "modules/module.proto";
 
 message ListModulesResponse {
-    repeated Module modules = 1;
+  repeated Module modules = 1;
 }

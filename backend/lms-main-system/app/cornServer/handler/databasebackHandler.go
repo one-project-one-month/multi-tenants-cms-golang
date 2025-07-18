@@ -71,7 +71,6 @@ func (handler *CornHandler) HandleDatabaseBackUp(ctx context.Context, req *asynq
 		}
 	}(conn, ctx)
 
-	// Get all tables
 	rows, err := conn.Query(ctx,
 		"SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
 	if err != nil {
@@ -90,9 +89,8 @@ func (handler *CornHandler) HandleDatabaseBackUp(ctx context.Context, req *asynq
 		tables = append(tables, table)
 	}
 
-	// Write schema and data for each table
 	for _, table := range tables {
-		// Write table schema
+
 		var schema string
 		err := conn.QueryRow(ctx,
 			"SELECT pg_get_tabledef($1)", table).Scan(&schema)
@@ -105,7 +103,6 @@ func (handler *CornHandler) HandleDatabaseBackUp(ctx context.Context, req *asynq
 			continue
 		}
 
-		// Write table data
 		if _, err := backupFile.WriteString(
 			fmt.Sprintf("COPY %s FROM stdin;\n", table)); err != nil {
 			handler.logger.Errorf("Failed to write COPY header for table %s: %v", table, err)
@@ -117,8 +114,6 @@ func (handler *CornHandler) HandleDatabaseBackUp(ctx context.Context, req *asynq
 			handler.logger.Errorf("Failed to query data from table %s: %v", table, err)
 			continue
 		}
-		//defer rows.Close()
-
 		for rows.Next() {
 			vals, err := rows.Values()
 			if err != nil {

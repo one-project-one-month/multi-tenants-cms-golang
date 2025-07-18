@@ -21,9 +21,9 @@ import (
 	"google.golang.org/grpc"
 )
 
-const (
-	grpcAddr = ":9001"
-)
+//const (
+//	grpcAddr = ":9001"
+//)
 
 type Server struct {
 	store       db.Store
@@ -31,6 +31,7 @@ type Server struct {
 	jwtSecret   string
 	jwtIssuer   string
 	jwtAudience string
+	grpcAddr    string
 }
 
 func NewServer(
@@ -39,6 +40,7 @@ func NewServer(
 	jwtSecret string,
 	jwtIssuer string,
 	jwtAudience string,
+	grpcAddr string,
 ) *Server {
 	return &Server{
 		store:       db,
@@ -46,6 +48,7 @@ func NewServer(
 		jwtSecret:   jwtSecret,
 		jwtIssuer:   jwtIssuer,
 		jwtAudience: jwtAudience,
+		grpcAddr:    grpcAddr,
 	}
 }
 
@@ -70,11 +73,11 @@ func (s *Server) Run() error {
 	var g run.Group
 
 	g.Add(func() error {
-		listener, err := net.Listen("tcp", grpcAddr)
+		listener, err := net.Listen("tcp", s.grpcAddr)
 		if err != nil {
 			return fmt.Errorf("failed to listen: %v", err)
 		}
-		s.logger.Infof("Starting gRPC server on %s", grpcAddr)
+		s.logger.Infof("Starting gRPC server on %s", s.grpcAddr)
 		return grpcServer.Serve(listener)
 	}, func(err error) {
 		grpcServer.GracefulStop()

@@ -35,16 +35,16 @@ A gRPC-based microservice built with Go, featuring both gRPC API and HTTP gatewa
 ## Directory Structure
 
 - **app/**: Application layer containing API implementations
-  - **gateway/**: HTTP gateway server implementation
-  - **rpc-api/**: gRPC server implementation
+    - **gateway/**: HTTP gateway server implementation
+    - **rpc-api/**: gRPC server implementation
 - **cmd/**: Application entry point
 - **database/**: Database-related files
-  - **migration/**: Database migration files
-  - **queries/**: SQL query files for sqlc
-  - **schema/**: Database schema definitions
+    - **migration/**: Database migration files
+    - **queries/**: SQL query files for sqlc
+    - **schema/**: Database schema definitions
 - **internal/**: Private application code
-  - **repo/**: Repository layer for data access
-  - **services/**: Business logic layer
+    - **repo/**: Repository layer for data access
+    - **services/**: Business logic layer
 - **pkg/**: Public library code and utilities
 - **proto/**: Protocol buffer definitions
 - **protogen/**: Generated protobuf code
@@ -73,11 +73,13 @@ A gRPC-based microservice built with Go, featuring both gRPC API and HTTP gatewa
 #### Generate Code
 
 Generate protobuf files:
+
 ```bash
 make proto
 ```
 
 Generate database code:
+
 ```bash
 make sqlc
 ```
@@ -85,11 +87,13 @@ make sqlc
 #### Build and Run
 
 Build the application:
+
 ```bash
 make build
 ```
 
 Run the application:
+
 ```bash
 make run
 ```
@@ -97,16 +101,19 @@ make run
 #### Testing
 
 Run tests:
+
 ```bash
 make test
 ```
 
 Format code:
+
 ```bash
 make fmt
 ```
 
 Lint code:
+
 ```bash
 make lint
 ```
@@ -114,11 +121,13 @@ make lint
 ### Docker
 
 Build Docker image:
+
 ```bash
 make docker-build
 ```
 
 Run Docker container:
+
 ```bash
 make docker-run
 ```
@@ -144,6 +153,22 @@ Configuration can be set through environment variables or configuration files.
 4. Run tests and linting
 5. Submit a pull request
 
-## License
+# Current routes
 
-This project is licensed under the MIT License.
+# User Registration
+
+```zsh
+  curl -X POST --location "http://localhost:8082/lms/v1/auth/register" \
+    -H "accept: application/json" \
+    -H "X-Organisation: <tenants-namespace>" \
+    -H "Content-Type: application/json" \
+    -d '{
+          "username": "SwanhtetAungphyo",
+          "email": "",
+          "password": "",
+          "address": "Swan Krakow",
+          "phoneNumber": "",
+          "mfaVerificationOption": true
+        }'
+```
+

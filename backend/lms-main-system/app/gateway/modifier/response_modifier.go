@@ -49,8 +49,13 @@ func ResponseModifier(
 func RequestModifier(ctx context.Context, req *http.Request) metadata.MD {
 	md := metadata.MD{}
 
-	md.Set("authorization", req.Header.Get("Authorization"))
-	md.Set("x-organisation", req.Header.Get("X-Organisation"))
+	if auth := req.Header.Get("Authorization"); auth != "" {
+		md.Set("authorization", auth)
+	}
+	if org := req.Header.Get("X-Organisation"); org != "" {
+		md.Set("x-organisation", org)
+	}
+
 	for _, cookie := range req.Cookies() {
 		switch cookie.Name {
 		case "access-token":
@@ -64,7 +69,7 @@ func RequestModifier(ctx context.Context, req *http.Request) metadata.MD {
 		case "session-id":
 			md.Set("session-id-cookie", cookie.Value)
 		case "organisation":
-
+			md.Set("organisation-cookie", cookie.Value)
 		}
 	}
 

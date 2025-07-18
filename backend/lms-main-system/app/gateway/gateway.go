@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/multi-tenants-cms-golang/lms-sys/app/gateway/modifier"
 	_ "github.com/multi-tenants-cms-golang/lms-sys/doc/statik"
 	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	"github.com/rakyll/statik/fs"
@@ -54,6 +55,7 @@ func (g *Gateway) Start() error {
 		runtime.WithErrorHandler(g.errorHandler),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{}),
 		runtime.WithIncomingHeaderMatcher(g.headerMatcher),
+		runtime.WithMetadata(modifier.RequestModifier),
 		jsonOption,
 	)
 

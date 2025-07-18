@@ -9,7 +9,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -22,6 +24,23 @@ type EmailRequest struct {
 	Subject      string                 `json:"subject"`
 	TemplateName string                 `json:"templateName"`
 	Data         map[string]interface{} `json:"data"`
+	// Enhanced fields
+	Priority    int               `json:"priority,omitempty"`    // 1=high, 2=normal, 3=low
+	RetryCount  int               `json:"retryCount,omitempty"`  // Current retry attempt
+	MaxRetries  int               `json:"maxRetries,omitempty"`  // Maximum retry attempts
+	ScheduleAt  int64             `json:"scheduleAt,omitempty"`  // Unix timestamp for delayed sending
+	CC          []string          `json:"cc,omitempty"`          // CC recipients
+	BCC         []string          `json:"bcc,omitempty"`         // BCC recipients
+	ReplyTo     string            `json:"replyTo,omitempty"`     // Reply-to address
+	Attachments []Attachment      `json:"attachments,omitempty"` // File attachments
+	Headers     map[string]string `json:"headers,omitempty"`     // Custom headers
+	TrackingID  string            `json:"trackingId,omitempty"`  // For tracking purposes
+}
+
+type Attachment struct {
+	Name    string `json:"name"`
+	Content string `json:"content"` // Base64 encoded content
+	Type    string `json:"type"`    // MIME type
 }
 
 type Config struct {
@@ -31,34 +50,63 @@ type Config struct {
 		Username string
 		Password string
 		From     string
+		// Enhanced SMTP config
+		MaxConnections    int
+		ConnectionTimeout time.Duration
+		SendTimeout       time.Duration
+		KeepAlive         bool
 	}
 	NATS struct {
 		URL      string
 		Stream   string
 		Subjects []string
+		// Enhanced NATS config
+		MaxDeliver    int
+		AckWait       time.Duration
+		MaxAckPending int
 	}
 	Templates struct {
 		Dir          string
 		DefaultExt   string
 		CacheEnabled bool
+		// Enhanced template config
+		WatchChanges   bool
+		ReloadOnChange bool
+	}
+	// New sections
+	Processing struct {
+		Workers           int
+		BatchSize         int
+		RetryDelaySeconds int
+		MaxRetries        int
+	}
+	Monitoring struct {
+		EnableMetrics bool
+		LogLevel      string
 	}
 }
 
+type EmailMetrics struct {
+	TotalSent     int64
+	TotalFailed   int64
+	TotalRetries  int64
+	LastProcessed time.Time
+	mu            sync.RWMutex
+}
+
+var metrics = &EmailMetrics{}
+
 func main() {
-	// Load configuration
 	cfg := loadConfig()
 
-	// Initialize SMTP client
-	smtpClient, err := mail.NewClient(
-		cfg.SMTP.Host,
-		mail.WithPort(cfg.SMTP.Port),
-		mail.WithSMTPAuth(mail.SMTPAuthPlain),
-		mail.WithUsername(cfg.SMTP.Username),
-		mail.WithPassword(cfg.SMTP.Password),
-		mail.WithTLSPolicy(mail.TLSMandatory),
-	)
-	if err != nil {
-		log.Fatalf("Failed to create SMTP client: %v", err)
+	// Initialize SMTP client pool
+	smtpPool := make(chan *mail.Client, cfg.Processing.Workers)
+	for i := 0; i < cfg.Processing.Workers; i++ {
+		client, err := createSMTPClient(cfg)
+		if err != nil {
+			log.Fatalf("Failed to create SMTP client: %v", err)
+		}
+		smtpPool <- client
 	}
 
 	nc, err := nats.Connect(cfg.NATS.URL)
@@ -77,6 +125,12 @@ func main() {
 		Subjects:  cfg.NATS.Subjects,
 		Retention: jetstream.WorkQueuePolicy,
 		Storage:   jetstream.FileStorage,
+		// Enhanced stream config
+		MaxAge:       24 * time.Hour,
+		MaxMsgs:      1000000,
+		MaxBytes:     1024 * 1024 * 1024, // 1GB
+		MaxConsumers: 10,
+		Duplicates:   2 * time.Minute,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -91,6 +145,12 @@ func main() {
 		Durable:       "email-processor",
 		AckPolicy:     jetstream.AckExplicitPolicy,
 		DeliverPolicy: jetstream.DeliverAllPolicy,
+		// Enhanced consumer config
+		MaxDeliver:    cfg.NATS.MaxDeliver,
+		AckWait:       cfg.NATS.AckWait,
+		MaxAckPending: cfg.NATS.MaxAckPending,
+		FilterSubject: "",
+		ReplayPolicy:  jetstream.ReplayInstantPolicy,
 	})
 	if err != nil {
 		log.Fatalf("Consumer creation failed: %v", err)
@@ -106,56 +166,153 @@ func main() {
 		}
 	}
 
-	_, err = consumer.Consume(func(msg jetstream.Msg) {
-		processMessage(msg, smtpClient, cfg.SMTP.From, cfg.Templates, templateCache)
-	})
-	if err != nil {
-		log.Fatalf("Consume failed: %v", err)
+	// Start template watcher if enabled
+	if cfg.Templates.WatchChanges {
+		go watchTemplates(cfg.Templates.Dir, cfg.Templates.DefaultExt, &templateCache)
+	}
+
+	// Start metrics reporter
+	if cfg.Monitoring.EnableMetrics {
+		go reportMetrics()
+	}
+
+	// Start workers
+	for i := 0; i < cfg.Processing.Workers; i++ {
+		go func(workerID int) {
+			_, err := consumer.Consume(func(msg jetstream.Msg) {
+				processMessage(msg, smtpPool, cfg.SMTP.From, cfg.Templates, templateCache, cfg.Processing, workerID)
+			})
+			if err != nil {
+				log.Printf("Worker %d consume failed: %v", workerID, err)
+			}
+		}(i)
 	}
 
 	select {}
 }
 
-func processMessage(msg jetstream.Msg, client *mail.Client, from string, templateCfg struct {
-	Dir          string
-	DefaultExt   string
-	CacheEnabled bool
-}, templateCache *template.Template) {
-	log.Printf("Received message on subject: %s", msg.Subject())
+func createSMTPClient(cfg Config) (*mail.Client, error) {
+	options := []mail.Option{
+		mail.WithPort(cfg.SMTP.Port),
+		mail.WithSMTPAuth(mail.SMTPAuthPlain),
+		mail.WithUsername(cfg.SMTP.Username),
+		mail.WithPassword(cfg.SMTP.Password),
+		mail.WithTLSPolicy(mail.TLSMandatory),
+	}
+
+	if cfg.SMTP.ConnectionTimeout > 0 {
+		options = append(options, mail.WithTimeout(cfg.SMTP.ConnectionTimeout))
+	}
+
+	return mail.NewClient(cfg.SMTP.Host, options...)
+}
+
+func processMessage(msg jetstream.Msg, smtpPool chan *mail.Client, from string, templateCfg struct {
+	Dir            string
+	DefaultExt     string
+	CacheEnabled   bool
+	WatchChanges   bool
+	ReloadOnChange bool
+}, templateCache *template.Template, processingCfg struct {
+	Workers           int
+	BatchSize         int
+	RetryDelaySeconds int
+	MaxRetries        int
+}, workerID int) {
+
+	log.Printf("Worker %d received message on subject: %s", workerID, msg.Subject())
 
 	var emailReq EmailRequest
 	if err := json.Unmarshal(msg.Data(), &emailReq); err != nil {
-		log.Printf("Failed to parse message: %v", err)
+		log.Printf("Worker %d failed to parse message: %v", workerID, err)
 		if err := msg.Nak(); err != nil {
-			log.Printf("Failed to NAK message: %v", err)
+			log.Printf("Worker %d failed to NAK message: %v", workerID, err)
 		}
 		return
 	}
 
+	// Set defaults
 	if emailReq.TemplateName == "" {
 		emailReq.TemplateName = "default"
 	}
+	if emailReq.MaxRetries == 0 {
+		emailReq.MaxRetries = processingCfg.MaxRetries
+	}
 
-	if err := sendEmail(client, from, emailReq, templateCfg, templateCache); err != nil {
-		log.Printf("Failed to send email: %v", err)
+	// Check if message should be delayed
+	if emailReq.ScheduleAt > 0 && time.Now().Unix() < emailReq.ScheduleAt {
+		log.Printf("Worker %d delaying message until %v", workerID, time.Unix(emailReq.ScheduleAt, 0))
+		// Requeue with delay
 		if err := msg.Nak(); err != nil {
-			log.Printf("Failed to NAK message: %v", err)
+			log.Printf("Worker %d failed to NAK delayed message: %v", workerID, err)
 		}
 		return
 	}
 
-	log.Printf("Email sent to %s", emailReq.To)
+	// Get SMTP client from pool
+	client := <-smtpPool
+	defer func() {
+		smtpPool <- client
+	}()
+
+	if err := sendEnhancedEmail(client, from, emailReq, templateCfg, templateCache, workerID); err != nil {
+		log.Printf("Worker %d failed to send email: %v", workerID, err)
+
+		// Retry logic
+		if emailReq.RetryCount < emailReq.MaxRetries {
+			emailReq.RetryCount++
+
+			// Exponential backoff
+			delay := time.Duration(processingCfg.RetryDelaySeconds) * time.Second * time.Duration(emailReq.RetryCount)
+			log.Printf("Worker %d retrying email (attempt %d/%d) after %v", workerID, emailReq.RetryCount, emailReq.MaxRetries, delay)
+
+			//retryData, _ := json.Marshal(emailReq)
+			if err := msg.Nak(); err != nil {
+				log.Printf("Worker %d failed to NAK for retry: %v", workerID, err)
+			}
+
+			metrics.mu.Lock()
+			metrics.TotalRetries++
+			metrics.mu.Unlock()
+
+			time.Sleep(delay)
+			return
+		}
+
+		// Max retries exceeded
+		log.Printf("Worker %d max retries exceeded for email to %s", workerID, emailReq.To)
+		metrics.mu.Lock()
+		metrics.TotalFailed++
+		metrics.mu.Unlock()
+
+		if err := msg.Ack(); err != nil {
+			log.Printf("Worker %d failed to ACK failed message: %v", workerID, err)
+		}
+		return
+	}
+
+	log.Printf("Worker %d email sent to %s (tracking: %s)", workerID, emailReq.To, emailReq.TrackingID)
+
+	metrics.mu.Lock()
+	metrics.TotalSent++
+	metrics.LastProcessed = time.Now()
+	metrics.mu.Unlock()
+
 	if err := msg.Ack(); err != nil {
-		log.Printf("Failed to ACK message: %v", err)
+		log.Printf("Worker %d failed to ACK message: %v", workerID, err)
 	}
 }
 
-func sendEmail(client *mail.Client, from string, req EmailRequest, templateCfg struct {
-	Dir          string
-	DefaultExt   string
-	CacheEnabled bool
-}, templateCache *template.Template) error {
+func sendEnhancedEmail(client *mail.Client, from string, req EmailRequest, templateCfg struct {
+	Dir            string
+	DefaultExt     string
+	CacheEnabled   bool
+	WatchChanges   bool
+	ReloadOnChange bool
+}, templateCache *template.Template, workerID int) error {
+
 	m := mail.NewMsg()
+
 	if err := m.From(from); err != nil {
 		return fmt.Errorf("failed to set From address: %w", err)
 	}
@@ -163,14 +320,58 @@ func sendEmail(client *mail.Client, from string, req EmailRequest, templateCfg s
 		return fmt.Errorf("failed to set To address: %w", err)
 	}
 
+	// Enhanced recipients
+	if len(req.CC) > 0 {
+		if err := m.Cc(req.CC...); err != nil {
+			return fmt.Errorf("failed to set CC addresses: %w", err)
+		}
+	}
+	if len(req.BCC) > 0 {
+		if err := m.Bcc(req.BCC...); err != nil {
+			return fmt.Errorf("failed to set BCC addresses: %w", err)
+		}
+	}
+	if req.ReplyTo != "" {
+		if err := m.ReplyTo(req.ReplyTo); err != nil {
+			return fmt.Errorf("failed to set Reply-To address: %w", err)
+		}
+	}
+
 	m.Subject(req.Subject)
 
+	// Set priority
+	switch req.Priority {
+	case 1:
+		m.SetImportance(mail.ImportanceHigh)
+	case 3:
+		m.SetImportance(mail.ImportanceLow)
+	default:
+		m.SetImportance(mail.ImportanceNormal)
+	}
+
+	for key, value := range req.Headers {
+		m.SetGenHeader(mail.Header(key), value)
+	}
+
+	// Add tracking header
+	if req.TrackingID != "" {
+		m.SetGenHeader("X-Tracking-ID", req.TrackingID)
+	}
+
+	// Render template
 	htmlContent, err := renderTemplate(req, templateCfg, templateCache)
 	if err != nil {
 		return fmt.Errorf("failed to render template: %w", err)
 	}
 
 	m.SetBodyString(mail.TypeTextHTML, htmlContent)
+
+	// Add attachments
+	for _, attachment := range req.Attachments {
+		if err := m.AttachReader(attachment.Name, strings.NewReader(attachment.Content)); err != nil {
+			return fmt.Errorf("failed to add attachment %s: %w", attachment.Name, err)
+		}
+	}
 
 	if err := client.DialAndSend(m); err != nil {
 		return fmt.Errorf("failed to send email: %w", err)
@@ -180,10 +381,13 @@ func sendEmail(client *mail.Client, from string, req EmailRequest, templateCfg s
 }
 
 func renderTemplate(req EmailRequest, templateCfg struct {
-	Dir          string
-	DefaultExt   string
-	CacheEnabled bool
+	Dir            string
+	DefaultExt     string
+	CacheEnabled   bool
+	WatchChanges   bool
+	ReloadOnChange bool
 }, templateCache *template.Template) (string, error) {
+
 	templatePath := filepath.Join(templateCfg.Dir, req.TemplateName+templateCfg.DefaultExt)
 
 	if templateCache != nil {
@@ -233,9 +437,15 @@ func loadTemplates(dir, ext string) (*template.Template, error) {
 			}
 			return val
 		},
+		// Enhanced template functions
+		"formatDate": func(timestamp int64) string {
+			return time.Unix(timestamp, 0).Format("2006-01-02 15:04:05")
+		},
+		"upper": strings.ToUpper,
+		"lower": strings.ToLower,
+		"title": strings.Title,
 	})
 
-	// Parse each file individually to get better error messages
 	for _, file := range files {
 		_, err := tmpl.ParseFiles(file)
 		if err != nil {
@@ -245,6 +455,35 @@ func loadTemplates(dir, ext string) (*template.Template, error) {
 
 	return tmpl, nil
 }
+
+func watchTemplates(dir, ext string, templateCache **template.Template) {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		newCache, err := loadTemplates(dir, ext)
+		if err != nil {
+			log.Printf("Failed to reload templates: %v", err)
+			continue
+		}
+		*templateCache = newCache
+		log.Println("Templates reloaded")
+	}
+}
+
+func reportMetrics() {
+	ticker := time.NewTicker(60 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		metrics.mu.RLock()
+		log.Printf("Metrics - Sent: %d, Failed: %d, Retries: %d, Last: %v, Goroutines: %d",
+			metrics.TotalSent, metrics.TotalFailed, metrics.TotalRetries,
+			metrics.LastProcessed.Format("15:04:05"), runtime.NumGoroutine())
+		metrics.mu.RUnlock()
+	}
+}
+
 func loadConfig() Config {
 	var cfg Config
 
@@ -253,15 +492,32 @@ func loadConfig() Config {
 	cfg.SMTP.Username = getEnv("SMTP_USER", "")
 	cfg.SMTP.Password = getEnv("SMTP_PASSWORD", "")
 	cfg.SMTP.From = getEnv("FROM_ADDR", cfg.SMTP.Username)
+	cfg.SMTP.MaxConnections = getEnvInt("SMTP_MAX_CONNECTIONS", 10)
+	cfg.SMTP.ConnectionTimeout = time.Duration(getEnvInt("SMTP_CONNECTION_TIMEOUT", 30)) * time.Second
+	cfg.SMTP.SendTimeout = time.Duration(getEnvInt("SMTP_SEND_TIMEOUT", 60)) * time.Second
+	cfg.SMTP.KeepAlive = getEnvBool("SMTP_KEEP_ALIVE", true)
 
 	cfg.NATS.URL = getEnv("NATS_URL", "nats://localhost:4222")
 	cfg.NATS.Stream = getEnv("NATS_STREAM", "EMAILS")
 	subjects := getEnv("NATS_SUBJECTS", "email.verification,email.notification,page.approval")
 	cfg.NATS.Subjects = strings.Split(subjects, ",")
+	cfg.NATS.MaxDeliver = getEnvInt("NATS_MAX_DELIVER", 3)
+	cfg.NATS.AckWait = time.Duration(getEnvInt("NATS_ACK_WAIT", 300)) * time.Second
+	cfg.NATS.MaxAckPending = getEnvInt("NATS_MAX_ACK_PENDING", 100)
 
 	cfg.Templates.Dir = getEnv("TEMPLATES_DIR", "templates")
 	cfg.Templates.DefaultExt = getEnv("TEMPLATES_EXT", ".html")
 	cfg.Templates.CacheEnabled = getEnvBool("TEMPLATES_CACHE", true)
+	cfg.Templates.WatchChanges = getEnvBool("TEMPLATES_WATCH", false)
+	cfg.Templates.ReloadOnChange = getEnvBool("TEMPLATES_RELOAD", false)
+
+	cfg.Processing.Workers = getEnvInt("PROCESSING_WORKERS", runtime.NumCPU())
+	cfg.Processing.BatchSize = getEnvInt("PROCESSING_BATCH_SIZE", 10)
+	cfg.Processing.RetryDelaySeconds = getEnvInt("PROCESSING_RETRY_DELAY", 60)
+	cfg.Processing.MaxRetries = getEnvInt("PROCESSING_MAX_RETRIES", 3)
+
+	cfg.Monitoring.EnableMetrics = getEnvBool("MONITORING_METRICS", true)
+	cfg.Monitoring.LogLevel = getEnv("MONITORING_LOG_LEVEL", "INFO")
 
 	return cfg
 }

@@ -7,9 +7,9 @@ option go_package = "github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/mod
 import "modules/module.proto";
 
 message GetModuleRequest {
-    string module_id = 1;
+  string module_id = 1;
 }
 
 message GetModuleResponse {
-    Module module = 1;
+  Module module = 1;
 }

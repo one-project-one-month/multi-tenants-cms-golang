@@ -2,6 +2,9 @@ package authentication
 
 import (
 	"context"
+	"fmt"
+	"sync"
+	"time"
 
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/nats"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/redis"
@@ -10,16 +13,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-
-	"sync"
-	"time"
-)
-
-const (
-	DefaultTokenLength      = 32
-	TokenTTL                = 15 * time.Minute
-	MaxRegistrationAttempts = 3
-	RateLimitWindow         = time.Hour
 )
 
 func (s *AuthenticationService) Register(
@@ -28,87 +21,139 @@ func (s *AuthenticationService) Register(
 ) (*authenticationpb.RegisterResponse, error) {
 	org, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		s.logger.WithFields(logrus.Fields{
-			"method": "Register",
-		}).Info("missing context")
+		return nil, status.Error(codes.InvalidArgument, "missing organization context")
 	}
-	get := org.Get("x-organization")
+
+	orgValues := org.Get("x-organisation")
+	var orgName string
+	if len(orgValues) > 0 {
+		orgName = orgValues[0]
+	} else {
+		return nil, status.Error(codes.InvalidArgument, "organization header required")
+	}
+
 	s.logger.WithFields(logrus.Fields{
 		"method": "Register",
-		"org":    get,
+		"org":    orgName,
 	}).Info("organization found")
+
 	if err := s.validateRegisterRequest(req); err != nil {
 		return nil, err
 	}
 
 	if err := s.checkRateLimit(ctx, req.GetEmail()); err != nil {
-		return nil, err
+		return nil, status.Error(codes.ResourceExhausted, "rate limit exceeded for registration. Please wait 30 mins")
 	}
 
 	s.logger.WithFields(logrus.Fields{
 		"method": "Register",
 		"email":  req.GetEmail(),
 	}).Info("processing registration request")
-	nameSpace := org.Get("x-organization")[0]
-	flow, err := s.store.WholeRegistrationFlow(s.databaseCtx, req, nameSpace)
+
+	flow, err := s.store.WholeRegistrationFlow(s.databaseCtx, req, orgName)
+
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"error": err.Error(),
-		}).Info("failed to process registration request")
+		}).Error("failed to process registration request")
 		return nil, err
 	}
-	var wg sync.WaitGroup
+
 	code, _ := s.generateToken(6)
-	wg.Add(2)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
-		err := s.sendEmailVerificationCode(req.GetEmail(), code)
-		if err != nil {
+		if err := s.sendEmailVerificationCode(req.GetEmail(), code, orgName); err != nil {
 			s.logger.WithFields(logrus.Fields{
 				"error": err.Error(),
-			}).Error("failed to send email verification code")
-			return
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		payload := map[string]interface{}{
-			"title":        "Email Verification From LMS",
-			"to":           req.GetEmail(),
-			"code":         code,
-			"organisation": org,
-		}
-		err := nats.Publish("lms.email.verification.code", payload)
-		if err != nil {
-			s.logger.WithFields(logrus.Fields{
-				"error": err.Error(),
+				"email": req.GetEmail(),
 			}).Error("failed to send email verification code")
 		}
 	}()
+
 	wg.Wait()
 	return flow, nil
 }
 
-func (s *AuthenticationService) sendEmailVerificationCode(email, code string) error {
-	return redis.SetRedis("verify-token"+email, code, time.Minute*10)
+func (s *AuthenticationService) sendEmailVerificationCode(email, code, organization string) error {
+	if err := redis.SetRedis("verify-token:"+email, code, time.Minute*10); err != nil {
+		return fmt.Errorf("failed to store verification code: %w", err)
+	}
 
+	payload := map[string]any{
+		"to":           email,
+		"subject":      "Email Verification Code",
+		"templateName": "verification_code",
+		"data": map[string]interface{}{
+			"code":         code,
+			"organization": organization,
+			"email":        email,
+			"expires_at":   time.Now().Add(time.Minute * 10).Unix(),
+		},
+		"trackingId": fmt.Sprintf("verify_%s_%d", email, time.Now().Unix()),
+	}
+
+	if err := nats.Publish("lms.email.verification", payload); err != nil {
+		return fmt.Errorf("failed to publish email verification: %w", err)
+	}
+
+	return nil
+}
+
+func (s *AuthenticationService) sendPasswordResetCode(email, code, organization string) error {
+	if err := redis.SetRedis("password-reset:"+email, code, time.Minute*15); err != nil {
+		return fmt.Errorf("failed to store password reset code: %w", err)
+	}
+
+	payload := map[string]any{
+		"type":         "password_reset",
+		"email":        email,
+		"code":         code,
+		"organization": organization,
+		"template":     "password_reset",
+		"subject":      "Password Reset Code",
+		"expires_at":   time.Now().Add(time.Minute * 15).Unix(),
+		"sent_at":      time.Now().Unix(),
+	}
+
+	return nats.Publish("lms.email.password_reset", payload)
+}
+
+func (s *AuthenticationService) sendWelcomeEmail(email, name, organization string) error {
+	payload := map[string]any{
+		"type":         "welcome",
+		"email":        email,
+		"name":         name,
+		"organization": organization,
+		"template":     "welcome",
+		"subject":      "Welcome to LMS",
+		"sent_at":      time.Now().Unix(),
+	}
+
+	return nats.Publish("lms.email.welcome", payload)
 }
 
 func (s *AuthenticationService) VerifyEmail(
 	ctx context.Context,
 	req *authenticationpb.EmailVerifyRequest,
 ) (*authenticationpb.EmailVerifyResponse, error) {
-
 	if err := s.validateEmailVerifyRequest(req); err != nil {
 		return nil, err
 	}
 
-	storedToken, err := redis.GetRedis(req.GetEmail())
+	storedToken, err := redis.GetRedis("verify-token:" + req.GetEmail())
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"error": err.Error(),
 			"email": req.GetEmail(),
 		}).Error("failed to retrieve token from Redis")
+		return nil, status.Error(codes.NotFound, "verification token not found or expired")
+	}
+
+	if storedToken == "" {
 		return nil, status.Error(codes.NotFound, "verification token not found or expired")
 	}
 
@@ -128,7 +173,7 @@ func (s *AuthenticationService) VerifyEmail(
 		return nil, status.Error(codes.Internal, "failed to verify email")
 	}
 
-	if err := redis.DeleteRedis(req.GetEmail()); err != nil {
+	if err := redis.DeleteRedis("verify-token:" + req.GetEmail()); err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"error": err.Error(),
 			"email": req.GetEmail(),

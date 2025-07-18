@@ -11,5 +11,5 @@ message  EmailVerifyRequest {
   string token = 3;
 }
 message  EmailVerifyResponse {
-  string message  = 1;
+  string message = 1;
 }

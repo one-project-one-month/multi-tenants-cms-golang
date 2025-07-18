@@ -4,6 +4,7 @@
 *.swp
 *.swo
 *~
+./backend/lms-main-system/.idea
 
 # OS generated files
 .DS_Store

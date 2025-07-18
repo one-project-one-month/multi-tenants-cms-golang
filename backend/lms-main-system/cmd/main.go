@@ -110,7 +110,7 @@ func main() {
 	logger.Info("Application starting with log rotation enabled")
 
 	grpcServerAddress := env.GetEnv("LMS_GRPC_SERVER_ADDRESS", ":9001")
-	grpcGatewayAddress := env.GetEnv("LMS_GRPC_GATEWAY_ADDRESS", ":8086")
+	//grpcGatewayAddress := env.GetEnv("LMS_GRPC_GATEWAY_ADDRESS", ":8086")
 	jwtSecret := env.GetEnv("LMS_JWT_SECRET", "default-secret-key-at-least-32-characters-long")
 	jwtIssuer := env.GetEnv("LMS_JWT_ISSUER", "lms-system")
 	jwtAudience := env.GetEnv("LMS_JWT_AUDIENCE", "lms-client")
@@ -167,12 +167,13 @@ func main() {
 		jwtSecret,
 		jwtIssuer,
 		jwtAudience,
+		grpcServerAddress,
 	)
 
 	grpcGateway := gateway.NewGateway(
 		logger,
 		grpcServerAddress,
-		grpcGatewayAddress,
+		":8086",
 		//jwtSecret,
 		//jwtIssuer,
 		//jwtAudience,

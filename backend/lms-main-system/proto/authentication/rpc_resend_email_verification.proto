@@ -10,7 +10,7 @@ message ResendVerificationRequest{
 }
 
 message  ResendVerificationResponse {
- string  message = 1;
- bool success = 2;
+  string  message = 1;
+  bool success = 2;
 }
 
