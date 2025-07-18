@@ -2,11 +2,10 @@ package handler
 
 import (
 	"errors"
-	"strings"
-
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"strings"
 
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/service"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
@@ -77,6 +76,23 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 		return utils.UnauthorizedResponse(c, "Login failed")
 	}
 
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    authResponse.AccessToken,
+		Path:     "/",
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Strict",
+	})
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    authResponse.RefreshToken,
+		Path:     "/",
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Strict",
+	})
 	return utils.SuccessResponse(c, "Login successful", authResponse)
 }
 
