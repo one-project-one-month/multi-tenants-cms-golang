@@ -13,6 +13,7 @@ type PageRepository interface {
 	UpdatePage(page *types.Page) error
 	GetById(id string) (*types.Page, error)
 	DeleteById(id string) error
+	GetAllPagesWithRelations(offset, limit int) ([]*types.Page, error)
 }
 
 type PageRepositoryImpl struct {
@@ -77,4 +78,14 @@ func (p *PageRepositoryImpl) DeleteById(id string) error {
 		return err
 	}
 	return nil
+}
+
+func (r *PageRepositoryImpl) GetAllPagesWithRelations(offset, limit int) ([]*types.Page, error) {
+	var pages []*types.Page
+	err := r.db.Preload("OwnerUser").Preload("PageRequest").
+		Offset(offset).
+		Limit(limit).
+		Order("created_at DESC").
+		Find(&pages).Error
+	return pages, err
 }

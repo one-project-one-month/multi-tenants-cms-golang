@@ -43,6 +43,37 @@ func NewPageService(
 	}
 }
 
+/*
+	func (p *PageServiceImpl) GetAllPages(req *types.PaginateRequest) ([]*types.PageResponse, *utils.Pagination, error) {
+		total, err := p.repo.Count()
+		if err != nil {
+			p.log.WithError(err).Errorln("Failed to count number of pages")
+			return nil, nil, err
+		}
+
+		offset := utils.CalculateOffset(req.Page, req.Limit)
+
+		pages, err := p.repo.GetAllPages(offset, req.Limit)
+		if err != nil {
+			p.log.WithError(err).Errorln("Failed to get all pages")
+			return nil, nil, err
+		}
+
+		var responses []*types.PageResponse
+		for _, page := range pages {
+			responses = append(responses, mapper.ToPageResponse(page))
+		}
+
+		pagination := &utils.Pagination{
+			Page:       req.Page,
+			Limit:      req.Limit,
+			Total:      total,
+			TotalPages: int(math.Ceil(float64(total) / float64(req.Limit))),
+		}
+
+		return responses, pagination, nil
+	}
+*/
 func (p *PageServiceImpl) GetAllPages(req *types.PaginateRequest) ([]*types.PageResponse, *utils.Pagination, error) {
 	total, err := p.repo.Count()
 	if err != nil {
@@ -52,9 +83,9 @@ func (p *PageServiceImpl) GetAllPages(req *types.PaginateRequest) ([]*types.Page
 
 	offset := utils.CalculateOffset(req.Page, req.Limit)
 
-	pages, err := p.repo.GetAllPages(offset, req.Limit)
+	pages, err := p.repo.GetAllPagesWithRelations(offset, req.Limit)
 	if err != nil {
-		p.log.WithError(err).Errorln("Failed to get all pages")
+		p.log.WithError(err).Errorln("Failed to get all pages with relations")
 		return nil, nil, err
 	}
 
