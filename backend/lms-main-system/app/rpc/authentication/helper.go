@@ -4,9 +4,12 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
-	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/nats"
-	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils/redis"
+	"github.com/multi-tenants-cms-golang/lms-sys/internal/types"
+	cook "github.com/multi-tenants-cms-golang/lms-sys/pkg/cookies"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/infra/nats"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/infra/redis"
 	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -18,7 +21,7 @@ import (
 	"time"
 )
 
-func (s *AuthenticationService) processEmailVerification(ctx context.Context, email string) error {
+func (s *Service) processEmailVerification(ctx context.Context, email string) error {
 	var wg sync.WaitGroup
 	errChan := make(chan error, 2)
 
@@ -64,7 +67,7 @@ func (s *AuthenticationService) processEmailVerification(ctx context.Context, em
 	return nil
 }
 
-func (s *AuthenticationService) generateAndStoreToken(email string) error {
+func (s *Service) generateAndStoreToken(email string) error {
 	tokenLength := s.cfg.TokenLength
 	if tokenLength == 0 {
 		tokenLength = DefaultTokenLength
@@ -92,7 +95,7 @@ func (s *AuthenticationService) generateAndStoreToken(email string) error {
 	return nil
 }
 
-func (s *AuthenticationService) generateToken(length int) (string, error) {
+func (s *Service) generateToken(length int) (string, error) {
 	if length <= 0 {
 		return "", fmt.Errorf("invalid token length: %d", length)
 	}
@@ -105,7 +108,7 @@ func (s *AuthenticationService) generateToken(length int) (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-func (s *AuthenticationService) sendVerificationEmail(email, token string) error {
+func (s *Service) sendVerificationEmail(email, token string) error {
 	if email == "" || token == "" {
 		return fmt.Errorf("email and token are required")
 	}
@@ -159,7 +162,7 @@ func (s *AuthenticationService) sendVerificationEmail(email, token string) error
 	return nats.Publish("lms.email.verify", emailPayload)
 }
 
-func (s *AuthenticationService) validateRegisterRequest(req *authenticationpb.RegisterRequest) error {
+func (s *Service) validateRegisterRequest(req *authenticationpb.RegisterRequest) error {
 	if req == nil {
 		return status.Error(codes.InvalidArgument, "request is required")
 	}
@@ -195,7 +198,7 @@ func (s *AuthenticationService) validateRegisterRequest(req *authenticationpb.Re
 	return nil
 }
 
-func (s *AuthenticationService) validateEmailVerifyRequest(req *authenticationpb.EmailVerifyRequest) error {
+func (s *Service) validateEmailVerifyRequest(req *authenticationpb.EmailVerifyRequest) error {
 	if req == nil {
 		return status.Error(codes.InvalidArgument, "request is required")
 	}
@@ -219,7 +222,7 @@ func (s *AuthenticationService) validateEmailVerifyRequest(req *authenticationpb
 	return nil
 }
 
-func (s *AuthenticationService) isValidEmail(email string) bool {
+func (s *Service) isValidEmail(email string) bool {
 
 	if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
 		return false
@@ -244,7 +247,7 @@ func (s *AuthenticationService) isValidEmail(email string) bool {
 	return true
 }
 
-func (s *AuthenticationService) isValidPassword(password string) bool {
+func (s *Service) isValidPassword(password string) bool {
 	hasUpper := false
 	hasLower := false
 	hasDigit := false
@@ -263,7 +266,7 @@ func (s *AuthenticationService) isValidPassword(password string) bool {
 	return hasUpper && hasLower && hasDigit
 }
 
-func (s *AuthenticationService) checkRateLimit(ctx context.Context, email string) error {
+func (s *Service) checkRateLimit(ctx context.Context, email string) error {
 	key := fmt.Sprintf("rate_limit:register:%s", email)
 	countStr, err := redis.GetRedis(key)
 
@@ -307,7 +310,7 @@ func (s *AuthenticationService) checkRateLimit(ctx context.Context, email string
 	return nil
 }
 
-func (s *AuthenticationService) checkResendRateLimit(ctx context.Context, email string) error {
+func (s *Service) checkResendRateLimit(ctx context.Context, email string) error {
 	key := fmt.Sprintf("rate_limit:resend:%s", email)
 	countStr, err := redis.GetRedis(key)
 
@@ -337,4 +340,148 @@ func (s *AuthenticationService) checkResendRateLimit(ctx context.Context, email 
 	}
 
 	return nil
+}
+
+func (s *Service) buildLoginCookies(user *types.UserInfo, tokens *types.TokenPair) []string {
+	var cookies []string
+
+	cookies = append(cookies, cook.NewCookieBuilder("access_token", tokens.AccessToken).
+		MaxAge(900).
+		Path("/").
+		Build())
+
+	cookies = append(cookies, cook.NewCookieBuilder("refresh_token", tokens.RefreshToken).
+		MaxAge(604800).
+		Path("/auth").
+		Build())
+
+	userInfo := types.UserInfo{
+		ID:    user.ID,
+		Email: user.Email,
+		Role:  user.Role,
+	}
+	userInfoJSON, _ := json.Marshal(userInfo)
+	cookies = append(cookies, cook.NewCookieBuilder("user_info", string(userInfoJSON)).
+		HttpOnly(false).
+		MaxAge(3600).
+		Build())
+
+	csrfToken := s.generateCSRFToken()
+	cookies = append(cookies, cook.NewCookieBuilder("csrf_token", csrfToken).
+		HttpOnly(false).
+		MaxAge(3600).
+		Build())
+
+	sessionID := s.generateSessionID()
+	cookies = append(cookies, cook.NewCookieBuilder("session_id", sessionID).
+		MaxAge(7200).
+		Build())
+
+	preferences := `{"theme":"light","language":"en"}`
+	cookies = append(cookies, cook.NewCookieBuilder("user_preferences", preferences).
+		HttpOnly(false).
+		MaxAge(2592000).
+		Build())
+
+	return cookies
+}
+
+func (s *Service) generateSessionID() string {
+	return generateRandomString(32)
+}
+
+func (s *Service) generateCSRFToken() string {
+	return generateRandomString(32)
+}
+
+func generateRandomString(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[time.Now().UnixNano()%int64(len(charset))]
+		time.Sleep(time.Nanosecond)
+	}
+	return string(b)
+}
+
+func (s *Service) buildLogoutCookies() []string {
+	expiredTime := time.Now().Add(-24 * time.Hour)
+
+	cookieNames := []string{
+		"access_token",
+		"refresh_token",
+		"user_info",
+		"csrf_token",
+		"session_id",
+		"user_preferences",
+	}
+
+	var cookies []string
+	for _, name := range cookieNames {
+		cookie := cook.NewCookieBuilder(name, "").
+			Expires(expiredTime).
+			MaxAge(0).
+			Build()
+		cookies = append(cookies, cookie)
+	}
+
+	return cookies
+}
+
+func (s *Service) sendEmailVerificationCode(email, code, organization string) error {
+	if err := redis.SetRedis("verify-token:"+email, code, time.Minute*10); err != nil {
+		return fmt.Errorf("failed to store verification code: %w", err)
+	}
+
+	payload := map[string]any{
+		"to":           email,
+		"subject":      "Email Verification Code",
+		"templateName": "verification_code",
+		"data": map[string]interface{}{
+			"code":         code,
+			"organization": organization,
+			"email":        email,
+			"expires_at":   time.Now().Add(time.Minute * 10).Unix(),
+		},
+		"trackingId": fmt.Sprintf("verify_%s_%d", email, time.Now().Unix()),
+	}
+
+	if err := nats.Publish("lms.email.verification", payload); err != nil {
+		return fmt.Errorf("failed to publish email verification: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) sendPasswordResetCode(email, code, organization string) error {
+	if err := redis.SetRedis("password-reset:"+email, code, time.Minute*15); err != nil {
+		return fmt.Errorf("failed to store password reset code: %w", err)
+	}
+
+	payload := map[string]any{
+		"type":         "password_reset",
+		"email":        email,
+		"code":         code,
+		"organization": organization,
+		"template":     "password_reset",
+		"subject":      "Password Reset Code",
+		"expires_at":   time.Now().Add(time.Minute * 15).Unix(),
+		"sent_at":      time.Now().Unix(),
+	}
+
+	return nats.Publish("lms.email.password_reset", payload)
+}
+
+func (s *Service) sendWelcomeEmail(email, name, organization string) error {
+	payload := map[string]any{
+		"type":         "welcome",
+		"email":        email,
+		"name":         name,
+		"organization": organization,
+		"template":     "welcome",
+		"subject":      "Welcome to LMS",
+		"sent_at":      time.Now().Unix(),
+	}
+
+	return nats.Publish("lms.email.welcome", payload)
 }
