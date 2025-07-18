@@ -43,7 +43,9 @@ func (q *Queries) AssignRolesToUser(ctx context.Context, arg AssignRolesToUserPa
 }
 
 const checkNameSpaceFromMetaData = `-- name: CheckNameSpaceFromMetaData :one
-SELECT  1 FROM tenants WHERE  namespace = $1
+SELECT 1
+FROM tenants
+WHERE namespace = $1
 `
 
 func (q *Queries) CheckNameSpaceFromMetaData(ctx context.Context, namespace string) (int32, error) {
@@ -54,7 +56,9 @@ func (q *Queries) CheckNameSpaceFromMetaData(ctx context.Context, namespace stri
 }
 
 const checkTenantsMemberExistenceByEmail = `-- name: CheckTenantsMemberExistenceByEmail :one
-SELECT  1 FROM tenants_members WHERE lms_user_email = $1
+SELECT 1
+FROM tenants_members
+WHERE lms_user_email = $1
 `
 
 func (q *Queries) CheckTenantsMemberExistenceByEmail(ctx context.Context, lmsUserEmail string) (int32, error) {
@@ -65,28 +69,28 @@ func (q *Queries) CheckTenantsMemberExistenceByEmail(ctx context.Context, lmsUse
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO lms_user (
-    lms_user_name,
-    lms_user_email,
-    password,
-    address,
-    tenant_id,
-    phone_number,
-    registration_date,
-    email_verified
-) VALUES (
-             $1, $2, $3, $4, $5, $6,CURRENT_DATE, FALSE
-         )
-RETURNING lms_user_id, lms_user_name, lms_user_email, address, phone_number, registration_date, email_verified, mfa_enable, created_at, updated_at
+INSERT INTO lms_user (lms_user_name,
+                      lms_user_email,
+                      password,
+                      address,
+                      tenant_id,
+                      phone_number,
+                      registration_date,
+                      email_verified,
+                      namespace_domain
+                      )
+VALUES ($1, $2, $3, $4, $5, $6, CURRENT_DATE,
+        FALSE, $7) RETURNING lms_user_id, lms_user_name, lms_user_email, address, phone_number, registration_date, email_verified, namespace_domain, mfa_enable, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	LmsUserName  string      `json:"lms_user_name"`
-	LmsUserEmail string      `json:"lms_user_email"`
-	Password     string      `json:"password"`
-	Address      pgtype.Text `json:"address"`
-	TenantID     pgtype.UUID `json:"tenant_id"`
-	PhoneNumber  pgtype.Text `json:"phone_number"`
+	LmsUserName     string      `json:"lms_user_name"`
+	LmsUserEmail    string      `json:"lms_user_email"`
+	Password        string      `json:"password"`
+	Address         pgtype.Text `json:"address"`
+	TenantID        pgtype.UUID `json:"tenant_id"`
+	PhoneNumber     pgtype.Text `json:"phone_number"`
+	NamespaceDomain pgtype.Text `json:"namespace_domain"`
 }
 
 type CreateUserRow struct {
@@ -97,6 +101,7 @@ type CreateUserRow struct {
 	PhoneNumber      pgtype.Text      `json:"phone_number"`
 	RegistrationDate pgtype.Date      `json:"registration_date"`
 	EmailVerified    pgtype.Bool      `json:"email_verified"`
+	NamespaceDomain  pgtype.Text      `json:"namespace_domain"`
 	MfaEnable        pgtype.Bool      `json:"mfa_enable"`
 	CreatedAt        pgtype.Timestamp `json:"created_at"`
 	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
@@ -110,6 +115,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		arg.Address,
 		arg.TenantID,
 		arg.PhoneNumber,
+		arg.NamespaceDomain,
 	)
 	var i CreateUserRow
 	err := row.Scan(
@@ -120,6 +126,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		&i.PhoneNumber,
 		&i.RegistrationDate,
 		&i.EmailVerified,
+		&i.NamespaceDomain,
 		&i.MfaEnable,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -128,7 +135,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 }
 
 const getDefaultRoleIDs = `-- name: GetDefaultRoleIDs :many
-SELECT lms_role_id FROM lms_user_role
+SELECT lms_role_id
+FROM lms_user_role
 WHERE lms_role_name IN ('STUDENT', 'VIEWER')
 `
 
@@ -153,7 +161,9 @@ func (q *Queries) GetDefaultRoleIDs(ctx context.Context) ([]uuid.UUID, error) {
 }
 
 const getRoleIdByName = `-- name: GetRoleIdByName :one
-SELECT lms_role_id FROM lms_user_role WHERE  lms_role_name = $1
+SELECT lms_role_id
+FROM lms_user_role
+WHERE lms_role_name = $1
 `
 
 func (q *Queries) GetRoleIdByName(ctx context.Context, lmsRoleName LmsRoleType) (uuid.UUID, error) {
@@ -164,7 +174,9 @@ func (q *Queries) GetRoleIdByName(ctx context.Context, lmsRoleName LmsRoleType) 
 }
 
 const getTenantIdByNameSpace = `-- name: GetTenantIdByNameSpace :one
-SELECT tenant_id FROM tenants WHERE  namespace = $1
+SELECT tenant_id
+FROM tenants
+WHERE namespace = $1
 `
 
 func (q *Queries) GetTenantIdByNameSpace(ctx context.Context, namespace string) (uuid.UUID, error) {
@@ -175,7 +187,9 @@ func (q *Queries) GetTenantIdByNameSpace(ctx context.Context, namespace string) 
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT  lms_user_id, lms_user_name, lms_user_email, password, tenant_id, address, phone_number, mfa_enable, email_verified, registration_date, created_at, updated_at FROM lms_user WHERE  lms_user_email = $1
+SELECT lms_user_id, lms_user_name, lms_user_email, password, tenant_id, address, phone_number, mfa_enable, email_verified, namespace_domain, registration_date, created_at, updated_at
+FROM lms_user
+WHERE lms_user_email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, lmsUserEmail string) (LmsUser, error) {
@@ -191,6 +205,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, lmsUserEmail string) (LmsU
 		&i.PhoneNumber,
 		&i.MfaEnable,
 		&i.EmailVerified,
+		&i.NamespaceDomain,
 		&i.RegistrationDate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -198,9 +213,45 @@ func (q *Queries) GetUserByEmail(ctx context.Context, lmsUserEmail string) (LmsU
 	return i, err
 }
 
+const getUserPasswordMfaByNameSpaceDomain = `-- name: GetUserPasswordMfaByNameSpaceDomain :one
+SELECT lms_user_id, password,mfa_enable
+FROM lms_user WHERE  namespace_domain = $1
+`
+
+type GetUserPasswordMfaByNameSpaceDomainRow struct {
+	LmsUserID uuid.UUID   `json:"lms_user_id"`
+	Password  string      `json:"password"`
+	MfaEnable pgtype.Bool `json:"mfa_enable"`
+}
+
+func (q *Queries) GetUserPasswordMfaByNameSpaceDomain(ctx context.Context, namespaceDomain pgtype.Text) (GetUserPasswordMfaByNameSpaceDomainRow, error) {
+	row := q.db.QueryRow(ctx, getUserPasswordMfaByNameSpaceDomain, namespaceDomain)
+	var i GetUserPasswordMfaByNameSpaceDomainRow
+	err := row.Scan(&i.LmsUserID, &i.Password, &i.MfaEnable)
+	return i, err
+}
+
+const setUpMFA = `-- name: SetUpMFA :one
+INSERT  INTO  lms_user_mfa (mfa_secret, lms_user_domain_email)
+VALUES ($1, $2) RETURNING  mfa_secret_id
+`
+
+type SetUpMFAParams struct {
+	MfaSecret          string `json:"mfa_secret"`
+	LmsUserDomainEmail string `json:"lms_user_domain_email"`
+}
+
+func (q *Queries) SetUpMFA(ctx context.Context, arg SetUpMFAParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, setUpMFA, arg.MfaSecret, arg.LmsUserDomainEmail)
+	var mfa_secret_id uuid.UUID
+	err := row.Scan(&mfa_secret_id)
+	return mfa_secret_id, err
+}
+
 const updateEmailVerification = `-- name: UpdateEmailVerification :exec
 UPDATE lms_user
-SET email_verified = true, updated_at = now()
+SET email_verified = true,
+    updated_at     = now()
 WHERE lms_user_email = $1
 `
 

@@ -7,12 +7,13 @@ import "google/protobuf/timestamp.proto";
 
 message LoginRequest {
   string organisation = 1;
-  string email = 2;
+  string namespace_domain_email = 2;
   string password = 3;
 }
 
 message LoginResponse {
   string message = 1;
   string token = 2;
-  google.protobuf.Timestamp expires_at = 3;
+  bool  mfa_enable = 3;
+  google.protobuf.Timestamp expires_at = 4;
 }

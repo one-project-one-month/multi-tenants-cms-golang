@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/joho/godotenv"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/infra/consul"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils"
 	"github.com/natefinch/lumberjack"
 	"github.com/sirupsen/logrus"
 	"io"
@@ -158,7 +159,17 @@ func initApp(logger *logrus.Logger, dbPool *pgxpool.Pool, consulClient *api.Clie
 	cronServer := cornServer.NewServer(logger, env.GetEnv("LMS_REDIS_ADDRESS", ""), backupHandler, dbUrl)
 
 	store := db.NewStore(logger, dbPool)
-	grpcSrv := rpc.NewServer(store, logger, jwtSecret, jwtIssuer, jwtAudience, grpcAddress)
+	mfaConfig := utils.DefaultMFAConfig()
+	mfaManger := utils.NewMFAManager(mfaConfig)
+	grpcSrv := rpc.NewServer(
+		store,
+		logger,
+		jwtSecret,
+		jwtIssuer,
+		jwtAudience,
+		grpcAddress,
+		mfaManger,
+	)
 	grpcGateway := gateway.NewGateway(logger, grpcAddress, ":8086")
 
 	return app.NewApp(grpcSrv, grpcGateway, cronServer, logger)

@@ -9,7 +9,8 @@ import "authentication/rpc_email_verify.proto";
 import "authentication/rpc_login.proto";
 import "authentication/rpc_resend_email_verification.proto";
 import "authentication/rpc_logout.proto";
-
+import "authentication/rpc_refresh.proto";
+import "authentication/rpc_mfa_setup.proto";
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
     title: "LMS Authentication Service";
@@ -29,7 +30,7 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   schemes: HTTP;
   consumes: "application/json";
   produces: "application/json";
-  host: "api.lms.example.com";
+  host: "localhost:8086";
   base_path: "/v1";
   security_definitions: {
     security: {
@@ -60,6 +61,16 @@ service AuthenticationService {
       summary: "Register new user"
       description: "Creates a new user account in the LMS system"
       tags: "Authentication"
+
+      parameters: {
+        headers{
+          name: "X-Organisation"
+          required: true
+          type: STRING
+          description: "Organization identifier header"
+        }
+      }
+
       responses: {
         key: "201"
         value: {
@@ -86,7 +97,6 @@ service AuthenticationService {
     };
   }
 
-  // Verify user email address
   rpc VerifyEmail(EmailVerifyRequest) returns (EmailVerifyResponse) {
     option (google.api.http) = {
       post: "/lms/v1/auth/verify-email/{email}/{token}"
@@ -96,6 +106,16 @@ service AuthenticationService {
       summary: "Verify email address"
       description: "Verifies a user's email address using the token sent to their email"
       tags: "Authentication"
+
+      parameters: {
+        headers{
+          name: "X-Organisation"
+          required: true
+          type: STRING
+          description: "Organization identifier header"
+        }
+      }
+
       responses: {
         key: "200"
         value: {
@@ -116,7 +136,6 @@ service AuthenticationService {
     };
   }
 
-  // Authenticate user
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (google.api.http) = {
       post: "/lms/v1/auth/login"
@@ -126,6 +145,16 @@ service AuthenticationService {
       summary: "User login"
       description: "Authenticates user credentials and returns access tokens"
       tags: "Authentication"
+
+      parameters: {
+        headers{
+          name: "X-Organisation"
+          required: true
+          type: STRING
+          description: "Organization identifier header"
+        }
+      }
+
       responses: {
         key: "200"
         value: {
@@ -146,7 +175,6 @@ service AuthenticationService {
     };
   }
 
-  // Resend verification email
   rpc ResendVerificationEmail(ResendVerificationRequest) returns (ResendVerificationResponse) {
     option (google.api.http) = {
       post: "/lms/v1/auth/resend/{email}"
@@ -155,6 +183,16 @@ service AuthenticationService {
       summary: "Resend verification email"
       description: "Resends the email verification token to the specified email address"
       tags: "Authentication"
+
+      parameters: {
+        headers{
+          name: "X-Organisation"
+          required: true
+          type: STRING
+          description: "Organization identifier header"
+        }
+      }
+
       responses: {
         key: "200"
         value: {
@@ -175,7 +213,6 @@ service AuthenticationService {
     };
   }
 
-  // Logout user
   rpc LogOut(LoginOutRequest) returns (LogoutResponse) {
     option (google.api.http) = {
       post: "/lms/v1/auth/logout"
@@ -185,12 +222,23 @@ service AuthenticationService {
       summary: "User logout"
       description: "Invalidates the user's authentication tokens"
       tags: "Authentication"
+
       security: {
         security_requirement: {
           key: "Bearer";
           value: {};
         }
       }
+
+      parameters: {
+        headers{
+          name: "X-Organisation"
+          required: true
+          type: STRING
+          description: "Organization identifier header"
+        }
+      }
+
       responses: {
         key: "200"
         value: {
@@ -210,4 +258,45 @@ service AuthenticationService {
       }
     };
   }
+
+  rpc Refresh(RefreshTokenRequest) returns (RefreshTokenResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/auth/refresh"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Refresh Token"
+      description: "Check the cookies  and returns new  access tokens"
+      tags: "Authentication"
+
+      parameters: {
+        headers{
+          name: "X-Organisation"
+          required: true
+          type: STRING
+          description: "Organization identifier header"
+        }
+      }
+    };
+  }
+
+  rpc SetUpMFA(MFASetUpRequest) returns (MFASetUpResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/auth/setup-mfa";
+      body: "*";
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Set UP MFA"
+      tags: "Authentication"
+
+      parameters: {
+        headers{
+          name: "X-Organisation"
+          required: true
+          type: STRING
+          description: "Organization identifier header"
+        }
+      }
+    };
+  }
 }
+

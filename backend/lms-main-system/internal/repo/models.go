@@ -298,9 +298,16 @@ type LmsUser struct {
 	PhoneNumber      pgtype.Text      `json:"phone_number"`
 	MfaEnable        pgtype.Bool      `json:"mfa_enable"`
 	EmailVerified    pgtype.Bool      `json:"email_verified"`
+	NamespaceDomain  pgtype.Text      `json:"namespace_domain"`
 	RegistrationDate pgtype.Date      `json:"registration_date"`
 	CreatedAt        pgtype.Timestamp `json:"created_at"`
 	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
+}
+
+type LmsUserMfa struct {
+	MfaSecretID        uuid.UUID `json:"mfa_secret_id"`
+	MfaSecret          string    `json:"mfa_secret"`
+	LmsUserDomainEmail string    `json:"lms_user_domain_email"`
 }
 
 type LmsUserRole struct {

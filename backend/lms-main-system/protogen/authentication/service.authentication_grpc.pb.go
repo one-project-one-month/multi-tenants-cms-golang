@@ -24,22 +24,21 @@ const (
 	AuthenticationService_Login_FullMethodName                   = "/lms.authentication.AuthenticationService/Login"
 	AuthenticationService_ResendVerificationEmail_FullMethodName = "/lms.authentication.AuthenticationService/ResendVerificationEmail"
 	AuthenticationService_LogOut_FullMethodName                  = "/lms.authentication.AuthenticationService/LogOut"
+	AuthenticationService_Refresh_FullMethodName                 = "/lms.authentication.AuthenticationService/Refresh"
+	AuthenticationService_SetUpMFA_FullMethodName                = "/lms.authentication.AuthenticationService/SetUpMFA"
 )
 
 // AuthenticationServiceClient is the client API for AuthenticationService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthenticationServiceClient interface {
-	// Register a new user account
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
-	// Verify user email address
 	VerifyEmail(ctx context.Context, in *EmailVerifyRequest, opts ...grpc.CallOption) (*EmailVerifyResponse, error)
-	// Authenticate user
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
-	// Resend verification email
 	ResendVerificationEmail(ctx context.Context, in *ResendVerificationRequest, opts ...grpc.CallOption) (*ResendVerificationResponse, error)
-	// Logout user
 	LogOut(ctx context.Context, in *LoginOutRequest, opts ...grpc.CallOption) (*LogoutResponse, error)
+	Refresh(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
+	SetUpMFA(ctx context.Context, in *MFASetUpRequest, opts ...grpc.CallOption) (*MFASetUpResponse, error)
 }
 
 type authenticationServiceClient struct {
@@ -100,20 +99,37 @@ func (c *authenticationServiceClient) LogOut(ctx context.Context, in *LoginOutRe
 	return out, nil
 }
 
+func (c *authenticationServiceClient) Refresh(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RefreshTokenResponse)
+	err := c.cc.Invoke(ctx, AuthenticationService_Refresh_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authenticationServiceClient) SetUpMFA(ctx context.Context, in *MFASetUpRequest, opts ...grpc.CallOption) (*MFASetUpResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MFASetUpResponse)
+	err := c.cc.Invoke(ctx, AuthenticationService_SetUpMFA_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthenticationServiceServer is the server API for AuthenticationService service.
 // All implementations must embed UnimplementedAuthenticationServiceServer
 // for forward compatibility.
 type AuthenticationServiceServer interface {
-	// Register a new user account
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
-	// Verify user email address
 	VerifyEmail(context.Context, *EmailVerifyRequest) (*EmailVerifyResponse, error)
-	// Authenticate user
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
-	// Resend verification email
 	ResendVerificationEmail(context.Context, *ResendVerificationRequest) (*ResendVerificationResponse, error)
-	// Logout user
 	LogOut(context.Context, *LoginOutRequest) (*LogoutResponse, error)
+	Refresh(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)
+	SetUpMFA(context.Context, *MFASetUpRequest) (*MFASetUpResponse, error)
 	mustEmbedUnimplementedAuthenticationServiceServer()
 }
 
@@ -138,6 +154,12 @@ func (UnimplementedAuthenticationServiceServer) ResendVerificationEmail(context.
 }
 func (UnimplementedAuthenticationServiceServer) LogOut(context.Context, *LoginOutRequest) (*LogoutResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LogOut not implemented")
+}
+func (UnimplementedAuthenticationServiceServer) Refresh(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Refresh not implemented")
+}
+func (UnimplementedAuthenticationServiceServer) SetUpMFA(context.Context, *MFASetUpRequest) (*MFASetUpResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetUpMFA not implemented")
 }
 func (UnimplementedAuthenticationServiceServer) mustEmbedUnimplementedAuthenticationServiceServer() {}
 func (UnimplementedAuthenticationServiceServer) testEmbeddedByValue()                               {}
@@ -250,6 +272,42 @@ func _AuthenticationService_LogOut_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthenticationService_Refresh_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RefreshTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticationServiceServer).Refresh(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthenticationService_Refresh_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticationServiceServer).Refresh(ctx, req.(*RefreshTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthenticationService_SetUpMFA_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MFASetUpRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticationServiceServer).SetUpMFA(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthenticationService_SetUpMFA_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticationServiceServer).SetUpMFA(ctx, req.(*MFASetUpRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthenticationService_ServiceDesc is the grpc.ServiceDesc for AuthenticationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -276,6 +334,14 @@ var AuthenticationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LogOut",
 			Handler:    _AuthenticationService_LogOut_Handler,
+		},
+		{
+			MethodName: "Refresh",
+			Handler:    _AuthenticationService_Refresh_Handler,
+		},
+		{
+			MethodName: "SetUpMFA",
+			Handler:    _AuthenticationService_SetUpMFA_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

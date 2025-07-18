@@ -40,3 +40,13 @@ func ConvertUUIDToString(pgUUID pgtype.UUID) string {
 	u := uuid.UUID(pgUUID.Bytes)
 	return u.String()
 }
+
+func ConvertStringToPgText(uuidStr string) *pgtype.Text {
+	if uuidStr == "" {
+		return nil
+	}
+	return &pgtype.Text{
+		String: uuidStr,
+		Valid:  true,
+	}
+}

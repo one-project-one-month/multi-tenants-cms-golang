@@ -1,0 +1,14 @@
+
+syntax = "proto3";
+
+package lms.authentication;
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/authentication";
+import "google/protobuf/timestamp.proto";
+
+message  RefreshTokenRequest {
+  
+}
+message  RefreshTokenResponse {
+  string new_access_token = 1;
+}
+

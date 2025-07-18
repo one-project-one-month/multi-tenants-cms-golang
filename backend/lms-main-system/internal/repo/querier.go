@@ -27,8 +27,10 @@ type Querier interface {
 	GetRoleIdByName(ctx context.Context, lmsRoleName LmsRoleType) (uuid.UUID, error)
 	GetTenantIdByNameSpace(ctx context.Context, namespace string) (uuid.UUID, error)
 	GetUserByEmail(ctx context.Context, lmsUserEmail string) (LmsUser, error)
+	GetUserPasswordMfaByNameSpaceDomain(ctx context.Context, namespaceDomain pgtype.Text) (GetUserPasswordMfaByNameSpaceDomainRow, error)
 	ListModules(ctx context.Context) ([]Module, error)
 	ModuleHasAssociations(ctx context.Context, moduleID uuid.UUID) (pgtype.Bool, error)
+	SetUpMFA(ctx context.Context, arg SetUpMFAParams) (uuid.UUID, error)
 	UpdateEmailVerification(ctx context.Context, lmsUserEmail string) error
 	UpdateModuleByID(ctx context.Context, arg UpdateModuleByIDParams) (Module, error)
 }

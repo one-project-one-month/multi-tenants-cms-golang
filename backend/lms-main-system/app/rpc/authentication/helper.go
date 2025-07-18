@@ -10,6 +10,7 @@ import (
 	cook "github.com/multi-tenants-cms-golang/lms-sys/pkg/cookies"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/infra/nats"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/infra/redis"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils"
 	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -194,7 +195,14 @@ func (s *Service) validateRegisterRequest(req *authenticationpb.RegisterRequest)
 	if !s.isValidPassword(req.GetPassword()) {
 		return status.Error(codes.InvalidArgument, "password must contain at least one uppercase letter, one lowercase letter, and one number")
 	}
+	result, err := utils.ParsePhoneNumberEnhanced("+48608422691", "PL")
+	if err != nil {
+		return status.Error(codes.Internal, "failed to parse phone number")
+	}
 
+	if !result.IsValid {
+		return status.Error(codes.Internal, "phone number is invalid")
+	}
 	return nil
 }
 

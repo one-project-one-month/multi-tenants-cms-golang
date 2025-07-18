@@ -3,25 +3,48 @@ package utils
 import (
 	"fmt"
 	"github.com/nyaruka/phonenumbers"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
-func ParsePhoneNumber(phoneNumber string, countryCode string) (string, bool, error) {
-	if len(countryCode) != 2 {
-		return "", false, fmt.Errorf("invalid country code")
+type PhoneNumberResult struct {
+	E164Format          string // +48608422691
+	InternationalFormat string // +48 608 422 691
+	NationalFormat      string // 608 422 691
+	CountryCode         int32  // 48
+	NationalNumber      uint64 // 608422691
+	IsValid             bool
+	IsPossible          bool
+	Region              string // PL
+}
+
+func ParsePhoneNumberEnhanced(phoneNumber string, defaultCountryCode string) (*PhoneNumberResult, error) {
+	if len(defaultCountryCode) != 2 {
+		return nil, fmt.Errorf("invalid country code: must be 2 characters")
 	}
 
-	normalizedPhoneNumber, err := phonenumbers.Parse(phoneNumber, countryCode)
+	parsedNumber, err := phonenumbers.Parse(phoneNumber, defaultCountryCode)
 	if err != nil {
-		return "", false, fmt.Errorf("failed to parse phone number: %s", err)
+		return nil, fmt.Errorf("failed to parse phone number: %w", err)
 	}
 
-	if !phonenumbers.IsValidNumber(normalizedPhoneNumber) &&
-		!phonenumbers.IsPossibleNumber(normalizedPhoneNumber) &&
-		!phonenumbers.IsValidNumberForRegion(normalizedPhoneNumber, countryCode) {
-		return "", false, status.Errorf(codes.InvalidArgument, "invalid phone number")
+	isValid := phonenumbers.IsValidNumber(parsedNumber)
+	isPossible := phonenumbers.IsPossibleNumber(parsedNumber)
+
+	if !isValid && !isPossible {
+		return nil, fmt.Errorf("invalid phone number: not valid or possible")
 	}
 
-	return fmt.Sprintf("%d%d", normalizedPhoneNumber.GetCountryCode(), normalizedPhoneNumber.GetNationalNumber()), phonenumbers.IsValidNumber(normalizedPhoneNumber), nil
+	region := phonenumbers.GetRegionCodeForNumber(parsedNumber)
+
+	result := &PhoneNumberResult{
+		E164Format:          phonenumbers.Format(parsedNumber, phonenumbers.E164),
+		InternationalFormat: phonenumbers.Format(parsedNumber, phonenumbers.INTERNATIONAL),
+		NationalFormat:      phonenumbers.Format(parsedNumber, phonenumbers.NATIONAL),
+		CountryCode:         parsedNumber.GetCountryCode(),
+		NationalNumber:      parsedNumber.GetNationalNumber(),
+		IsValid:             isValid,
+		IsPossible:          isPossible,
+		Region:              region,
+	}
+
+	return result, nil
 }

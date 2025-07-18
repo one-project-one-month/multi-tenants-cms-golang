@@ -13,14 +13,11 @@ import (
 )
 
 const createModule = `-- name: CreateModule :one
-INSERT INTO Module (
-    module_name,        
-    course_id, 
-    description,  
-    updated_at
-) VALUES (
-    $1, $2, $3, CURRENT_TIMESTAMP
-) RETURNING module_id, module_name, course_id, description, created_at, updated_at
+INSERT INTO Module (module_name,
+                    course_id,
+                    description,
+                    updated_at)
+VALUES ($1, $2, $3, CURRENT_TIMESTAMP) RETURNING module_id, module_name, course_id, description, created_at, updated_at
 `
 
 type CreateModuleParams struct {
@@ -44,7 +41,8 @@ func (q *Queries) CreateModule(ctx context.Context, arg CreateModuleParams) (Mod
 }
 
 const deleteAssociatedLessons = `-- name: DeleteAssociatedLessons :exec
-DELETE FROM Lesson
+DELETE
+FROM Lesson
 WHERE module_id = $1
 `
 
@@ -54,7 +52,8 @@ func (q *Queries) DeleteAssociatedLessons(ctx context.Context, moduleID uuid.UUI
 }
 
 const deleteAssociatedQuizzes = `-- name: DeleteAssociatedQuizzes :exec
-DELETE FROM Quiz
+DELETE
+FROM Quiz
 WHERE module_id = $1
 `
 
@@ -64,7 +63,8 @@ func (q *Queries) DeleteAssociatedQuizzes(ctx context.Context, moduleID uuid.UUI
 }
 
 const deleteModule = `-- name: DeleteModule :exec
-DELETE FROM Module
+DELETE
+FROM Module
 WHERE module_id = $1
 `
 
@@ -74,8 +74,9 @@ func (q *Queries) DeleteModule(ctx context.Context, moduleID uuid.UUID) error {
 }
 
 const deleteModules = `-- name: DeleteModules :exec
-DELETE FROM Module
-WHERE module_id = ANY($1::uuid[])
+DELETE
+FROM Module
+WHERE module_id = ANY ($1::uuid[])
 `
 
 func (q *Queries) DeleteModules(ctx context.Context, dollar_1 []uuid.UUID) error {
@@ -84,7 +85,8 @@ func (q *Queries) DeleteModules(ctx context.Context, dollar_1 []uuid.UUID) error
 }
 
 const getModuleByID = `-- name: GetModuleByID :one
-SELECT module_id, module_name, course_id, description, created_at, updated_at FROM Module
+SELECT module_id, module_name, course_id, description, created_at, updated_at
+FROM Module
 WHERE module_id = $1
 `
 
@@ -103,7 +105,8 @@ func (q *Queries) GetModuleByID(ctx context.Context, moduleID uuid.UUID) (Module
 }
 
 const listModules = `-- name: ListModules :many
-SELECT module_id, module_name, course_id, description, created_at, updated_at FROM Module
+SELECT module_id, module_name, course_id, description, created_at, updated_at
+FROM Module
 ORDER BY created_at DESC
 `
 
@@ -136,10 +139,10 @@ func (q *Queries) ListModules(ctx context.Context) ([]Module, error) {
 
 const moduleHasAssociations = `-- name: ModuleHasAssociations :one
 SELECT (
-    (SELECT COUNT(*) FROM Quiz q WHERE q.module_id = $1) > 0
-    OR
-    (SELECT COUNT(*) FROM Lesson l WHERE l.module_id = $1) > 0
-) AS exists
+           (SELECT COUNT(*) FROM Quiz q WHERE q.module_id = $1) > 0
+               OR
+           (SELECT COUNT(*) FROM Lesson l WHERE l.module_id = $1) > 0
+           ) AS exists
 `
 
 func (q *Queries) ModuleHasAssociations(ctx context.Context, moduleID uuid.UUID) (pgtype.Bool, error) {
@@ -151,14 +154,11 @@ func (q *Queries) ModuleHasAssociations(ctx context.Context, moduleID uuid.UUID)
 
 const updateModuleByID = `-- name: UpdateModuleByID :one
 UPDATE Module
-SET 
-    module_name = COALESCE($2, module_name),
-    course_id = COALESCE($3, course_id), 
-    description = COALESCE($4, description), 
-    updated_at = CURRENT_TIMESTAMP
-WHERE
-    module_id = $1
-RETURNING module_id, module_name, course_id, description, created_at, updated_at
+SET module_name = COALESCE($2, module_name),
+    course_id   = COALESCE($3, course_id),
+    description = COALESCE($4, description),
+    updated_at  = CURRENT_TIMESTAMP
+WHERE module_id = $1 RETURNING module_id, module_name, course_id, description, created_at, updated_at
 `
 
 type UpdateModuleByIDParams struct {

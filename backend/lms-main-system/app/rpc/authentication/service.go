@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	"github.com/multi-tenants-cms-golang/lms-sys/internal/types"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils"
 	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	"github.com/sirupsen/logrus"
 	"time"
@@ -30,7 +31,7 @@ type (
 		ResendVerificationEmail(ctx context.Context, req *authenticationpb.ResendVerificationRequest) (*authenticationpb.ResendVerificationResponse, error)
 		Login(ctx context.Context, req *authenticationpb.LoginRequest) (*authenticationpb.LoginResponse, error)
 		LogOut(ctx context.Context, req *authenticationpb.LoginOutRequest) (*authenticationpb.LogoutResponse, error)
-
+		Refresh(ctx context.Context, req *authenticationpb.RefreshTokenRequest) (*authenticationpb.RefreshTokenResponse, error)
 		// Email & Token logic
 		sendEmailVerificationCode(email, code, organisation string) error
 		sendVerificationEmail(email string, token string) error
@@ -56,8 +57,7 @@ type (
 		store       repo.Store
 		logger      *logrus.Logger
 		cfg         *types.Config
-		//redisClient *redis.Client
-		//natsConn    *nats.Conn
+		mfaManager  *utils.MFAManager
 	}
 )
 
@@ -67,13 +67,13 @@ func NewAuthenticationService(
 	store repo.Store,
 	logger *logrus.Logger,
 	config *types.Config,
+	mfaManager *utils.MFAManager,
 ) *Service {
 	return &Service{
 		databaseCtx: context.Background(),
 		store:       store,
 		logger:      logger,
 		cfg:         config,
-		//redisClient: redisClient,
-		//natsConn:    natsConn,
+		mfaManager:  mfaManager,
 	}
 }

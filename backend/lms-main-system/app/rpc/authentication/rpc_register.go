@@ -2,6 +2,7 @@ package authentication
 
 import (
 	"context"
+	"errors"
 	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -46,7 +47,11 @@ func (s *Service) Register(
 	}).Info("processing registration request")
 
 	flow, err := s.store.WholeRegistrationFlow(s.databaseCtx, req, orgName)
-
+	if err != nil {
+		if errors.Is(err, errors.New("namespace does not exist")) {
+			return nil, status.Error(codes.NotFound, "namespace not found")
+		}
+	}
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"error": err.Error(),
