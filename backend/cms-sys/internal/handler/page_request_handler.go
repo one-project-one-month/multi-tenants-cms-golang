@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/multi-tenants-cms-golang/cms-sys/internal/middleware"
 	"github.com/multi-tenants-cms-golang/cms-sys/pkg/aws"
 
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/service"
@@ -120,7 +121,11 @@ func (h *PageRequestHandler) ChangeStatus(c *fiber.Ctx) error {
 		return utils.BadRequestResponse(c, "Invalid request status", "Status must be PENDING, APPROVED or REJECTED")
 	}
 
-	if err := h.service.ChangeStatus(req); err != nil {
+	claims, ok := middleware.GetUserClaims(c)
+	if !ok {
+		return utils.UnauthorizedResponse(c, "User not authenticated!!!")
+	}
+	if err := h.service.ChangeStatus(req, claims.UserID); err != nil {
 		return utils.InternalServerErrorResponse(c, "Failed to change page request status", err.Error())
 	}
 
