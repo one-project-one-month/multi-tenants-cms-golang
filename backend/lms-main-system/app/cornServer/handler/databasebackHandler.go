@@ -117,7 +117,7 @@ func (handler *CornHandler) HandleDatabaseBackUp(ctx context.Context, req *asynq
 			handler.logger.Errorf("Failed to query data from table %s: %v", table, err)
 			continue
 		}
-		defer rows.Close()
+		//defer rows.Close()
 
 		for rows.Next() {
 			vals, err := rows.Values()

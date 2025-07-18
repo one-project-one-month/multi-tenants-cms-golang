@@ -74,7 +74,7 @@ func (store *SQLStore) WholeRegistrationFlow(
 		}
 		if data != 1 {
 			store.logger.WithField("namespace", namespace).Error("Namespace does not exist")
-			return errors.New("Namespace does not exist")
+			return errors.New("namespace does not exist")
 		}
 
 		store.logger.WithField("namespace", namespace).Info("Retrieving tenant ID")

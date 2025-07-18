@@ -136,7 +136,7 @@ services:
 
   file-service:
     build:
-      context: backend/file-service
+      context: backend/file/file-service
       dockerfile: Dockerfile
     networks:
       - railway-network
