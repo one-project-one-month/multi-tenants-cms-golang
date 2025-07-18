@@ -1,4 +1,4 @@
-BEGIN;
+eBEGIN;
 
 -- Create ENUM types
 CREATE TYPE lms_role_type AS ENUM ('ADMIN', 'INSTRUCTOR', 'STUDENT', 'VIEWER');
