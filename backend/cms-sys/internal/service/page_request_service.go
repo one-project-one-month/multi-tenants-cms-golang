@@ -2,7 +2,10 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
+	"log"
 	"math"
 	"strings"
 
@@ -17,13 +20,15 @@ import (
 type PageRequestService interface {
 	CreatePageRequest(req types.CreatePageRequest, logourl *string) (*types.PageRequestResponse, error)
 	GetAllPageRequests(req *types.PaginateRequest) ([]*types.PageRequestResponse, *utils.Pagination, error)
-	ChangeStatus(req types.ChangeStatusPageRequest) error
+	ChangeStatus(req types.ChangeStatusPageRequest, currentUserID uuid.UUID) error
 	ApprovePageRequest(req *types.ApprovePageRequest) (err error)
 }
 
 type PageRequestServiceImpl struct {
-	logger *logrus.Logger
-	repo   repository.PageRequestRepository
+	logger      *logrus.Logger
+	repo        repository.PageRequestRepository
+	pageService PageService
+	ownerRepo   repository.OwnerRepository
 }
 
 var _ PageRequestService = (*PageRequestServiceImpl)(nil)
@@ -91,13 +96,57 @@ func (s *PageRequestServiceImpl) GetAllPageRequests(req *types.PaginateRequest) 
 	return responses, pagination, nil
 }
 
-func (s *PageRequestServiceImpl) ChangeStatus(req types.ChangeStatusPageRequest) error {
+func (s *PageRequestServiceImpl) ChangeStatus(req types.ChangeStatusPageRequest, currentUserID uuid.UUID) error {
 	requestUUID, err := uuid.Parse(req.RequestID)
 	if err != nil {
 		return errors.New("invalid request ID format")
 	}
 
-	return s.repo.UpdateStatus(requestUUID, req.Status)
+	_, err = s.repo.GetById(requestUUID)
+	if err != nil || errors.Is(err, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("invalid pageRequestId: %w", err)
+	}
+
+	if err := s.repo.UpdateStatus(requestUUID, req.Status); err != nil {
+		return err
+	}
+
+	if req.Status == "APPROVED" {
+		requestUUID, err := uuid.Parse(req.RequestID)
+		if err != nil {
+			return errors.New("invalid request ID format")
+		}
+
+		pageRequest, err := s.repo.GetById(requestUUID)
+		if err != nil {
+			return fmt.Errorf("failed to fetch page request: %w", err)
+		}
+
+		createReq := &types.PageCreateRequest{
+			PageRequestID: requestUUID,
+			Title:         pageRequest.Title,
+			Content:       utils.SafeString(pageRequest.Description),
+			ImageUrl:      utils.SafeString(pageRequest.LogoUrl),
+			OwnerId:       pageRequest.OwnerID,
+			PublisherId:   currentUserID,
+			Status:        utils.StringPtr("PUBLISHED"),
+		}
+
+		_, err = s.pageService.Create(createReq)
+		if err != nil {
+			return fmt.Errorf("failed to auto-create page: %w", err)
+		}
+
+		owner, err := s.ownerRepo.GetById(pageRequest.OwnerID.String())
+		if err != nil {
+			return fmt.Errorf("failed to fetch owner: %w", err)
+		}
+		log.Printf("Owner fetched: %+v\n", owner) // TODO: Delete this log after you finish service to service communication
+
+		// TODO: Ko Swan continue Communication with LMS Service here to create Tenant and send email to Owner
+	}
+
+	return nil
 }
 func (s *PageRequestServiceImpl) ApprovePageRequest(req *types.ApprovePageRequest) (err error) {
 	//pageRequest , err := s.repo.GetById(req.PageRequestID)

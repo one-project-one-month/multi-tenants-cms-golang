@@ -99,7 +99,7 @@ func registerService(client *api.Client, config consulConfig, logger *logrus.Log
 		Port:    config.Port,
 		Address: localIP,
 		Meta: map[string]string{
-			"health-check-path": "/cms-doc/health",
+			"health-check-path": "/cms/health",
 		},
 		Checks: api.AgentServiceChecks{
 			{
@@ -127,7 +127,7 @@ func registerService(client *api.Client, config consulConfig, logger *logrus.Log
 		"service_name": config.Name,
 		"address":      localIP,
 		"port":         config.Port,
-		"metadata":     "health-check-path=/cms-doc/health",
+		"metadata":     "health-check-path=/cms/health",
 	}).Info("Service registered with Consul successfully")
 
 	return nil
@@ -164,7 +164,7 @@ func loadConsulConfig() consulConfig {
 	port, _ := strconv.Atoi(utils.GetEnv("PORT", "8081"))
 	checkTTL, _ := time.ParseDuration(utils.GetEnv("CONSUL_CHECK_TTL", "30s"))
 
-	tagsStr := utils.GetEnv("CONSUL_SERVICE_TAGS", "cms-doc,multi-tenant,api")
+	tagsStr := utils.GetEnv("CONSUL_SERVICE_TAGS", "cms,multi-tenant,api")
 	var tags []string
 	if tagsStr != "" {
 		for _, tag := range strings.Split(tagsStr, ",") {
@@ -183,7 +183,7 @@ func loadConsulConfig() consulConfig {
 		Token:      utils.GetEnv("CONSUL_TOKEN", ""),
 		Scheme:     utils.GetEnv("CONSUL_SCHEME", "http"),
 		ServiceID:  utils.GetEnv("CONSUL_SERVICE_ID", fmt.Sprintf("cms-doc-api-%s", localIP)),
-		Name:       utils.GetEnv("CONSUL_SERVICE_NAME", "cms-doc-service"),
+		Name:       utils.GetEnv("CONSUL_SERVICE_NAME", "cms-service"),
 		Tags:       tags,
 		Port:       port,
 		CheckTTL:   checkTTL,

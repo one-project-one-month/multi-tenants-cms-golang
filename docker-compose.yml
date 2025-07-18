@@ -81,11 +81,11 @@ services:
       - CONSUL_ADDRESS=${CONSUL_ADDRESS}
       - CONSUL_DATACENTER=${CONSUL_DATACENTER}
       - CONSUL_SCHEME=${CONSUL_SCHEME}
-      - CONSUL_SERVICE_ID=cms-doc-api-1
-      - CONSUL_SERVICE_NAME=cms-doc-service
+      - CONSUL_SERVICE_ID=cms-api-1
+      - CONSUL_SERVICE_NAME=cms-service
       - CONSUL_SERVICE_TAGS=${CMS_SERVICE_TAGS}
       - CONSUL_CHECK_TTL=30s
-      - CONSUL_CHECK_ID=service-check-cms-doc-api-1
+      - CONSUL_CHECK_ID=service-check-cms-api-1
       - PORT=${CMS_PORT}
     ports:
       - "8081:8080"
