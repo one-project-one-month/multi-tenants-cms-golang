@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/rpc/interceptor"
 	db "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils"
 	"net"
 	"syscall"
 	"time"
@@ -32,6 +33,7 @@ type Server struct {
 	jwtIssuer   string
 	jwtAudience string
 	grpcAddr    string
+	mfaManager  *utils.MFAManager
 }
 
 func NewServer(
@@ -41,6 +43,7 @@ func NewServer(
 	jwtIssuer string,
 	jwtAudience string,
 	grpcAddr string,
+	mfaManager *utils.MFAManager,
 ) *Server {
 	return &Server{
 		store:       db,
@@ -49,6 +52,7 @@ func NewServer(
 		jwtIssuer:   jwtIssuer,
 		jwtAudience: jwtAudience,
 		grpcAddr:    grpcAddr,
+		mfaManager:  mfaManager,
 	}
 }
 
@@ -56,6 +60,7 @@ func (s *Server) Run() error {
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(interceptor.MetadataLoggerInterceptor(s.logger)),
 	)
+
 	authService := authSrv.NewAuthenticationService(s.store, s.logger, &types.Config{
 		BaseURL:           "http://localhost:9001",
 		TokenLength:       0,
@@ -64,7 +69,9 @@ func (s *Server) Run() error {
 		RetryDelay:        0,
 		RateLimitAttempts: 100,
 		RateLimitWindow:   time.Second * 20,
-	})
+	},
+		s.mfaManager,
+	)
 
 	moduleService := msv.NewModuleService(s.store, s.logger)
 	authpb.RegisterAuthenticationServiceServer(grpcServer, authService)

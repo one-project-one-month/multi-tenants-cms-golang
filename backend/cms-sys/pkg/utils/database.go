@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -43,16 +44,30 @@ func (dc *DatabaseConnection) Connect() error {
 	var db *gorm.DB
 	var err error
 
-	dsn := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		dc.Config.Host,
-		dc.Config.Port,
-		dc.Config.User,
-		dc.Config.Password,
-		dc.Config.DBName,
-		dc.Config.SSLMode,
+	//dsn := fmt.Sprintf(
+	//	"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+	//	dc.Config.Host,
+	//	dc.Config.Port,
+	//	dc.Config.User,
+	//	dc.Config.Password,
+	//	dc.Config.DBName,
+	//	dc.Config.SSLMode,
+	//)
+	//dsn := "postgresql://neondb_owner:npg_mFrGIyn0Sq9B@ep-purple-haze-a15hvjtw-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+	const (
+		dbHost     = "ep-purple-haze-a15hvjtw-pooler.ap-southeast-1.aws.neon.tech"
+		dbPort     = 5432
+		dbUser     = "neondb_owner"
+		dbPassword = "npg_mFrGIyn0Sq9B"
+		dbName     = "neondb"
 	)
 
+	type Seeder struct {
+		db *sql.DB
+	}
+
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=require",
+		dbHost, dbPort, dbUser, dbPassword, dbName)
 	gormConfig := &gorm.Config{
 		Logger: logger.New(
 			dc.Logger,
@@ -77,7 +92,7 @@ func (dc *DatabaseConnection) Connect() error {
 			"database":     dc.Config.DBName,
 		}).Info("Attempting to connect to database")
 
-		db, err = gorm.Open(postgres.Open(dsn), gormConfig)
+		db, err = gorm.Open(postgres.Open(psqlInfo), gormConfig)
 		if err == nil {
 			dc.Logger.Info("Successfully connected to database")
 			break

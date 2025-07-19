@@ -6,9 +6,11 @@ INSERT INTO lms_user (lms_user_name,
                       tenant_id,
                       phone_number,
                       registration_date,
-                      email_verified)
+                      email_verified,
+                      namespace_domain
+                      )
 VALUES ($1, $2, $3, $4, $5, $6, CURRENT_DATE,
-        FALSE) RETURNING lms_user_id, lms_user_name, lms_user_email, address, phone_number, registration_date, email_verified, mfa_enable, created_at, updated_at;
+        FALSE, $7) RETURNING lms_user_id, lms_user_name, lms_user_email, address, phone_number, registration_date, email_verified, namespace_domain, mfa_enable, created_at, updated_at;
 -- name: GetTenantIdByNameSpace :one
 SELECT tenant_id
 FROM tenants
@@ -53,3 +55,11 @@ WHERE lms_user_email = $1;
 SELECT *
 FROM lms_user
 WHERE lms_user_email = $1;
+
+-- name: GetUserPasswordMfaByNameSpaceDomain :one
+SELECT lms_user_id, password,mfa_enable
+FROM lms_user WHERE  namespace_domain = $1 ;
+
+-- name: SetUpMFA :one
+INSERT  INTO  lms_user_mfa (mfa_secret, lms_user_domain_email)
+VALUES ($1, $2) RETURNING  mfa_secret_id;

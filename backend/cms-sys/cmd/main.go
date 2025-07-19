@@ -178,12 +178,12 @@ func loadConsulConfig() consulConfig {
 	}
 
 	return consulConfig{
-		Address:    utils.GetEnv("CONSUL_ADDRESS", "consul:8500"),
-		Datacenter: utils.GetEnv("CONSUL_DATACENTER", "dc1"),
-		Token:      utils.GetEnv("CONSUL_TOKEN", ""),
-		Scheme:     utils.GetEnv("CONSUL_SCHEME", "http"),
-		ServiceID:  utils.GetEnv("CONSUL_SERVICE_ID", fmt.Sprintf("cms-doc-api-%s", localIP)),
-		Name:       utils.GetEnv("CONSUL_SERVICE_NAME", "cms-service"),
+		Address:    utils.GetEnv("CMS_CONSUL_ADDRESS", "consul:8500"),
+		Datacenter: utils.GetEnv("CMS_CONSUL_DATACENTER", "dc1"),
+		Token:      utils.GetEnv("CMS_CONSUL_TOKEN", ""),
+		Scheme:     utils.GetEnv("CMS_CONSUL_SCHEME", "http"),
+		ServiceID:  utils.GetEnv("CMS_CONSUL_SERVICE_ID", fmt.Sprintf("cms-doc-api-%s", localIP)),
+		Name:       utils.GetEnv("CMS_CONSUL_SERVICE_NAME", "cms-service"),
 		Tags:       tags,
 		Port:       port,
 		CheckTTL:   checkTTL,
@@ -291,13 +291,13 @@ func main() {
 	applicationStatus := utils.GetEnv("CMS_APP_STATUS", "production")
 
 	appLogger := utils.NewLogger(utils.LogConfig{
-		Level:      utils.GetEnv("LOG_LEVEL", "info"),
-		FilePath:   utils.GetEnv("LOG_FILE_PATH", "logs/app.log"),
-		MaxSize:    utils.GetEnvAsInt("LOG_MAX_SIZE", 100),
-		MaxBackups: utils.GetEnvAsInt("LOG_MAX_BACKUPS", 5),
-		MaxAge:     utils.GetEnvAsInt("LOG_MAX_AGE", 30),
-		Compress:   utils.GetEnvAsBool("LOG_COMPRESS", true),
-		Console:    utils.GetEnvAsBool("LOG_CONSOLE", true),
+		Level:      utils.GetEnv("CMS_LOG_LEVEL", "info"),
+		FilePath:   utils.GetEnv("CMS_LOG_FILE_PATH", "logs/app.log"),
+		MaxSize:    utils.GetEnvAsInt("CMS_LOG_MAX_SIZE", 100),
+		MaxBackups: utils.GetEnvAsInt("CMS_LOG_MAX_BACKUPS", 5),
+		MaxAge:     utils.GetEnvAsInt("CMS_LOG_MAX_AGE", 30),
+		Compress:   utils.GetEnvAsBool("CMS_LOG_COMPRESS", true),
+		Console:    utils.GetEnvAsBool("CMS_LOG_CONSOLE", true),
 	})
 
 	appLogger.Info("Starting CMS Multi-Tenant System")
@@ -315,18 +315,18 @@ func main() {
 	}
 
 	dbConfig := utils.DatabaseConfig{
-		Host:            utils.GetEnv("DB_HOST", "localhost"),
-		Port:            utils.GetEnvAsInt("DB_PORT", 5432),
-		User:            utils.GetEnv("DB_USER", "postgres"),
-		Password:        utils.GetEnv("DB_PASSWORD", "Swanhtet12@"),
-		DBName:          utils.GetEnv("DB_NAME", "cms_db"),
-		SSLMode:         utils.GetEnv("DB_SSL_MODE", "disable"),
-		MaxOpenConns:    utils.GetEnvAsInt("DB_MAX_OPEN_CONNS", 25),
-		MaxIdleConns:    utils.GetEnvAsInt("DB_MAX_IDLE_CONNS", 10),
-		ConnMaxLifetime: utils.GetEnvAsDuration("DB_CONN_MAX_LIFETIME", 5*time.Minute),
-		ConnMaxIdleTime: utils.GetEnvAsDuration("DB_CONN_MAX_IDLE_TIME", 2*time.Minute),
-		RetryAttempts:   utils.GetEnvAsInt("DB_RETRY_ATTEMPTS", 5),
-		RetryDelay:      utils.GetEnvAsDuration("DB_RETRY_DELAY", 2*time.Second),
+		Host:            utils.GetEnv("CMS_DB_HOST", "localhost"),
+		Port:            utils.GetEnvAsInt("CMS_DB_PORT", 5432),
+		User:            utils.GetEnv("CMS_DB_USER", "postgres"),
+		Password:        utils.GetEnv("CMS_DB_PASSWORD", "Swanhtet12@"),
+		DBName:          utils.GetEnv("CMS_DB_NAME", "cms_db"),
+		SSLMode:         utils.GetEnv("CMS_DB_SSL_MODE", "disable"),
+		MaxOpenConns:    utils.GetEnvAsInt("CMS_DB_MAX_OPEN_CONNS", 25),
+		MaxIdleConns:    utils.GetEnvAsInt("CMS_DB_MAX_IDLE_CONNS", 10),
+		ConnMaxLifetime: utils.GetEnvAsDuration("CMS_DB_CONN_MAX_LIFETIME", 5*time.Minute),
+		ConnMaxIdleTime: utils.GetEnvAsDuration("CMS_DB_CONN_MAX_IDLE_TIME", 2*time.Minute),
+		RetryAttempts:   utils.GetEnvAsInt("CMS_DB_RETRY_ATTEMPTS", 5),
+		RetryDelay:      utils.GetEnvAsDuration("CMS_DB_RETRY_DELAY", 2*time.Second),
 		LogLevel:        logger.Info,
 	}
 	var jwtSecret []byte
@@ -508,7 +508,7 @@ func main() {
 	routes.SetupPageRequestRoutes(app, di.pageRequestHandler)
 	routes.SetupPageRoutes(app, di.pageHandler)
 
-	port := utils.GetEnv("PORT", "8080")
+	port := utils.GetEnv("CMS_PORT", "8080")
 
 	if consulEnabled && consulClient != nil {
 		if err := registerService(consulClient, consulConfig, appLogger); err != nil {

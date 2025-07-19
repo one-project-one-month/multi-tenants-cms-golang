@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package lms.authentication;
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/authentication";
+
+message  MFASetUpRequest {
+  string  domain_email = 1;
+}
+
+message MFASetUpResponse {
+  string photoString = 1 ;
+  string manualEntry = 2;
+}

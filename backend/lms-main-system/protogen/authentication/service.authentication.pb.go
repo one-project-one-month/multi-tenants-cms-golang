@@ -26,9 +26,9 @@ var File_authentication_service_authentication_proto protoreflect.FileDescriptor
 
 const file_authentication_service_authentication_proto_rawDesc = "" +
 	"\n" +
-	"+authentication/service.authentication.proto\x12\x12lms.authentication\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a!authentication/rpc_register.proto\x1a%authentication/rpc_email_verify.proto\x1a\x1eauthentication/rpc_login.proto\x1a2authentication/rpc_resend_email_verification.proto\x1a\x1fauthentication/rpc_logout.proto2\xc3\r\n" +
-	"\x15AuthenticationService\x12\xdb\x02\n" +
-	"\bRegister\x12#.lms.authentication.RegisterRequest\x1a$.lms.authentication.RegisterResponse\"\x83\x02\x92A\xdf\x01\n" +
+	"+authentication/service.authentication.proto\x12\x12lms.authentication\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a!authentication/rpc_register.proto\x1a%authentication/rpc_email_verify.proto\x1a\x1eauthentication/rpc_login.proto\x1a2authentication/rpc_resend_email_verification.proto\x1a\x1fauthentication/rpc_logout.proto\x1a authentication/rpc_refresh.proto\x1a\"authentication/rpc_mfa_setup.proto2\xb9\x13\n" +
+	"\x15AuthenticationService\x12\x93\x03\n" +
+	"\bRegister\x12#.lms.authentication.RegisterRequest\x1a$.lms.authentication.RegisterResponse\"\xbb\x02\x92A\x97\x02\n" +
 	"\x0eAuthentication\x12\x11Register new user\x1a,Creates a new user account in the LMS systemJI\n" +
 	"\x03201\x12B\n" +
 	"\x1cUser successfully registered\x12\"\n" +
@@ -36,30 +36,38 @@ const file_authentication_service_authentication_proto_rawDesc = "" +
 	"\x03400\x12\x1c\n" +
 	"\x1aInvalid request parametersJ\x1c\n" +
 	"\x03409\x12\x15\n" +
-	"\x13User already exists\x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/lms/v1/auth/register\x12\xf4\x02\n" +
-	"\vVerifyEmail\x12&.lms.authentication.EmailVerifyRequest\x1a'.lms.authentication.EmailVerifyResponse\"\x93\x02\x92A\xdb\x01\n" +
+	"\x13User already existsr6\n" +
+	"4\n" +
+	"\x0eX-Organisation\x12\x1eOrganization identifier header\x18\x01(\x01\x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/lms/v1/auth/register\x12\xac\x03\n" +
+	"\vVerifyEmail\x12&.lms.authentication.EmailVerifyRequest\x1a'.lms.authentication.EmailVerifyResponse\"\xcb\x02\x92A\x93\x02\n" +
 	"\x0eAuthentication\x12\x14Verify email address\x1aCVerifies a user's email address using the token sent to their emailJK\n" +
 	"\x03200\x12D\n" +
 	"\x1bEmail successfully verified\x12%\n" +
 	"#\x1a!#/definitions/EmailVerifyResponseJ!\n" +
 	"\x03400\x12\x1a\n" +
-	"\x18Invalid or expired token\x82\xd3\xe4\x93\x02.:\x01*\")/lms/v1/auth/verify-email/{email}/{token}\x12\xa0\x02\n" +
-	"\x05Login\x12 .lms.authentication.LoginRequest\x1a!.lms.authentication.LoginResponse\"\xd1\x01\x92A\xb0\x01\n" +
+	"\x18Invalid or expired tokenr6\n" +
+	"4\n" +
+	"\x0eX-Organisation\x12\x1eOrganization identifier header\x18\x01(\x01\x82\xd3\xe4\x93\x02.:\x01*\")/lms/v1/auth/verify-email/{email}/{token}\x12\xd8\x02\n" +
+	"\x05Login\x12 .lms.authentication.LoginRequest\x1a!.lms.authentication.LoginResponse\"\x89\x02\x92A\xe8\x01\n" +
 	"\x0eAuthentication\x12\n" +
 	"User login\x1a8Authenticates user credentials and returns access tokensJ:\n" +
 	"\x03200\x123\n" +
 	"\x10Login successful\x12\x1f\n" +
 	"\x1d\x1a\x1b#/definitions/LoginResponseJ\x1c\n" +
 	"\x03401\x12\x15\n" +
-	"\x13Invalid credentials\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/lms/v1/auth/login\x12\xfe\x02\n" +
-	"\x17ResendVerificationEmail\x12-.lms.authentication.ResendVerificationRequest\x1a..lms.authentication.ResendVerificationResponse\"\x83\x02\x92A\xdc\x01\n" +
+	"\x13Invalid credentialsr6\n" +
+	"4\n" +
+	"\x0eX-Organisation\x12\x1eOrganization identifier header\x18\x01(\x01\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/lms/v1/auth/login\x12\xb6\x03\n" +
+	"\x17ResendVerificationEmail\x12-.lms.authentication.ResendVerificationRequest\x1a..lms.authentication.ResendVerificationResponse\"\xbb\x02\x92A\x94\x02\n" +
 	"\x0eAuthentication\x12\x19Resend verification email\x1aCResends the email verification token to the specified email addressJP\n" +
 	"\x03200\x12I\n" +
 	"\x19Verification email resent\x12,\n" +
 	"*\x1a(#/definitions/ResendVerificationResponseJ\x18\n" +
 	"\x03404\x12\x11\n" +
-	"\x0fEmail not found\x82\xd3\xe4\x93\x02\x1d\"\x1b/lms/v1/auth/resend/{email}\x12\xb0\x02\n" +
-	"\x06LogOut\x12#.lms.authentication.LoginOutRequest\x1a\".lms.authentication.LogoutResponse\"\xdc\x01\x92A\xba\x01\n" +
+	"\x0fEmail not foundr6\n" +
+	"4\n" +
+	"\x0eX-Organisation\x12\x1eOrganization identifier header\x18\x01(\x01\x82\xd3\xe4\x93\x02\x1d\"\x1b/lms/v1/auth/resend/{email}\x12\xe8\x02\n" +
+	"\x06LogOut\x12#.lms.authentication.LoginOutRequest\x1a\".lms.authentication.LogoutResponse\"\x94\x02\x92A\xf2\x01\n" +
 	"\x0eAuthentication\x12\vUser logout\x1a,Invalidates the user's authentication tokensJ<\n" +
 	"\x03200\x125\n" +
 	"\x11Logout successful\x12 \n" +
@@ -68,11 +76,22 @@ const file_authentication_service_authentication_proto_rawDesc = "" +
 	"\x18Invalid or missing tokenb\f\n" +
 	"\n" +
 	"\n" +
-	"\x06Bearer\x12\x00\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/lms/v1/auth/logoutB\xce\x03\x92A\x86\x03\x12\xe6\x01\n" +
+	"\x06Bearer\x12\x00r6\n" +
+	"4\n" +
+	"\x0eX-Organisation\x12\x1eOrganization identifier header\x18\x01(\x01\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/lms/v1/auth/logout\x12\x89\x02\n" +
+	"\aRefresh\x12'.lms.authentication.RefreshTokenRequest\x1a(.lms.authentication.RefreshTokenResponse\"\xaa\x01\x92A\x8a\x01\n" +
+	"\x0eAuthentication\x12\rRefresh Token\x1a1Check the cookies  and returns new  access tokensr6\n" +
+	"4\n" +
+	"\x0eX-Organisation\x12\x1eOrganization identifier header\x18\x01(\x01\x82\xd3\xe4\x93\x02\x16\"\x14/lms/v1/auth/refresh\x12\xcf\x01\n" +
+	"\bSetUpMFA\x12#.lms.authentication.MFASetUpRequest\x1a$.lms.authentication.MFASetUpResponse\"x\x92AT\n" +
+	"\x0eAuthentication\x12\n" +
+	"Set UP MFAr6\n" +
+	"4\n" +
+	"\x0eX-Organisation\x12\x1eOrganization identifier header\x18\x01(\x01\x82\xd3\xe4\x93\x02\x1b:\x01*\"\x16/lms/v1/auth/setup-mfaB\xc9\x03\x92A\x81\x03\x12\xe6\x01\n" +
 	"\x1aLMS Authentication Service\x12=API for user authentication in the Learning Management System\"D\n" +
 	"\bLMS Team\x12\x1fhttps://lms.example.com/support\x1a\x17support@lms.example.com*>\n" +
 	"\n" +
-	"Apache 2.0\x120https://www.apache.org/licenses/LICENSE-2.0.html2\x031.0\x1a\x13api.lms.example.com\"\x03/v1*\x02\x02\x012\x10application/json:\x10application/jsonZK\n" +
+	"Apache 2.0\x120https://www.apache.org/licenses/LICENSE-2.0.html2\x031.0\x1a\x0elocalhost:8086\"\x03/v1*\x02\x02\x012\x10application/json:\x10application/jsonZK\n" +
 	"I\n" +
 	"\x06Bearer\x12?\b\x02\x12*Authentication token, prefixed with Bearer\x1a\rAuthorization \x02b\f\n" +
 	"\n" +
@@ -85,28 +104,36 @@ var file_authentication_service_authentication_proto_goTypes = []any{
 	(*LoginRequest)(nil),               // 2: lms.authentication.LoginRequest
 	(*ResendVerificationRequest)(nil),  // 3: lms.authentication.ResendVerificationRequest
 	(*LoginOutRequest)(nil),            // 4: lms.authentication.LoginOutRequest
-	(*RegisterResponse)(nil),           // 5: lms.authentication.RegisterResponse
-	(*EmailVerifyResponse)(nil),        // 6: lms.authentication.EmailVerifyResponse
-	(*LoginResponse)(nil),              // 7: lms.authentication.LoginResponse
-	(*ResendVerificationResponse)(nil), // 8: lms.authentication.ResendVerificationResponse
-	(*LogoutResponse)(nil),             // 9: lms.authentication.LogoutResponse
+	(*RefreshTokenRequest)(nil),        // 5: lms.authentication.RefreshTokenRequest
+	(*MFASetUpRequest)(nil),            // 6: lms.authentication.MFASetUpRequest
+	(*RegisterResponse)(nil),           // 7: lms.authentication.RegisterResponse
+	(*EmailVerifyResponse)(nil),        // 8: lms.authentication.EmailVerifyResponse
+	(*LoginResponse)(nil),              // 9: lms.authentication.LoginResponse
+	(*ResendVerificationResponse)(nil), // 10: lms.authentication.ResendVerificationResponse
+	(*LogoutResponse)(nil),             // 11: lms.authentication.LogoutResponse
+	(*RefreshTokenResponse)(nil),       // 12: lms.authentication.RefreshTokenResponse
+	(*MFASetUpResponse)(nil),           // 13: lms.authentication.MFASetUpResponse
 }
 var file_authentication_service_authentication_proto_depIdxs = []int32{
-	0, // 0: lms.authentication.AuthenticationService.Register:input_type -> lms.authentication.RegisterRequest
-	1, // 1: lms.authentication.AuthenticationService.VerifyEmail:input_type -> lms.authentication.EmailVerifyRequest
-	2, // 2: lms.authentication.AuthenticationService.Login:input_type -> lms.authentication.LoginRequest
-	3, // 3: lms.authentication.AuthenticationService.ResendVerificationEmail:input_type -> lms.authentication.ResendVerificationRequest
-	4, // 4: lms.authentication.AuthenticationService.LogOut:input_type -> lms.authentication.LoginOutRequest
-	5, // 5: lms.authentication.AuthenticationService.Register:output_type -> lms.authentication.RegisterResponse
-	6, // 6: lms.authentication.AuthenticationService.VerifyEmail:output_type -> lms.authentication.EmailVerifyResponse
-	7, // 7: lms.authentication.AuthenticationService.Login:output_type -> lms.authentication.LoginResponse
-	8, // 8: lms.authentication.AuthenticationService.ResendVerificationEmail:output_type -> lms.authentication.ResendVerificationResponse
-	9, // 9: lms.authentication.AuthenticationService.LogOut:output_type -> lms.authentication.LogoutResponse
-	5, // [5:10] is the sub-list for method output_type
-	0, // [0:5] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: lms.authentication.AuthenticationService.Register:input_type -> lms.authentication.RegisterRequest
+	1,  // 1: lms.authentication.AuthenticationService.VerifyEmail:input_type -> lms.authentication.EmailVerifyRequest
+	2,  // 2: lms.authentication.AuthenticationService.Login:input_type -> lms.authentication.LoginRequest
+	3,  // 3: lms.authentication.AuthenticationService.ResendVerificationEmail:input_type -> lms.authentication.ResendVerificationRequest
+	4,  // 4: lms.authentication.AuthenticationService.LogOut:input_type -> lms.authentication.LoginOutRequest
+	5,  // 5: lms.authentication.AuthenticationService.Refresh:input_type -> lms.authentication.RefreshTokenRequest
+	6,  // 6: lms.authentication.AuthenticationService.SetUpMFA:input_type -> lms.authentication.MFASetUpRequest
+	7,  // 7: lms.authentication.AuthenticationService.Register:output_type -> lms.authentication.RegisterResponse
+	8,  // 8: lms.authentication.AuthenticationService.VerifyEmail:output_type -> lms.authentication.EmailVerifyResponse
+	9,  // 9: lms.authentication.AuthenticationService.Login:output_type -> lms.authentication.LoginResponse
+	10, // 10: lms.authentication.AuthenticationService.ResendVerificationEmail:output_type -> lms.authentication.ResendVerificationResponse
+	11, // 11: lms.authentication.AuthenticationService.LogOut:output_type -> lms.authentication.LogoutResponse
+	12, // 12: lms.authentication.AuthenticationService.Refresh:output_type -> lms.authentication.RefreshTokenResponse
+	13, // 13: lms.authentication.AuthenticationService.SetUpMFA:output_type -> lms.authentication.MFASetUpResponse
+	7,  // [7:14] is the sub-list for method output_type
+	0,  // [0:7] is the sub-list for method input_type
+	0,  // [0:0] is the sub-list for extension type_name
+	0,  // [0:0] is the sub-list for extension extendee
+	0,  // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_authentication_service_authentication_proto_init() }
@@ -119,6 +146,8 @@ func file_authentication_service_authentication_proto_init() {
 	file_authentication_rpc_login_proto_init()
 	file_authentication_rpc_resend_email_verification_proto_init()
 	file_authentication_rpc_logout_proto_init()
+	file_authentication_rpc_refresh_proto_init()
+	file_authentication_rpc_mfa_setup_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

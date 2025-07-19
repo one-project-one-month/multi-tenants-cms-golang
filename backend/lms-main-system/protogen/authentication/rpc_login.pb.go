@@ -23,12 +23,12 @@ const (
 )
 
 type LoginRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Organisation  string                 `protobuf:"bytes,1,opt,name=organisation,proto3" json:"organisation,omitempty"`
-	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Organisation         string                 `protobuf:"bytes,1,opt,name=organisation,proto3" json:"organisation,omitempty"`
+	NamespaceDomainEmail string                 `protobuf:"bytes,2,opt,name=namespace_domain_email,json=namespaceDomainEmail,proto3" json:"namespace_domain_email,omitempty"`
+	Password             string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *LoginRequest) Reset() {
@@ -68,9 +68,9 @@ func (x *LoginRequest) GetOrganisation() string {
 	return ""
 }
 
-func (x *LoginRequest) GetEmail() string {
+func (x *LoginRequest) GetNamespaceDomainEmail() string {
 	if x != nil {
-		return x.Email
+		return x.NamespaceDomainEmail
 	}
 	return ""
 }
@@ -86,7 +86,8 @@ type LoginResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
 	Token         string                 `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	MfaEnable     bool                   `protobuf:"varint,3,opt,name=mfa_enable,json=mfaEnable,proto3" json:"mfa_enable,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -135,6 +136,13 @@ func (x *LoginResponse) GetToken() string {
 	return ""
 }
 
+func (x *LoginResponse) GetMfaEnable() bool {
+	if x != nil {
+		return x.MfaEnable
+	}
+	return false
+}
+
 func (x *LoginResponse) GetExpiresAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.ExpiresAt
@@ -146,16 +154,18 @@ var File_authentication_rpc_login_proto protoreflect.FileDescriptor
 
 const file_authentication_rpc_login_proto_rawDesc = "" +
 	"\n" +
-	"\x1eauthentication/rpc_login.proto\x12\x12lms.authentication\x1a\x1fgoogle/protobuf/timestamp.proto\"d\n" +
+	"\x1eauthentication/rpc_login.proto\x12\x12lms.authentication\x1a\x1fgoogle/protobuf/timestamp.proto\"\x84\x01\n" +
 	"\fLoginRequest\x12\"\n" +
-	"\forganisation\x18\x01 \x01(\tR\forganisation\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpassword\"z\n" +
+	"\forganisation\x18\x01 \x01(\tR\forganisation\x124\n" +
+	"\x16namespace_domain_email\x18\x02 \x01(\tR\x14namespaceDomainEmail\x12\x1a\n" +
+	"\bpassword\x18\x03 \x01(\tR\bpassword\"\x99\x01\n" +
 	"\rLoginResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\x12\x14\n" +
-	"\x05token\x18\x02 \x01(\tR\x05token\x129\n" +
+	"\x05token\x18\x02 \x01(\tR\x05token\x12\x1d\n" +
 	"\n" +
-	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAtBDZBgithub.com/multi-tenant-cms-golang/lms-sys/protogen/authenticationb\x06proto3"
+	"mfa_enable\x18\x03 \x01(\bR\tmfaEnable\x129\n" +
+	"\n" +
+	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAtBDZBgithub.com/multi-tenant-cms-golang/lms-sys/protogen/authenticationb\x06proto3"
 
 var (
 	file_authentication_rpc_login_proto_rawDescOnce sync.Once

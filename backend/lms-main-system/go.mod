@@ -3,7 +3,6 @@ module github.com/multi-tenants-cms-golang/lms-sys
 go 1.24.5
 
 require (
-	github.com/go-resty/resty/v2 v2.16.5
 	github.com/golang-jwt/jwt/v5 v5.2.3
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
@@ -16,11 +15,11 @@ require (
 	github.com/nats-io/nats.go v1.43.0
 	github.com/nyaruka/phonenumbers v1.6.3
 	github.com/oklog/run v1.2.0
+	github.com/pquerna/otp v1.5.0
 	github.com/rakyll/statik v0.1.7
 	github.com/redis/go-redis/v9 v9.11.0
 	github.com/rs/cors v1.11.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.10.0
 	golang.org/x/crypto v0.40.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250715232539-7130f93afb79
 	google.golang.org/grpc v1.73.0
@@ -30,8 +29,8 @@ require (
 require (
 	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
+	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -52,10 +51,10 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/nats-io/nkeys v0.4.11 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/spf13/cast v1.9.2 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	go.opentelemetry.io/otel v1.37.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.37.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.36.0 // indirect
@@ -68,5 +67,4 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250715232539-7130f93afb79 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

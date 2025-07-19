@@ -14,6 +14,7 @@ message  SystemUser {
   string address = 5;
   bool  email_verified = 6;
   bool  mfa_enable = 7;
+  string domain_email = 11; 
   google.protobuf.Timestamp registration_date = 8;
   google.protobuf.Timestamp created_at = 9;
   google.protobuf.Timestamp updated_at = 10;

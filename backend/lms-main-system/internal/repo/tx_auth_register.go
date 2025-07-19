@@ -8,6 +8,7 @@ import (
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils"
 	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	"github.com/sirupsen/logrus"
+	"strings"
 )
 
 // WholeRegistrationFlow handles the complete user registration process
@@ -24,7 +25,9 @@ import (
 //
 // 6. Return the created user details
 
-func ProtoToCreateParams(req *authenticationpb.RegisterRequest, tenantId uuid.UUID) CreateUserParams {
+func ProtoToCreateParams(req *authenticationpb.RegisterRequest, tenantId uuid.UUID, namespace string) CreateUserParams {
+	domainEmail := emailToDomainEmail(req.Email, namespace)
+
 	return CreateUserParams{
 		LmsUserName:  req.Username,
 		LmsUserEmail: req.Email,
@@ -37,6 +40,10 @@ func ProtoToCreateParams(req *authenticationpb.RegisterRequest, tenantId uuid.UU
 			String: req.Address,
 			Valid:  req.Address != "",
 		},
+		NamespaceDomain: pgtype.Text{
+			String: *domainEmail,
+			Valid:  true,
+		},
 		PhoneNumber: pgtype.Text{
 			String: req.PhoneNumber,
 			Valid:  req.PhoneNumber != "",
@@ -44,6 +51,14 @@ func ProtoToCreateParams(req *authenticationpb.RegisterRequest, tenantId uuid.UU
 	}
 }
 
+func emailToDomainEmail(email, namespace string) *string {
+	if !strings.Contains(email, "@") {
+		return nil
+	}
+	name := strings.Split(email, "@")
+	domainEmail := name[0] + "@" + strings.ToLower(namespace) + ".edu"
+	return &domainEmail
+}
 func createUserRowToAssignRow(req *CreateUserRow, rolesId uuid.UUID) AssignRolesToUserParams {
 	return AssignRolesToUserParams{
 		LmsUserID: req.LmsUserID,
@@ -96,8 +111,16 @@ func (store *SQLStore) WholeRegistrationFlow(
 				"error": err.Error(),
 			}).Info("User does not belong to any tenant as member, proceeding with default role")
 		}
-
-		userToBeCreated := ProtoToCreateParams(req, tenantIdInDB)
+		santizedPhone := utils.SanitizePhoneNumberEnhanced(req.PhoneNumber)
+		userToBeCreated := ProtoToCreateParams(req, tenantIdInDB, namespace)
+		userToBeCreated.PhoneNumber.String = santizedPhone
+		userToBeCreated.Password, err = utils.HashPassword(userToBeCreated.Password)
+		if err != nil {
+			store.logger.WithFields(logrus.Fields{
+				"email": req.Email,
+				"error": err.Error(),
+			}).Info("Failed to hash password")
+		}
 		store.logger.WithField("email", req.Email).Info("Creating new user")
 		user, err := store.CreateUser(ctx, userToBeCreated)
 		if err != nil {
@@ -201,6 +224,7 @@ func (store *SQLStore) WholeRegistrationFlow(
 			Address:          userInDB.Address.String,
 			EmailVerified:    userInDB.EmailVerified.Bool,
 			MfaEnable:        userInDB.MfaEnable.Bool,
+			DomainEmail:      userInDB.NamespaceDomain.String,
 			RegistrationDate: utils.ParsePgTimestamp(pgtype.Timestamptz(userInDB.RegistrationDate)),
 			CreatedAt:        utils.ParsePgTimestamp(pgtype.Timestamptz(userInDB.CreatedAt)),
 			UpdatedAt:        utils.ParsePgTimestamp(pgtype.Timestamptz(userInDB.UpdatedAt)),

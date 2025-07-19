@@ -1,4 +1,4 @@
-# .air.toml
+
 root = "."
 tmp_dir = "tmp"
 

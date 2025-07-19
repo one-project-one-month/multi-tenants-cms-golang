@@ -13,9 +13,7 @@ func ResponseModifier(
 	ctx context.Context,
 	w http.ResponseWriter,
 	resp proto.Message,
-
 ) error {
-
 	md, ok := runtime.ServerMetadataFromContext(ctx)
 	if !ok {
 		return nil
@@ -36,14 +34,16 @@ func ResponseModifier(
 		"session-id-cookie",
 	}
 
-	for _, headerName := range cookieHeaders {
-		if values := md.HeaderMD.Get(headerName); len(values) > 0 {
-			w.Header().Add("Set-Cookie", values[0])
-			delete(md.HeaderMD, headerName)
+	for _, header := range cookieHeaders {
+		if values := md.HeaderMD.Get(header); len(values) > 0 {
+			for _, value := range values {
+				w.Header().Add("Set-Cookie", value)
+			}
+			delete(md.HeaderMD, header)
 		}
 	}
-	return nil
 
+	return nil
 }
 
 func RequestModifier(ctx context.Context, req *http.Request) metadata.MD {

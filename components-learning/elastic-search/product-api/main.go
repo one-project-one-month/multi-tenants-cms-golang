@@ -17,7 +17,7 @@ import (
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("Error loading .env.file.es.cms file")
 	}
 	url := os.Getenv("ELASTICSEARCH_URL")
 	if url == "" {

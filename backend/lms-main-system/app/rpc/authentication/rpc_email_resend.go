@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *AuthenticationService) ResendVerificationEmail(
+func (s *Service) ResendVerificationEmail(
 	ctx context.Context,
 	req *authenticationpb.ResendVerificationRequest,
 ) (*authenticationpb.ResendVerificationResponse, error) {

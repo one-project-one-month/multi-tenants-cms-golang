@@ -22,7 +22,7 @@
       "name": "ModuleService"
     }
   ],
-  "host": "api.lms.example.com",
+  "host": "localhost:8086",
   "basePath": "/v1",
   "schemes": [
     "https",
@@ -66,6 +66,13 @@
             "schema": {
               "$ref": "#/definitions/authenticationLoginRequest"
             }
+          },
+          {
+            "name": "X-Organisation",
+            "description": "Organization identifier header",
+            "in": "header",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [
@@ -104,6 +111,13 @@
             "schema": {
               "$ref": "#/definitions/authenticationLoginOutRequest"
             }
+          },
+          {
+            "name": "X-Organisation",
+            "description": "Organization identifier header",
+            "in": "header",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [
@@ -113,6 +127,39 @@
           {
             "Bearer": []
           }
+        ]
+      }
+    },
+    "/lms/v1/auth/refresh": {
+      "post": {
+        "summary": "Refresh Token",
+        "description": "Check the cookies  and returns new  access tokens",
+        "operationId": "AuthenticationService_Refresh",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authenticationRefreshTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Organisation",
+            "description": "Organization identifier header",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Authentication"
         ]
       }
     },
@@ -157,6 +204,13 @@
             "schema": {
               "$ref": "#/definitions/authenticationRegisterRequest"
             }
+          },
+          {
+            "name": "X-Organisation",
+            "description": "Organization identifier header",
+            "in": "header",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [
@@ -198,6 +252,53 @@
             "name": "organisation",
             "in": "query",
             "required": false,
+            "type": "string"
+          },
+          {
+            "name": "X-Organisation",
+            "description": "Organization identifier header",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/lms/v1/auth/setup-mfa": {
+      "post": {
+        "summary": "Set UP MFA",
+        "operationId": "AuthenticationService_SetUpMFA",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authenticationMFASetUpResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authenticationMFASetUpRequest"
+            }
+          },
+          {
+            "name": "X-Organisation",
+            "description": "Organization identifier header",
+            "in": "header",
+            "required": true,
             "type": "string"
           }
         ],
@@ -249,6 +350,13 @@
             "schema": {
               "$ref": "#/definitions/AuthenticationServiceVerifyEmailBody"
             }
+          },
+          {
+            "name": "X-Organisation",
+            "description": "Organization identifier header",
+            "in": "header",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [
@@ -471,7 +579,7 @@
         "organisation": {
           "type": "string"
         },
-        "email": {
+        "namespaceDomainEmail": {
           "type": "string"
         },
         "password": {
@@ -488,6 +596,9 @@
         "token": {
           "type": "string"
         },
+        "mfaEnable": {
+          "type": "boolean"
+        },
         "expiresAt": {
           "type": "string",
           "format": "date-time"
@@ -498,6 +609,33 @@
       "type": "object",
       "properties": {
         "message": {
+          "type": "string"
+        }
+      }
+    },
+    "authenticationMFASetUpRequest": {
+      "type": "object",
+      "properties": {
+        "domainEmail": {
+          "type": "string"
+        }
+      }
+    },
+    "authenticationMFASetUpResponse": {
+      "type": "object",
+      "properties": {
+        "photoString": {
+          "type": "string"
+        },
+        "manualEntry": {
+          "type": "string"
+        }
+      }
+    },
+    "authenticationRefreshTokenResponse": {
+      "type": "object",
+      "properties": {
+        "newAccessToken": {
           "type": "string"
         }
       }
@@ -573,6 +711,9 @@
         },
         "mfaEnable": {
           "type": "boolean"
+        },
+        "domainEmail": {
+          "type": "string"
         },
         "registrationDate": {
           "type": "string",

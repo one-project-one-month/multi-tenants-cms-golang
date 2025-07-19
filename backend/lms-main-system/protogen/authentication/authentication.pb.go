@@ -32,6 +32,7 @@ type SystemUser struct {
 	Address          string                 `protobuf:"bytes,5,opt,name=address,proto3" json:"address,omitempty"`
 	EmailVerified    bool                   `protobuf:"varint,6,opt,name=email_verified,json=emailVerified,proto3" json:"email_verified,omitempty"`
 	MfaEnable        bool                   `protobuf:"varint,7,opt,name=mfa_enable,json=mfaEnable,proto3" json:"mfa_enable,omitempty"`
+	DomainEmail      string                 `protobuf:"bytes,11,opt,name=domain_email,json=domainEmail,proto3" json:"domain_email,omitempty"`
 	RegistrationDate *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=registration_date,json=registrationDate,proto3" json:"registration_date,omitempty"`
 	CreatedAt        *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt        *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
@@ -118,6 +119,13 @@ func (x *SystemUser) GetMfaEnable() bool {
 	return false
 }
 
+func (x *SystemUser) GetDomainEmail() string {
+	if x != nil {
+		return x.DomainEmail
+	}
+	return ""
+}
+
 func (x *SystemUser) GetRegistrationDate() *timestamppb.Timestamp {
 	if x != nil {
 		return x.RegistrationDate
@@ -143,7 +151,7 @@ var File_authentication_authentication_proto protoreflect.FileDescriptor
 
 const file_authentication_authentication_proto_rawDesc = "" +
 	"\n" +
-	"#authentication/authentication.proto\x12\x12lms.authentication\x1a\x1fgoogle/protobuf/timestamp.proto\"\x90\x03\n" +
+	"#authentication/authentication.proto\x12\x12lms.authentication\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb3\x03\n" +
 	"\n" +
 	"SystemUser\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
@@ -153,7 +161,8 @@ const file_authentication_authentication_proto_rawDesc = "" +
 	"\aaddress\x18\x05 \x01(\tR\aaddress\x12%\n" +
 	"\x0eemail_verified\x18\x06 \x01(\bR\remailVerified\x12\x1d\n" +
 	"\n" +
-	"mfa_enable\x18\a \x01(\bR\tmfaEnable\x12G\n" +
+	"mfa_enable\x18\a \x01(\bR\tmfaEnable\x12!\n" +
+	"\fdomain_email\x18\v \x01(\tR\vdomainEmail\x12G\n" +
 	"\x11registration_date\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\x10registrationDate\x129\n" +
 	"\n" +
 	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +

@@ -1,17 +1,28 @@
 ### Register a new user
-POST http://localhost:8086/lms/v1/auth/register
+POST {{lms_url}}/lms/v1/auth/register
 accept: application/json
-X-Organisation: Swand
+X-Organisation: Swan
 Content-Type: application/json
 
 {
   "username": "SwanhtetAungphyo",
-  "email": "swanhtetaundgp@gmail.com",
+  "email": "swan100222@gmail.com",
   "password": "SwanHtet12@",
   "address": "Swan Krakow",
-  "phoneNumber": "48608422691",
+  "phoneNumber": "+48608422691",
   "mfaVerificationOption": true
 }
 
+####
 
+POST  {{lms_url}}/lms/v1/auth/login
+accept: application/json
+X-Organisation: Swan
+Content-Type: application/json
+
+{
+  "namespace_domain_email": "swan100222@swan.edu",
+  "password": "SwanHtet12@"
+
+}
 ### Write http test in here

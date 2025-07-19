@@ -56,6 +56,7 @@ func (g *Gateway) Start() error {
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{}),
 		runtime.WithIncomingHeaderMatcher(g.headerMatcher),
 		runtime.WithMetadata(modifier.RequestModifier),
+		runtime.WithForwardResponseOption(modifier.ResponseModifier),
 		jsonOption,
 	)
 

@@ -1,4 +1,4 @@
-eBEGIN;
+BEGIN;
 
 -- Create ENUM types
 CREATE TYPE lms_role_type AS ENUM ('ADMIN', 'INSTRUCTOR', 'STUDENT', 'VIEWER');
@@ -35,6 +35,7 @@ CREATE TABLE LMS_USER
     phone_number      VARCHAR(100),
     mfa_enable        BOOLEAN          DEFAULT FALSE,
     email_verified    BOOLEAN          DEFAULT FALSE,
+    namespace_domain varchar(200),
     registration_date DATE             DEFAULT CURRENT_DATE,
     created_at        TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,
     updated_at        TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,
@@ -288,6 +289,16 @@ CREATE TABLE Report
     updated_at           TIMESTAMP,
     CONSTRAINT fk_report_user FOREIGN KEY (generated_by_user_id)
         REFERENCES LMS_USER (lms_user_id) ON DELETE CASCADE
+);
+
+CREATE  TABLE  LMS_USER_MFA (
+                                mfa_secret_id uuid not null default gen_random_uuid(),
+                                mfa_secret varchar not null unique ,
+                                lms_user_domain_email varchar not null unique ,
+                                CONSTRAINT fk_lms_user_domain_email
+                                    FOREIGN KEY  (lms_user_domain_email)
+                                        REFERENCES lms_user(namespace_domain),
+                                UNIQUE (mfa_secret,lms_user_domain_email)
 );
 
 COMMIT;
