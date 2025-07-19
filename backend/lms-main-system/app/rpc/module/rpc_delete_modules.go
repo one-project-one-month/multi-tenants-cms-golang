@@ -4,25 +4,44 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/multi-tenants-cms-golang/lms-sys/internal/convert/module"
 	mpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/modules"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
 func (ms *ModulesService) DeleteModules(ctx context.Context, req *mpb.DeleteModulesRequest) (*mpb.DeleteModulesResponse, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.InvalidArgument, "missing module id(s) to delete")
+	}
+
+	var module_ids []string
+	headerValues := md.Get("x-module-ids")
+	if len(headerValues) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "module-ids header required")
+	}
+
+	if len(headerValues) == 1 {
+		module_ids = strings.Split(headerValues[0], ",")
+	} else {
+		module_ids = headerValues
+	}
+
 	ms.logger.WithFields(logrus.Fields{
 		"method":     "DeleteModules",
-		"module_ids": req.Ids,
+		"module_ids": module_ids,
 	})
 
 	dbCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	for _, id := range req.Ids {
+	for _, id := range module_ids {
 		if id == "" {
 			return nil, status.Error(codes.InvalidArgument, "module id is required")
 		}
