@@ -14,7 +14,7 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
-backend/**/.env
+backend/lms-main-system/.env
 # Terraform
 infra/.terraform/
 infra/.terraform.lock.hcl
@@ -24,7 +24,7 @@ infra/*.tfvars
 infra/.terraform.tfstate.lock.info
 
 # Environment files
-backend/cms-sys/.env
+backend/cms-sys/.env.cms
 backend/lms-sys/.env
 .env
 .env.local

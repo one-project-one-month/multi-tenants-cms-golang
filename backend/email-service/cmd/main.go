@@ -487,37 +487,37 @@ func reportMetrics() {
 func loadConfig() Config {
 	var cfg Config
 
-	cfg.SMTP.Host = getEnv("SMTP_HOST", "smtp.gmail.com")
-	cfg.SMTP.Port = getEnvInt("SMTP_PORT", 587)
-	cfg.SMTP.Username = getEnv("SMTP_USER", "")
+	cfg.SMTP.Host = getEnv("ES_SMTP_HOST", "smtp.gmail.com")
+	cfg.SMTP.Port = getEnvInt("ES_SMTP_PORT", 587)
+	cfg.SMTP.Username = getEnv("ES_SMTP_USER", "")
 	cfg.SMTP.Password = getEnv("SMTP_PASSWORD", "")
-	cfg.SMTP.From = getEnv("FROM_ADDR", cfg.SMTP.Username)
-	cfg.SMTP.MaxConnections = getEnvInt("SMTP_MAX_CONNECTIONS", 10)
-	cfg.SMTP.ConnectionTimeout = time.Duration(getEnvInt("SMTP_CONNECTION_TIMEOUT", 30)) * time.Second
-	cfg.SMTP.SendTimeout = time.Duration(getEnvInt("SMTP_SEND_TIMEOUT", 60)) * time.Second
-	cfg.SMTP.KeepAlive = getEnvBool("SMTP_KEEP_ALIVE", true)
+	cfg.SMTP.From = getEnv("ES_FROM_ADDR", cfg.SMTP.Username)
+	cfg.SMTP.MaxConnections = getEnvInt("ES_SMTP_MAX_CONNECTIONS", 10)
+	cfg.SMTP.ConnectionTimeout = time.Duration(getEnvInt("ES_SMTP_CONNECTION_TIMEOUT", 30)) * time.Second
+	cfg.SMTP.SendTimeout = time.Duration(getEnvInt("ES_SMTP_SEND_TIMEOUT", 60)) * time.Second
+	cfg.SMTP.KeepAlive = getEnvBool("ES_SMTP_KEEP_ALIVE", true)
 
-	cfg.NATS.URL = getEnv("NATS_URL", "nats://localhost:4222")
-	cfg.NATS.Stream = getEnv("NATS_STREAM", "EMAILS")
-	subjects := getEnv("NATS_SUBJECTS", "email.verification,email.notification,page.approval")
+	cfg.NATS.URL = getEnv("ES_NATS_URL", "nats://localhost:4222")
+	cfg.NATS.Stream = getEnv("ES_NATS_STREAM", "EMAILS")
+	subjects := getEnv("ES_NATS_SUBJECTS", "email.verification,email.notification,page.approval")
 	cfg.NATS.Subjects = strings.Split(subjects, ",")
-	cfg.NATS.MaxDeliver = getEnvInt("NATS_MAX_DELIVER", 3)
-	cfg.NATS.AckWait = time.Duration(getEnvInt("NATS_ACK_WAIT", 300)) * time.Second
-	cfg.NATS.MaxAckPending = getEnvInt("NATS_MAX_ACK_PENDING", 100)
+	cfg.NATS.MaxDeliver = getEnvInt("ES_NATS_MAX_DELIVER", 3)
+	cfg.NATS.AckWait = time.Duration(getEnvInt("ES_NATS_ACK_WAIT", 300)) * time.Second
+	cfg.NATS.MaxAckPending = getEnvInt("ES_NATS_MAX_ACK_PENDING", 100)
 
-	cfg.Templates.Dir = getEnv("TEMPLATES_DIR", "templates")
-	cfg.Templates.DefaultExt = getEnv("TEMPLATES_EXT", ".html")
-	cfg.Templates.CacheEnabled = getEnvBool("TEMPLATES_CACHE", true)
-	cfg.Templates.WatchChanges = getEnvBool("TEMPLATES_WATCH", false)
-	cfg.Templates.ReloadOnChange = getEnvBool("TEMPLATES_RELOAD", false)
+	cfg.Templates.Dir = getEnv("ES_TEMPLATES_DIR", "templates")
+	cfg.Templates.DefaultExt = getEnv("ES_TEMPLATES_EXT", ".html")
+	cfg.Templates.CacheEnabled = getEnvBool("ES_TEMPLATES_CACHE", true)
+	cfg.Templates.WatchChanges = getEnvBool("ES_TEMPLATES_WATCH", false)
+	cfg.Templates.ReloadOnChange = getEnvBool("ES_TEMPLATES_RELOAD", false)
 
-	cfg.Processing.Workers = getEnvInt("PROCESSING_WORKERS", runtime.NumCPU())
-	cfg.Processing.BatchSize = getEnvInt("PROCESSING_BATCH_SIZE", 10)
-	cfg.Processing.RetryDelaySeconds = getEnvInt("PROCESSING_RETRY_DELAY", 60)
-	cfg.Processing.MaxRetries = getEnvInt("PROCESSING_MAX_RETRIES", 3)
+	cfg.Processing.Workers = getEnvInt("ES_PROCESSING_WORKERS", runtime.NumCPU())
+	cfg.Processing.BatchSize = getEnvInt("ES_PROCESSING_BATCH_SIZE", 10)
+	cfg.Processing.RetryDelaySeconds = getEnvInt("ES_PROCESSING_RETRY_DELAY", 60)
+	cfg.Processing.MaxRetries = getEnvInt("ES_PROCESSING_MAX_RETRIES", 3)
 
-	cfg.Monitoring.EnableMetrics = getEnvBool("MONITORING_METRICS", true)
-	cfg.Monitoring.LogLevel = getEnv("MONITORING_LOG_LEVEL", "INFO")
+	cfg.Monitoring.EnableMetrics = getEnvBool("ES_MONITORING_METRICS", true)
+	cfg.Monitoring.LogLevel = getEnv("ES_MONITORING_LOG_LEVEL", "INFO")
 
 	return cfg
 }
