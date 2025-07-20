@@ -7,6 +7,7 @@ import (
 	"github.com/multi-tenants-cms-golang/lms-sys/app/middleware"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/infra/consul"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/infra/ipfs"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/mailer"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils"
 	"github.com/natefinch/lumberjack"
 	"github.com/sirupsen/logrus"
@@ -196,6 +197,7 @@ func initApp(logger *logrus.Logger, dbPool *pgxpool.Pool, consulClient *api.Clie
 	store := db.NewStore(logger, dbPool)
 	mfaConfig := utils.DefaultMFAConfig()
 	mfaManger := utils.NewMFAManager(mfaConfig)
+	mailer := mailer.New(logger, "", 1000, "", "")
 	authMiddlware := middleware.NewAuthMiddleware(jwtSecret)
 	grpcSrv := rpc.NewServer(
 		store,
@@ -208,6 +210,7 @@ func initApp(logger *logrus.Logger, dbPool *pgxpool.Pool, consulClient *api.Clie
 		authMiddlware,
 		ipfsClient,
 		asynqClient,
+		mailer,
 	)
 
 	grpcGateway := gateway.NewGateway(logger, grpcAddress, ":8086", "localhost:6379")
