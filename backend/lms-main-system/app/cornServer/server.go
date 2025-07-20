@@ -9,23 +9,26 @@ import (
 )
 
 type Server struct {
-	logger    *logrus.Logger
-	redisAddr string
-	handlers  *handler.CornHandler
-	dbUrl     string
+	logger      *logrus.Logger
+	redisAddr   string
+	handlers    *handler.CornHandler
+	ipfsHandler *handler.IPFSHandler
+	dbUrl       string
 }
 
 func NewServer(
 	logger *logrus.Logger,
 	redisAddr string,
 	handler *handler.CornHandler,
+	ipfsHandler *handler.IPFSHandler,
 	dbUrl string,
 ) *Server {
 	return &Server{
-		logger:    logger,
-		redisAddr: redisAddr,
-		handlers:  handler,
-		dbUrl:     dbUrl,
+		logger:      logger,
+		redisAddr:   redisAddr,
+		handlers:    handler,
+		ipfsHandler: ipfsHandler,
+		dbUrl:       dbUrl,
 	}
 }
 func (s *Server) RunServer() error {
@@ -63,7 +66,7 @@ func (s *Server) RunServer() error {
 	}
 	mux := asynq.NewServeMux()
 	mux.HandleFunc(task.TypeDatabaseBackup, s.handlers.HandleDatabaseBackUp)
-
+	mux.HandleFunc(task.TypeFileUpload, s.ipfsHandler.HandleIPFSUpload)
 	go func() {
 		if err := scheduler.Run(); err != nil {
 			s.logger.WithFields(logrus.Fields{

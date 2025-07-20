@@ -9,7 +9,7 @@ package authentication
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -85,9 +85,7 @@ func (x *LoginRequest) GetPassword() string {
 type LoginResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-	Token         string                 `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
-	MfaEnable     bool                   `protobuf:"varint,3,opt,name=mfa_enable,json=mfaEnable,proto3" json:"mfa_enable,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	MfaEnable     bool                   `protobuf:"varint,2,opt,name=mfa_enable,json=mfaEnable,proto3" json:"mfa_enable,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -129,25 +127,11 @@ func (x *LoginResponse) GetMessage() string {
 	return ""
 }
 
-func (x *LoginResponse) GetToken() string {
-	if x != nil {
-		return x.Token
-	}
-	return ""
-}
-
 func (x *LoginResponse) GetMfaEnable() bool {
 	if x != nil {
 		return x.MfaEnable
 	}
 	return false
-}
-
-func (x *LoginResponse) GetExpiresAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ExpiresAt
-	}
-	return nil
 }
 
 var File_authentication_rpc_login_proto protoreflect.FileDescriptor
@@ -158,14 +142,11 @@ const file_authentication_rpc_login_proto_rawDesc = "" +
 	"\fLoginRequest\x12\"\n" +
 	"\forganisation\x18\x01 \x01(\tR\forganisation\x124\n" +
 	"\x16namespace_domain_email\x18\x02 \x01(\tR\x14namespaceDomainEmail\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpassword\"\x99\x01\n" +
+	"\bpassword\x18\x03 \x01(\tR\bpassword\"H\n" +
 	"\rLoginResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\x12\x14\n" +
-	"\x05token\x18\x02 \x01(\tR\x05token\x12\x1d\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\x12\x1d\n" +
 	"\n" +
-	"mfa_enable\x18\x03 \x01(\bR\tmfaEnable\x129\n" +
-	"\n" +
-	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAtBDZBgithub.com/multi-tenant-cms-golang/lms-sys/protogen/authenticationb\x06proto3"
+	"mfa_enable\x18\x02 \x01(\bR\tmfaEnableBDZBgithub.com/multi-tenant-cms-golang/lms-sys/protogen/authenticationb\x06proto3"
 
 var (
 	file_authentication_rpc_login_proto_rawDescOnce sync.Once
@@ -181,17 +162,15 @@ func file_authentication_rpc_login_proto_rawDescGZIP() []byte {
 
 var file_authentication_rpc_login_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_authentication_rpc_login_proto_goTypes = []any{
-	(*LoginRequest)(nil),          // 0: lms.authentication.LoginRequest
-	(*LoginResponse)(nil),         // 1: lms.authentication.LoginResponse
-	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
+	(*LoginRequest)(nil),  // 0: lms.authentication.LoginRequest
+	(*LoginResponse)(nil), // 1: lms.authentication.LoginResponse
 }
 var file_authentication_rpc_login_proto_depIdxs = []int32{
-	2, // 0: lms.authentication.LoginResponse.expires_at:type_name -> google.protobuf.Timestamp
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	0, // [0:0] is the sub-list for method output_type
+	0, // [0:0] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_authentication_rpc_login_proto_init() }

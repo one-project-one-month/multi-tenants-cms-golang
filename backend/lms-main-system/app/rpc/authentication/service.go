@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	"github.com/multi-tenants-cms-golang/lms-sys/internal/types"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/mailer"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils"
 	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	"github.com/sirupsen/logrus"
@@ -58,6 +59,7 @@ type (
 		logger      *logrus.Logger
 		cfg         *types.Config
 		mfaManager  *utils.MFAManager
+		mailer      *mailer.Mailer
 	}
 )
 
@@ -68,6 +70,7 @@ func NewAuthenticationService(
 	logger *logrus.Logger,
 	config *types.Config,
 	mfaManager *utils.MFAManager,
+	mailer *mailer.Mailer,
 ) *Service {
 	return &Service{
 		databaseCtx: context.Background(),
@@ -75,5 +78,6 @@ func NewAuthenticationService(
 		logger:      logger,
 		cfg:         config,
 		mfaManager:  mfaManager,
+		mailer:      mailer,
 	}
 }

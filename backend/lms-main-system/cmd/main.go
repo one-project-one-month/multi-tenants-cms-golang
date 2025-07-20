@@ -1,8 +1,12 @@
 package main
 
 import (
+	"github.com/hibiken/asynq"
+	shell "github.com/ipfs/go-ipfs-api"
 	"github.com/joho/godotenv"
+	"github.com/multi-tenants-cms-golang/lms-sys/app/middleware"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/infra/consul"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/infra/ipfs"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils"
 	"github.com/natefinch/lumberjack"
 	"github.com/sirupsen/logrus"
@@ -109,13 +113,14 @@ func initRedis(logger *logrus.Logger) {
 }
 
 func initNATS(logger *logrus.Logger) {
-	natsUrl := env.GetEnv("LMS_NATS_URL", "nats://localhost:4222")
-	if err := nats.InitNATS(natsUrl); err != nil {
-		logger.WithError(err).Fatal("Failed to connect to NATS")
-	}
-	logger.Info("NATS initialized")
-}
+	natsURL := "nats://localhost:4222"
+	logger.WithField("url", natsURL).Info("Attempting to connect to NATS")
 
+	if err := nats.InitNATS(natsURL); err != nil {
+		logger.WithError(err).WithField("url", natsURL).Fatal("Failed to connect to NATS")
+	}
+	logger.Info("NATS initialized successfully")
+}
 func initConsul(logger *logrus.Logger, serviceID string) *api.Client {
 	consulAddr := env.GetEnv("LMS_CONSUL_ADDRESS", "localhost:8500")
 	client, err := consul.NewConsulClient(consulAddr)
@@ -156,11 +161,42 @@ func initApp(logger *logrus.Logger, dbPool *pgxpool.Pool, consulClient *api.Clie
 	dbUrl := "postgresql://neondb_owner:npg_MEB4CYJS7TKh@ep-withered-salad-a27oo7gn-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
 	backupHandler := handler.NewCornHandler(logger)
-	cronServer := cornServer.NewServer(logger, env.GetEnv("LMS_REDIS_ADDRESS", ""), backupHandler, dbUrl)
+	ipfsShell := shell.NewShell("localhost:5001")
+	ipfsHanlder := handler.NewIPFSHandler(logger, ipfsShell)
+	cronServer := cornServer.NewServer(
+		logger,
+		env.GetEnv("LMS_REDIS_ADDRESS", ""),
+		backupHandler,
+		ipfsHanlder,
+		dbUrl,
+	)
+	ipfsCfg := ipfs.Config{
+		Host:    env.GetEnv("IPFS_HOST", "localhost"),
+		Port:    env.GetEnv("IPFS_PORT", "5001"),
+		Timeout: 10 * time.Minute,
+	}
+	ipfsClient := ipfs.NewClient(&ipfsCfg, logger)
 
+	redisOpt := asynq.RedisClientOpt{
+		Addr:     env.GetEnv("REDIS_ADDR", "localhost:6379"),
+		Password: env.GetEnv("REDIS_PASSWORD", ""),
+		DB:       env.GetEnvAsInt("REDIS_DB", 0),
+	}
+	asynqClient := asynq.NewClient(redisOpt)
+	defer func(asynqClient *asynq.Client) {
+		err := asynqClient.Close()
+		if err != nil {
+			logger.WithError(err).Error("Failed to close asynq client connection")
+		}
+	}(asynqClient)
+	//taskCreator := &task.TaskCreator{}
+
+	//fileService := files.NewFileService(ipfsClient, asynqClient, logger, taskCreator)
+	//startFileUploadWorker(logger, ipfsClient, fileService)
 	store := db.NewStore(logger, dbPool)
 	mfaConfig := utils.DefaultMFAConfig()
 	mfaManger := utils.NewMFAManager(mfaConfig)
+	authMiddlware := middleware.NewAuthMiddleware(jwtSecret)
 	grpcSrv := rpc.NewServer(
 		store,
 		logger,
@@ -169,8 +205,41 @@ func initApp(logger *logrus.Logger, dbPool *pgxpool.Pool, consulClient *api.Clie
 		jwtAudience,
 		grpcAddress,
 		mfaManger,
+		authMiddlware,
+		ipfsClient,
+		asynqClient,
 	)
-	grpcGateway := gateway.NewGateway(logger, grpcAddress, ":8086")
+
+	grpcGateway := gateway.NewGateway(logger, grpcAddress, ":8086", "localhost:6379")
 
 	return app.NewApp(grpcSrv, grpcGateway, cronServer, logger)
 }
+
+//func startFileUploadWorker(logger *logrus.Logger, ipfsClient *ipfs.Client, fileService *files.FileService) {
+//	redisOpt := asynq.RedisClientOpt{
+//		Addr:     env.GetEnv("REDIS_ADDR", "localhost:6379"),
+//		Password: env.GetEnv("REDIS_PASSWORD", ""),
+//		DB:       env.GetEnvAsInt("REDIS_DB", 0),
+//	}
+//
+//	worker := asynq.NewServer(
+//		redisOpt,
+//		asynq.Config{
+//			Concurrency: 10,
+//			Queues: map[string]int{
+//				"file-upload": 5,
+//				"default":     3,
+//			},
+//		},
+//	)
+//
+//	//processor := task.NewFileUploadProcessor(fileService, ipfsClient, logger)
+//	mux := asynq.NewServeMux()
+//	mux.Handle(task.TypeFileUpload, processor)
+//
+//	go func() {
+//		if err := worker.Run(mux); err != nil {
+//			logger.WithError(err).Fatal("failed to start file upload worker")
+//		}
+//	}()
+//}

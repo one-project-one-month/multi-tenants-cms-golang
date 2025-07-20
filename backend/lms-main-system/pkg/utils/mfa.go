@@ -1,8 +1,12 @@
 package utils
 
 import (
+	"bytes"
 	"crypto/rand"
+	"encoding/base64"
 	"fmt"
+	"github.com/sirupsen/logrus"
+	"image/png"
 	"time"
 
 	"github.com/pquerna/otp"
@@ -18,6 +22,16 @@ type MFAConfig struct {
 	Period      uint
 }
 
+func NewMFAConfig(issuer string, accountName string) *MFAConfig {
+	return &MFAConfig{
+		Issuer:      issuer,
+		AccountName: accountName,
+		Algorithm:   otp.AlgorithmSHA256,
+		Digits:      otp.DigitsSix,
+		Period:      30,
+	}
+}
+
 // DefaultMFAConfig returns a default MFA configuration
 func DefaultMFAConfig() *MFAConfig {
 	return &MFAConfig{
@@ -31,9 +45,10 @@ func DefaultMFAConfig() *MFAConfig {
 
 // MFASecret represents an MFA secret key
 type MFASecret struct {
-	Secret    string
-	QRCodeURL string
-	Config    *MFAConfig
+	Secret          string
+	QRCodeURL       string
+	QRCodeBase64Str string
+	Config          *MFAConfig
 }
 
 // GenerateMFASecret creates a new MFA secret
@@ -55,10 +70,20 @@ func GenerateMFASecret(config *MFAConfig, email string) (*MFASecret, error) {
 		return nil, fmt.Errorf("failed to generate MFA secret: %w", err)
 	}
 
+	buf := &bytes.Buffer{}
+	image, err := key.Image(200, 200)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate MFA secret: %w", err)
+	}
+	err = png.Encode(buf, image)
+	if err != nil {
+		logrus.Errorf("failed to generate MFA secret: %w", err)
+	}
 	return &MFASecret{
-		Secret:    key.Secret(),
-		QRCodeURL: key.URL(),
-		Config:    config,
+		Secret:          key.Secret(),
+		QRCodeURL:       key.URL(),
+		Config:          config,
+		QRCodeBase64Str: base64.StdEncoding.EncodeToString(buf.Bytes()),
 	}, nil
 }
 

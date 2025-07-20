@@ -1,0 +1,119 @@
+### 1. Payment Intent Tests
+
+### Create Payment Intent
+POST http://localhost:8086/lms/v1/stripe/create-payment-intent
+Content-Type: application/json
+
+{
+  "amount": 2000,
+  "currency": "usd",
+  "description": "Test Payment",
+  "customer_id": "cus_SiERLo5uiJIqGq",
+  "metadata": {
+    "order_id": "12345"
+  }
+}
+
+### Get Payment Status
+GET http://localhost:8086/lms/v1/stripe/payment-status?payment_intent_id=pi_3RmnyxInsa2xt1880mD1v44t
+
+### Test Invalid Amount
+POST http://localhost:8086/lms/v1/stripe/create-payment-intent
+Content-Type: application/json
+
+{
+  "amount": 0,
+  "currency": "usd",
+  "description": "Invalid Amount Test"
+}
+
+### 2. Checkout Session Tests
+
+### Create Checkout Session
+POST http://localhost:8086/lms/v1/stripe/create-checkout-session
+Content-Type: application/json
+
+{
+  "amount": 2000,
+  "currency": "usd",
+  "product_name": "Premium Plan",
+  "quantity": 1,
+  "success_url": "http://localhost:8086/success",
+  "cancel_url": "http://localhost:8086/cancel",
+  "customer_email": "test@example.com",
+  "billing_address": true,
+  "metadata": {
+    "order_id": "67890"
+  }
+}
+
+### Test Missing Required Fields
+POST http://localhost:8086/lms/v1/stripe/create-checkout-session
+Content-Type: application/json
+
+{
+  "amount": 2000
+}
+
+### 3. Webhook Tests (Requires Stripe CLI)
+
+# First run in terminal:
+# stripe listen --forward-to http://localhost:8086/lms/v1/stripe/webhook
+
+### Then trigger test events:
+# stripe trigger payment_intent.succeeded
+# stripe trigger payment_intent.payment_failed
+# stripe trigger checkout.session.completed
+
+### 4. Advanced Scenarios
+
+### Test Different Currency (EUR)
+POST http://localhost:8086/lms/v1/stripe/create-payment-intent
+Content-Type: application/json
+
+{
+  "amount": 1500,
+  "currency": "eur",
+  "description": "EUR Test Payment"
+}
+
+### Test Complex Metadata
+POST http://localhost:8086/lms/v1/stripe/create-payment-intent
+Content-Type: application/json
+
+{
+  "amount": 2000,
+  "currency": "usd",
+  "metadata": {
+    "user_id": "user_789",
+    "subscription": "annual",
+    "custom_data": "special_value"
+  }
+}
+
+### Test Recurring Payments
+POST http://localhost:8086/lms/v1/stripe/create-checkout-session
+Content-Type: application/json
+
+{
+  "amount": 2000,
+  "currency": "usd",
+  "product_name": "Monthly Subscription",
+  "quantity": 1,
+  "success_url": "http://localhost:8086/success",
+  "cancel_url": "http://localhost:8086/cancel",
+  "mode": "subscription"
+}
+
+### 5. Customer Management
+
+### Create Test Customer
+POST https://api.stripe.com/v1/customers
+Authorization: Bearer sk_test_51RZyq9Insa2xt1880OWZrSR1AABDcd07U38WHMO8EWBynxl0Hhv0nPJYcH8UbHWI3odWFsIZk4BchIlrinUFF6Zr00U8K2LNt8
+Content-Type: application/x-www-form-urlencoded
+
+name=Test Customer&email=test@example.com
+
+### List Customers
+GET https://api.stripe.com/v1/customers
+Authorization: Bearer sk_test_51RZyq9Insa2xt1880OWZrSR1AABDcd07U38WHMO8EWBynxl0Hhv0nPJYcH8UbHWI3odWFsIZk4BchIlrinUFF6Zr00U8K2LNt8

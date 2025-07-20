@@ -3,15 +3,18 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"github.com/multi-tenants-cms-golang/lms-sys/app/rpc/interceptor"
+	"github.com/hibiken/asynq"
+	middleware2 "github.com/multi-tenants-cms-golang/lms-sys/app/middleware"
 	db "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/infra/ipfs"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/mailer"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils"
+	"google.golang.org/grpc/reflection"
 	"net"
 	"syscall"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/multi-tenants-cms-golang/lms-sys/app/gateway/middleware"
 	authSrv "github.com/multi-tenants-cms-golang/lms-sys/app/rpc/authentication"
 	msv "github.com/multi-tenants-cms-golang/lms-sys/app/rpc/module"
 	"github.com/multi-tenants-cms-golang/lms-sys/internal/types"
@@ -27,13 +30,17 @@ import (
 //)
 
 type Server struct {
-	store       db.Store
-	logger      *logrus.Logger
-	jwtSecret   string
-	jwtIssuer   string
-	jwtAudience string
-	grpcAddr    string
-	mfaManager  *utils.MFAManager
+	store          db.Store
+	logger         *logrus.Logger
+	jwtSecret      string
+	jwtIssuer      string
+	jwtAudience    string
+	grpcAddr       string
+	mfaManager     *utils.MFAManager
+	authMiddleware *middleware2.AuthMiddleware
+	ipfsClient     *ipfs.Client
+	asynqClient    *asynq.Client
+	mailer         *mailer.Mailer
 }
 
 func NewServer(
@@ -44,21 +51,30 @@ func NewServer(
 	jwtAudience string,
 	grpcAddr string,
 	mfaManager *utils.MFAManager,
+	authMiddleware *middleware2.AuthMiddleware,
+	ipfsClient *ipfs.Client,
+	asynqClient *asynq.Client,
+	mailer *mailer.Mailer,
 ) *Server {
 	return &Server{
-		store:       db,
-		logger:      logger,
-		jwtSecret:   jwtSecret,
-		jwtIssuer:   jwtIssuer,
-		jwtAudience: jwtAudience,
-		grpcAddr:    grpcAddr,
-		mfaManager:  mfaManager,
+		store:          db,
+		logger:         logger,
+		jwtSecret:      jwtSecret,
+		jwtIssuer:      jwtIssuer,
+		jwtAudience:    jwtAudience,
+		grpcAddr:       grpcAddr,
+		mfaManager:     mfaManager,
+		authMiddleware: authMiddleware,
+		ipfsClient:     ipfsClient,
+		asynqClient:    asynqClient,
+		mailer:         mailer,
 	}
 }
 
 func (s *Server) Run() error {
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(interceptor.MetadataLoggerInterceptor(s.logger)),
+		grpc.UnaryInterceptor(middleware2.MetadataLoggerInterceptor(s.logger)),
+		//grpc.UnaryInterceptor(s.authMiddleware.UnaryServerInterceptor()),
 	)
 
 	authService := authSrv.NewAuthenticationService(s.store, s.logger, &types.Config{
@@ -69,17 +85,36 @@ func (s *Server) Run() error {
 		RetryDelay:        0,
 		RateLimitAttempts: 100,
 		RateLimitWindow:   time.Second * 20,
+		Email: struct {
+			NoReplyAddress string
+			Templates      struct {
+				Verification string
+				Footer       string
+			}
+		}{
+			NoReplyAddress: "swanhtetaunpg@gmail.com",
+			Templates: struct {
+				Verification string
+				Footer       string
+			}{
+				Verification: "templates/verification",
+				Footer:       "templates/footer",
+			},
+		},
 	},
 		s.mfaManager,
+		s.mailer,
 	)
 
+	//fileService := files.NewFileService(s.ipfsClient, s.asynqClient, s.logger, &task.TaskCreator{})
 	moduleService := msv.NewModuleService(s.store, s.logger)
 	authpb.RegisterAuthenticationServiceServer(grpcServer, authService)
 	mspb.RegisterModuleServiceServer(grpcServer, moduleService)
-
+	//fb.RegisterFileServiceServer(grpcServer, fileService)
 	var g run.Group
 
 	g.Add(func() error {
+		reflection.Register(grpcServer)
 		listener, err := net.Listen("tcp", s.grpcAddr)
 		if err != nil {
 			return fmt.Errorf("failed to listen: %v", err)
@@ -95,7 +130,7 @@ func (s *Server) Run() error {
 	return g.Run()
 }
 
-func (s *Server) verifyToken(tokenString string) (*middleware.UserContext, error) {
+func (s *Server) verifyToken(tokenString string) (*middleware2.UserContext, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -135,10 +170,10 @@ func (s *Server) verifyToken(tokenString string) (*middleware.UserContext, error
 		return nil, fmt.Errorf("missing or invalid roles claim")
 	}
 
-	var roles []middleware.Role
+	var roles []middleware2.Role
 	for _, r := range rolesClaim {
 		if roleStr, ok := r.(string); ok {
-			roles = append(roles, middleware.Role(roleStr))
+			roles = append(roles, middleware2.Role(roleStr))
 		}
 	}
 
@@ -146,7 +181,7 @@ func (s *Server) verifyToken(tokenString string) (*middleware.UserContext, error
 		return nil, fmt.Errorf("no valid roles found in token")
 	}
 
-	return &middleware.UserContext{
+	return &middleware2.UserContext{
 		UserID: userID,
 		Roles:  roles,
 	}, nil

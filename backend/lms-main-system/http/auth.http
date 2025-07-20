@@ -1,7 +1,7 @@
 ### Register a new user
 POST {{lms_url}}/lms/v1/auth/register
 accept: application/json
-X-Organisation: Swan
+X-Organisation: tenant_namespace_1
 Content-Type: application/json
 
 {
@@ -13,16 +13,70 @@ Content-Type: application/json
   "mfaVerificationOption": true
 }
 
-####
+### Response from register
+#{
+#  "registeredUser": {
+#    "id": "e4b64491-c6ef-4969-a3c0-48230b60edf1",
+#    "username": "SwanhtetAungphyo",
+#    "email": "swan100222@gmail.com",
+#    "phoneNumber": "+48608422691",
+#    "address": "Swan Krakow",
+#    "emailVerified": false,
+#    "mfaEnable": false,
+#    "domainEmail": "swan100222@tenant_namespace_1.edu", // I add it to reduce database overhead in login
+#    "registrationDate": "2025-07-19T00:00:00Z",
+#    "createdAt": "2025-07-19T21:47:16.576883Z",
+#    "updatedAt": "2025-07-19T21:47:16.576883Z"
+#  },
+#  "message": "user created successfully"
+#}
 
+#### LOGIN REQUEST
 POST  {{lms_url}}/lms/v1/auth/login
 accept: application/json
-X-Organisation: Swan
+X-Organisation: tenant_namespace_1
 Content-Type: application/json
 
 {
-  "namespace_domain_email": "swan100222@swan.edu",
+  "namespace_domain_email": "swan100222@tenant_namespace_1.edu",
   "password": "SwanHtet12@"
 
 }
-### Write http test in here
+
+### RESPONSE FROM LOGIN
+//
+//Set-Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZTRiNjQ0OTEtYzZlZi00OTY5LWEzYzAtNDgyMzBiNjBlZGYxIiwiZW1haWwiOiJzd2FuMTAwMjIyQHRlbmFudF9uYW1lc3BhY2VfMS5lZHUiLCJyb2xlIjoidGVuYW50X25hbWVzcGFjZV8xIiwidG9rZW5fdHlwZSI6ImFjY2VzcyIsImV4cCI6MTc1Mjk2MjYxNCwibmJmIjoxNzUyOTYxNzE0LCJpYXQiOjE3NTI5NjE3MTQsImp0aSI6ImRhZTQ5ZDNmYTQ1OTRlZjZmNWNkYTIwZmE1MWY5OTU3In0.BLgDgO3kAFfwA-I3R1g7buLqx61L2HOeiF-ITt0hoVg; Path=/; Expires=Sun, 20 Jul 2025 00:18:34 CEST; Secure; SameSite=Strict; HttpOnly
+//Set-Cookie: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZTRiNjQ0OTEtYzZlZi00OTY5LWEzYzAtNDgyMzBiNjBlZGYxIiwiZW1haWwiOiJzd2FuMTAwMjIyQHRlbmFudF9uYW1lc3BhY2VfMS5lZHUiLCJyb2xlIjoidGVuYW50X25hbWVzcGFjZV8xIiwidG9rZW5fdHlwZSI6InJlZnJlc2giLCJleHAiOjE3NTM1NjY1MTQsIm5iZiI6MTc1Mjk2MTcxNCwiaWF0IjoxNzUyOTYxNzE0LCJqdGkiOiJhNzUzM2M4Y2ZiYzk5MWQ5M2MwNjk3M2E5OTg4Mzc4YSJ9.r6_Z-y_rV_8ycny_MPQGzNpD-o0Zc6bU9Ui9qFWFMD8; Path=/; Expires=Sat, 26 Jul 2025 19:48:34 CEST; Secure; SameSite=Strict; HttpOnly
+//Set-Cookie: user_info={"user_id":"e4b64491-c6ef-4969-a3c0-48230b60edf1","email":"swan100222@tenant_namespace_1.edu","organization":"tenant_namespace_1"}; Path=/; Expires=Sun, 20 Jul 2025 00:18:34 CEST; Secure; SameSite=Strict
+//Set-Cookie: csrf_token=MksssAAAIIIIIQQQQYYYY66666eeeemm; Path=/; Expires=Sat, 26 Jul 2025 19:48:34 CEST; Secure; SameSite=Strict
+//Vary: Origin
+//Date: Sat, 19 Jul 2025 21:48:34 GMT
+//Content-Length: 75
+//
+//{
+//"message": "Login successful",
+//"mfaEnable": true,
+//}
+
+### SetUp MFA
+POST {{lms_url}}/lms/v1/auth/setup-mfa
+accept: application/json
+X-Organisation: tenant_namespace_1
+Content-Type: application/json
+
+{
+
+  "domain_email": "swan100222@tenant_namespace_1.edu"
+}
+
+#### RESPONSE FROM SETUP MFA
+#Set-Cookie: mfa-code-id=e6034736-f526-4570-805a-fdcf4897bf45; Path=/; Expires=Sun, 20 Jul 2025 00:03:05 CEST; Secure; SameSite=Strict; HttpOnly
+#Vary: Origin
+#Date: Sat, 19 Jul 2025 21:49:50 GMT
+#Transfer-Encoding: chunked
+#
+#{
+#"mfaUrl": "otpauth://totp/LMS:swan100222@tenant_namespace_1.edu?algorithm=SHA1&digits=6&issuer=LMS&period=30&secret=72SI7WNSFK4X4MLN3WEFRAZCBQD42EPC",
+#"photoString": "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",
+#"manualEntry": "72SI7WNSFK4X4MLN3WEFRAZCBQD42EPC"
+#}

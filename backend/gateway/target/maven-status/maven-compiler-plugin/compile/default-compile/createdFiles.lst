@@ -1,2 +1,4 @@
+com/content_management_system/gateway/LoggingGlobalFilter.class
+com/content_management_system/gateway/CorsConfig.class
 com/content_management_system/gateway/ServiceConnectionLogger.class
 com/content_management_system/gateway/GatewayApplication.class

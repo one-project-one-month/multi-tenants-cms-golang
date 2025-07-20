@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package lms.files;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option go_package = "github.com/multi-tenants-cms-golang/lms-sys/protogen/files";
+
+service FileService {
+  rpc UploadFile(stream UploadFileRequest) returns (UploadFileResponse) {
+    option (google.api.http) = {
+      post: "/v1/files"
+      body: "*"
+    };
+  }
+
+  rpc GetFileStatus(GetFileStatusRequest) returns (FileStatusResponse) {
+    option (google.api.http) = {
+      get: "/v1/files/{id}/status"
+    };
+  }
+}
+
+message UploadFileRequest {
+  oneof data {
+    FileMetadata metadata = 1;
+    bytes chunk = 2;
+  }
+}
+
+message FileMetadata {
+  string name = 1;
+  string type = 2;
+  map<string, string> labels = 3;
+}
+
+message UploadFileResponse {
+  string id = 1;
+}
+
+message GetFileStatusRequest {
+  string id = 1;
+}
+
+message FileStatusResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    QUEUED = 1;
+    PROCESSING = 2;
+    COMPLETED = 3;
+    FAILED = 4;
+  }
+
+  string id = 1;
+  Status status = 2;
+  string ipfs_cid = 3;
+  string error_message = 4;
+  google.protobuf.Timestamp queued_at = 5;
+  google.protobuf.Timestamp started_at = 6;
+  google.protobuf.Timestamp completed_at = 7;
+}
