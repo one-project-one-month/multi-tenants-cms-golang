@@ -44,3 +44,20 @@ func RequireTokenType(tokenType string) fiber.Handler {
 		return c.Next()
 	}
 }
+
+func RequireAccessToken() fiber.Handler {
+	return RequireTokenType("access")
+}
+
+func RequireOwnership() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		userID := c.Locals("userID")
+		if userID == nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "User ID not found in token",
+			})
+		}
+
+		return c.Next()
+	}
+}

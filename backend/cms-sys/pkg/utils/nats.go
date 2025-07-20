@@ -74,21 +74,27 @@ func InitNats() error {
 	return initErr
 }
 
-// initJetStream safely initializes streams handling conflicts
 func initJetStream(js nats.JetStreamContext) error {
-
 	streamConfig := &nats.StreamConfig{
-		Name:      "EMAILS",
-		Subjects:  []string{"email.verification", "email.notification"},
-		Retention: nats.WorkQueuePolicy,
-		Storage:   nats.FileStorage,
-		MaxAge:    24 * time.Hour,
+		Name:         "EMAILS",
+		Subjects:     []string{"email.verification", "email.notification", "page.approval"},
+		Retention:    nats.WorkQueuePolicy,
+		Storage:      nats.FileStorage,
+		MaxAge:       24 * time.Hour,
+		MaxMsgs:      1000000,
+		MaxBytes:     1024 * 1024 * 1024, // 1GB
+		MaxConsumers: 10,                 // Add this line
+		Duplicates:   2 * time.Minute,
 	}
 
-	// Check if stream exists
-	_, err := js.StreamInfo("EMAILS")
+	existingInfo, err := js.StreamInfo("EMAILS")
 	if err == nil {
-		// Stream exists, try to update it
+		if existingInfo.Config.MaxConsumers != streamConfig.MaxConsumers {
+			log.Printf("Warning: Existing stream has MaxConsumers=%d, but config wants %d. Cannot change this field.",
+				existingInfo.Config.MaxConsumers, streamConfig.MaxConsumers)
+			return nil
+		}
+
 		_, err = js.UpdateStream(streamConfig)
 		if err != nil {
 			return fmt.Errorf("failed to update existing stream: %w", err)
@@ -97,7 +103,6 @@ func initJetStream(js nats.JetStreamContext) error {
 		return nil
 	}
 
-	// Stream doesn't exist, create it
 	_, err = js.AddStream(streamConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create new stream: %w", err)
