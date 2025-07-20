@@ -10,4 +10,11 @@ type Config struct {
 	RetryDelay        time.Duration
 	RateLimitAttempts int
 	RateLimitWindow   time.Duration
+	Email             struct {
+		NoReplyAddress string
+		Templates      struct {
+			Verification string
+			Footer       string
+		}
+	}
 }

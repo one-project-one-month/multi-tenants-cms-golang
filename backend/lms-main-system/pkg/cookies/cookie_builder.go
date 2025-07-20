@@ -28,6 +28,16 @@ func NewCookieBuilder(name, value string) *CookieBuilder {
 		sameSite: "Strict",
 	}
 }
+func CreateSecureCookie(name, value string, expires time.Time, path string, httpOnly bool) string {
+	cookie := fmt.Sprintf("%s=%s; Path=%s; Expires=%s; Secure; SameSite=Strict",
+		name, value, path, expires.Format(time.RFC1123))
+
+	if httpOnly {
+		cookie += "; HttpOnly"
+	}
+
+	return cookie
+}
 
 func (cb *CookieBuilder) Domain(domain string) *CookieBuilder {
 	cb.domain = domain

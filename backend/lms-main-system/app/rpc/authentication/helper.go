@@ -15,7 +15,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -107,60 +106,6 @@ func (s *Service) generateToken(length int) (string, error) {
 	}
 
 	return hex.EncodeToString(bytes), nil
-}
-
-func (s *Service) sendVerificationEmail(email, token string) error {
-	if email == "" || token == "" {
-		return fmt.Errorf("email and token are required")
-	}
-
-	baseURL := s.cfg.BaseURL
-	if baseURL == "" {
-		baseURL = "http://localhost:8098"
-	}
-
-	verifyURL := fmt.Sprintf("%s/verify-email?email=%s&token=%s",
-		baseURL, url.QueryEscape(email), url.QueryEscape(token))
-
-	emailBody := fmt.Sprintf(`
-		<html>
-		<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-			<div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
-				<h2 style="color: #343a40; text-align: center;">Email Verification</h2>
-				<p style="color: #6c757d; font-size: 16px;">
-					Thank you for registering with our Learning Management System!
-				</p>
-				<p style="color: #6c757d; font-size: 16px;">
-					Please click the button below to verify your email address:
-				</p>
-				<div style="text-align: center; margin: 30px 0;">
-					<a href="%s" style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-						Verify Email
-					</a>
-				</div>
-				<p style="color: #6c757d; font-size: 14px;">
-					<strong>Important:</strong> This link will expire in 15 minutes.
-				</p>
-				<p style="color: #6c757d; font-size: 14px;">
-					If you did not request this verification, please ignore this email.
-				</p>
-				<hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
-				<p style="color: #6c757d; font-size: 12px; text-align: center;">
-					This is an automated message, please do not reply.
-				</p>
-			</div>
-		</body>
-		</html>
-	`, verifyURL)
-
-	emailPayload := map[string]interface{}{
-		"to":      email,
-		"subject": "Email Verification - LMS System",
-		"body":    emailBody,
-		"type":    "verification",
-	}
-
-	return nats.Publish("lms.email.verify", emailPayload)
 }
 
 func (s *Service) validateRegisterRequest(req *authenticationpb.RegisterRequest) error {

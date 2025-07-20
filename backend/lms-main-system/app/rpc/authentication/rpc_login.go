@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	gc "github.com/multi-tenants-cms-golang/lms-sys/internal/convert/global"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/cookies"
 	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils"
 	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	"google.golang.org/grpc"
@@ -58,14 +59,14 @@ func (s *Service) Login(
 		return nil, status.Error(codes.Internal, "failed to generate refresh token")
 	}
 
-	accessTokenCookie := createSecureCookie("access_token", accessToken, time.Now().Add(time.Minute*30), "/", true)
-	refreshTokenCookie := createSecureCookie("refresh_token", refreshToken, time.Now().Add(time.Hour*164), "/", true)
+	accessTokenCookie := cookies.CreateSecureCookie("access_token", accessToken, time.Now().Add(time.Minute*30), "/", true)
+	refreshTokenCookie := cookies.CreateSecureCookie("refresh_token", refreshToken, time.Now().Add(time.Hour*164), "/", true)
 
 	userInfo := fmt.Sprintf(`{"user_id":"%s","email":"%s","organization":"%s"}`,
 		userPasswordInDB.LmsUserID, req.GetNamespaceDomainEmail(), organization)
-	userInfoCookie := createSecureCookie("user_info", userInfo, time.Now().Add(time.Minute*30), "/", false)
+	userInfoCookie := cookies.CreateSecureCookie("user_info", userInfo, time.Now().Add(time.Minute*30), "/", false)
 	csrfToken := s.generateCSRFToken()
-	csrfCookie := createSecureCookie("csrf_token", csrfToken, time.Now().Add(time.Hour*164), "/", false)
+	csrfCookie := cookies.CreateSecureCookie("csrf_token", csrfToken, time.Now().Add(time.Hour*164), "/", false)
 
 	header := metadata.Pairs(
 		"access-token-cookie", accessTokenCookie,
@@ -81,19 +82,7 @@ func (s *Service) Login(
 	}
 
 	return &authenticationpb.LoginResponse{
-		Message: "Login successful",
-
-		MfaEnable: userPasswordInDB.MfaEnable.Valid,
+		Message:   "Login successful",
+		MfaEnable: userPasswordInDB.MfaEnable.Bool,
 	}, nil
-}
-
-func createSecureCookie(name, value string, expires time.Time, path string, httpOnly bool) string {
-	cookie := fmt.Sprintf("%s=%s; Path=%s; Expires=%s; Secure; SameSite=Strict",
-		name, value, path, expires.Format(time.RFC1123))
-
-	if httpOnly {
-		cookie += "; HttpOnly"
-	}
-
-	return cookie
 }

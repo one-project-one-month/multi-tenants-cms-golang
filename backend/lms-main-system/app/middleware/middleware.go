@@ -1,10 +1,9 @@
-package interceptor
+package middleware
 
 import (
 	"context"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/multi-tenants-cms-golang/lms-sys/app/gateway/middleware"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -17,7 +16,7 @@ import (
 type AuthConfig struct {
 	Enabled      bool
 	SkipMethods  map[string]bool
-	RoleMappings map[string][]middleware.Role
+	RoleMappings map[string][]Role
 }
 
 // ServiceAuthConfig holds service-specific auth configurations
@@ -104,13 +103,13 @@ func (im *InterceptorManager) UnaryInterceptor() grpc.UnaryServerInterceptor {
 		}
 
 		// Add user context and proceed
-		newCtx := context.WithValue(ctx, middleware.UserContextKey, userCtx)
+		newCtx := context.WithValue(ctx, UserContextKey, userCtx)
 		return handler(newCtx, req)
 	}
 }
 
 // verifyToken validates JWT token and returns user context
-func (im *InterceptorManager) verifyToken(tokenString string) (*middleware.UserContext, error) {
+func (im *InterceptorManager) verifyToken(tokenString string) (*UserContext, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -144,10 +143,10 @@ func (im *InterceptorManager) verifyToken(tokenString string) (*middleware.UserC
 		return nil, fmt.Errorf("missing or invalid roles claim")
 	}
 
-	var roles []middleware.Role
+	var roles []Role
 	for _, r := range rolesClaim {
 		if roleStr, ok := r.(string); ok {
-			roles = append(roles, middleware.Role(roleStr))
+			roles = append(roles, Role(roleStr))
 		}
 	}
 
@@ -155,7 +154,7 @@ func (im *InterceptorManager) verifyToken(tokenString string) (*middleware.UserC
 		return nil, fmt.Errorf("no valid roles found in token")
 	}
 
-	return &middleware.UserContext{
+	return &UserContext{
 		UserID: userID,
 		Roles:  roles,
 	}, nil
@@ -181,7 +180,7 @@ func (im *InterceptorManager) validateClaims(claims jwt.MapClaims) error {
 }
 
 // hasRequiredRole checks if user has any of the required roles
-func (im *InterceptorManager) hasRequiredRole(userRoles []middleware.Role, requiredRoles []middleware.Role) bool {
+func (im *InterceptorManager) hasRequiredRole(userRoles []Role, requiredRoles []Role) bool {
 	if len(requiredRoles) == 0 {
 		return true
 	}

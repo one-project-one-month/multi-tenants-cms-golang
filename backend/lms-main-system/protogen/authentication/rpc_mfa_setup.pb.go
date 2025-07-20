@@ -67,6 +67,7 @@ func (x *MFASetUpRequest) GetDomainEmail() string {
 
 type MFASetUpResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	MfaUrl        string                 `protobuf:"bytes,3,opt,name=mfa_url,json=mfaUrl,proto3" json:"mfa_url,omitempty"`
 	PhotoString   string                 `protobuf:"bytes,1,opt,name=photoString,proto3" json:"photoString,omitempty"`
 	ManualEntry   string                 `protobuf:"bytes,2,opt,name=manualEntry,proto3" json:"manualEntry,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -103,6 +104,13 @@ func (*MFASetUpResponse) Descriptor() ([]byte, []int) {
 	return file_authentication_rpc_mfa_setup_proto_rawDescGZIP(), []int{1}
 }
 
+func (x *MFASetUpResponse) GetMfaUrl() string {
+	if x != nil {
+		return x.MfaUrl
+	}
+	return ""
+}
+
 func (x *MFASetUpResponse) GetPhotoString() string {
 	if x != nil {
 		return x.PhotoString
@@ -123,8 +131,9 @@ const file_authentication_rpc_mfa_setup_proto_rawDesc = "" +
 	"\n" +
 	"\"authentication/rpc_mfa_setup.proto\x12\x12lms.authentication\"4\n" +
 	"\x0fMFASetUpRequest\x12!\n" +
-	"\fdomain_email\x18\x01 \x01(\tR\vdomainEmail\"V\n" +
-	"\x10MFASetUpResponse\x12 \n" +
+	"\fdomain_email\x18\x01 \x01(\tR\vdomainEmail\"o\n" +
+	"\x10MFASetUpResponse\x12\x17\n" +
+	"\amfa_url\x18\x03 \x01(\tR\x06mfaUrl\x12 \n" +
 	"\vphotoString\x18\x01 \x01(\tR\vphotoString\x12 \n" +
 	"\vmanualEntry\x18\x02 \x01(\tR\vmanualEntryBDZBgithub.com/multi-tenant-cms-golang/lms-sys/protogen/authenticationb\x06proto3"
 
