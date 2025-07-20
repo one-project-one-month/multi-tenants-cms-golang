@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package lms.lesson;
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/lesson";
+import "google/protobuf/timestamp.proto";
+
+message Lesson {
+  string id = 1;
+  string title = 2;
+  string content = 3;
+  string material_type = 4;
+  Module module = 5;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+message Module{
+  string id=1;
+  string name=2;
+}
+

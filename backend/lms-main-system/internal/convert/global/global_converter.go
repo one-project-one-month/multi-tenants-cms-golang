@@ -50,3 +50,10 @@ func ConvertStringToPgText(uuidStr string) *pgtype.Text {
 		Valid:  true,
 	}
 }
+
+func ConvertStringToGoogleUUID(uuidStr string) uuid.UUID {
+	if uuidStr == "" {
+		return uuid.Nil
+	}
+	return uuid.MustParse(uuidStr)
+}
