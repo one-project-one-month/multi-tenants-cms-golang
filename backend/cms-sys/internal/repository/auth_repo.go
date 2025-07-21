@@ -176,7 +176,7 @@ func (r *Repo) CreateDefaultRoles() error {
 
 func (r *Repo) GetActiveMFAToken(userID uuid.UUID) (*types.MFAToken, error) {
 	var mfaToken types.MFAToken
-	err := r.db.Where("user_id = ? AND expires_at IS NULL", userID).First(&mfaToken).Error
+	err := r.db.Where("user_id = ?", userID).First(&mfaToken).Error
 	return &mfaToken, err
 }
 
