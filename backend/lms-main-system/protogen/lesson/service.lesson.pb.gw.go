@@ -101,22 +101,21 @@ func local_request_LessonService_GetLessonById_0(ctx context.Context, marshaler 
 	return msg, metadata, err
 }
 
+var filter_LessonService_GetAllLessonsByModuleId_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+
 func request_LessonService_GetAllLessonsByModuleId_0(ctx context.Context, marshaler runtime.Marshaler, client LessonServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq GetLessonsByModuleIdRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if req.Body != nil {
 		_, _ = io.Copy(io.Discard, req.Body)
 	}
-	val, ok := pathParams["module_id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "module_id")
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	protoReq.ModuleId, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "module_id", err)
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LessonService_GetAllLessonsByModuleId_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.GetAllLessonsByModuleId(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -126,15 +125,12 @@ func local_request_LessonService_GetAllLessonsByModuleId_0(ctx context.Context, 
 	var (
 		protoReq GetLessonsByModuleIdRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["module_id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "module_id")
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	protoReq.ModuleId, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "module_id", err)
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LessonService_GetAllLessonsByModuleId_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.GetAllLessonsByModuleId(ctx, &protoReq)
 	return msg, metadata, err
@@ -272,7 +268,7 @@ func RegisterLessonServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.lesson.LessonService/GetAllLessonsByModuleId", runtime.WithHTTPPathPattern("/lms/v1/modules/{module_id}/lessons"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.lesson.LessonService/GetAllLessonsByModuleId", runtime.WithHTTPPathPattern("/lms/v1/modules/lessons"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -404,7 +400,7 @@ func RegisterLessonServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.lesson.LessonService/GetAllLessonsByModuleId", runtime.WithHTTPPathPattern("/lms/v1/modules/{module_id}/lessons"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.lesson.LessonService/GetAllLessonsByModuleId", runtime.WithHTTPPathPattern("/lms/v1/modules/lessons"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -457,7 +453,7 @@ func RegisterLessonServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 var (
 	pattern_LessonService_CreateLesson_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"lms", "v1", "lessons"}, ""))
 	pattern_LessonService_GetLessonById_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"lms", "v1", "lessons", "id"}, ""))
-	pattern_LessonService_GetAllLessonsByModuleId_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"lms", "v1", "modules", "module_id", "lessons"}, ""))
+	pattern_LessonService_GetAllLessonsByModuleId_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"lms", "v1", "modules", "lessons"}, ""))
 	pattern_LessonService_UpdateLesson_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"lms", "v1", "lessons", "id"}, ""))
 	pattern_LessonService_DeleteLessons_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"lms", "v1", "lessons"}, ""))
 )

@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func (ls *LessonService) GetLessonsByModuleId(ctx context.Context, req *lpb.GetLessonsByModuleIdRequest) (*lpb.GetLessonsByModuleIdResponse, error) {
+func (ls *LessonService) GetAllLessonsByModuleId(ctx context.Context, req *lpb.GetLessonsByModuleIdRequest) (*lpb.GetLessonsByModuleIdResponse, error) {
 	ls.logger.WithFields(logrus.Fields{
 		"method": "GetLessonsByModuleId",
 		"params": req,

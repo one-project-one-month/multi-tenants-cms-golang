@@ -28,6 +28,26 @@ func ConvertLessonToProto(lesson *db.GetLessonsByModuleIdRow) *lpb.Lesson {
 	}
 }
 
+func ConvertLessonToProtoFromLesson(l db.Lesson, moduleName string) *lpb.Lesson {
+	materialType := ""
+	if l.MaterialType.Valid {
+		materialType = string(l.MaterialType.MaterialType)
+	}
+
+	return &lpb.Lesson{
+		Id:           l.LessonID.String(),
+		Title:        l.Title,
+		Content:      l.Content.String,
+		MaterialType: materialType,
+		Module: &lpb.Module{
+			Id:   l.ModuleID.String(),
+			Name: moduleName,
+		},
+		CreatedAt: timestamppb.New(l.CreatedAt.Time),
+		UpdatedAt: timestamppb.New(l.UpdatedAt.Time),
+	}
+}
+
 func ConvertLessonsToProto(lessons []db.GetLessonsByModuleIdRow) []*lpb.Lesson {
 	protoLessons := make([]*lpb.Lesson, len(lessons))
 	for _, lesson := range lessons {

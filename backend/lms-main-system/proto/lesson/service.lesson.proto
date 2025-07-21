@@ -65,7 +65,7 @@ service LessonService {
 
   rpc GetAllLessonsByModuleId(GetLessonsByModuleIdRequest) returns (GetLessonsByModuleIdResponse) {
     option (google.api.http) = {
-      get: "/lms/v1/modules/{module_id}/lessons"
+      get: "/lms/v1/modules/lessons"
     };
   }
 

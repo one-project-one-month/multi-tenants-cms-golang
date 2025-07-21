@@ -4,8 +4,7 @@ package lms.lesson;
 option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/lesson";
 
 message DeleteLessonsRequest {
-  repeated string ids = 1;         // List of lesson UUIDs to delete
-  bool force_delete = 2;
+  repeated string ids = 1;
 }
 
 message DeleteLessonsResponse {
