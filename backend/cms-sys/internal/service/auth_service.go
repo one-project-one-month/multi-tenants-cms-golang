@@ -37,6 +37,8 @@ type AuthService interface {
 	VerifyCredentials(email string, password string) (*types.CMSUser, error)
 	EmailServiceCommunication(userId uuid.UUID, info *utils.LocationInfo) error
 	VerifyEmail(email string, code string) error
+	ResendVerificationEmail(email string) error
+	GetUserByEmail(email string) (*types.CMSUser, error)
 }
 
 type Service struct {
@@ -607,15 +609,18 @@ func (s *Service) EmailServiceCommunication(userId uuid.UUID, info *utils.Locati
 }
 
 func (s *Service) generateEmailVerificationCode() (string, error) {
-	maxNumber := big.NewInt(9999999)
-	n, err := rand.Int(rand.Reader, maxNumber)
-	if err != nil {
-		return "", err
+	digits := make([]byte, 6)
+	for i := 0; i < 6; i++ {
+		maxNumber := big.NewInt(10)
+		n, err := rand.Int(rand.Reader, maxNumber)
+		if err != nil {
+			return "", err
+		}
+		digits[i] = byte('0' + n.Int64())
 	}
-	code := n.Int64() + 100000
-	numberCode := fmt.Sprintf("%06d", code)
-	return numberCode, nil
+	return string(digits), nil
 }
+
 func (s *Service) IsMFAEnabled(userID uuid.UUID) (bool, error) {
 	user, err := s.repo.GetUserByID(userID)
 	if err != nil {
@@ -689,4 +694,68 @@ func (s *Service) sendVerificationEmail(userID uuid.UUID, info *utils.LocationIn
 		return nil
 	}
 	return s.EmailServiceCommunication(userID, info)
+}
+func (s *Service) ResendVerificationEmail(email string) error {
+	user, err := s.repo.GetUserByEmail(email)
+	if err != nil {
+		s.log.WithError(err).Error("Failed to get user by email for resend verification")
+		return errors.New("user not found")
+	}
+
+	if user.Verified {
+		return errors.New("user already verified")
+	}
+
+	ctx := context.Background()
+	rateLimitKey := fmt.Sprintf("resend_limit:%s", user.CMSUserID.String())
+	attemptsKey := fmt.Sprintf("resend_attempts:%s", user.CMSUserID.String())
+
+	attemptsStr, err := s.redisClient.Get(ctx, attemptsKey).Result()
+	attempts := 0
+	if err == nil {
+		if parsedAttempts, parseErr := fmt.Sscanf(attemptsStr, "%d", &attempts); parseErr != nil || parsedAttempts != 1 {
+			attempts = 0
+		}
+	}
+
+	if attempts >= 5 {
+		return errors.New("rate limit exceeded. Maximum 5 verification emails per hour")
+	}
+
+	exists, err := s.redisClient.Exists(ctx, rateLimitKey).Result()
+	if err != nil {
+		s.log.WithError(err).Error("Failed to check rate limit")
+	} else if exists > 0 {
+		return errors.New("rate limit exceeded. Please wait 2 minutes before requesting another verification email")
+	}
+
+	locationInfo := &utils.LocationInfo{
+		Timezone: "UTC",
+	}
+
+	if err := s.sendVerificationEmail(user.CMSUserID, locationInfo); err != nil {
+		s.log.WithError(err).Error("Failed to resend verification email")
+		return fmt.Errorf("failed to send verification email: %w", err)
+	}
+
+	s.redisClient.Set(ctx, rateLimitKey, "1", 2*time.Minute)
+	s.redisClient.Incr(ctx, attemptsKey) // Increment attempts
+	s.redisClient.Expire(ctx, attemptsKey, time.Hour)
+
+	s.log.WithFields(logrus.Fields{
+		"userID":   user.CMSUserID,
+		"email":    email,
+		"attempts": attempts + 1,
+	}).Info("Verification email resent successfully")
+
+	return nil
+}
+
+func (s *Service) GetUserByEmail(email string) (*types.CMSUser, error) {
+	user, err := s.repo.GetUserByEmail(email)
+	if err != nil {
+		s.log.WithError(err).Error("Failed to get user by email")
+		return nil, errors.New("user not found")
+	}
+	return user, nil
 }
