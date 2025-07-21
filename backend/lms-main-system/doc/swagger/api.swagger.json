@@ -22,6 +22,9 @@
       "name": "FileService"
     },
     {
+      "name": "LessonService"
+    },
+    {
       "name": "ModuleService"
     }
   ],
@@ -367,6 +370,136 @@
         ]
       }
     },
+    "/lms/v1/lessons": {
+      "delete": {
+        "operationId": "LessonService_DeleteLessons",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/lessonDeleteLessonsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "LessonService"
+        ]
+      },
+      "post": {
+        "operationId": "LessonService_CreateLesson",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/lessonCreateLessonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/lessonCreateLessonRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LessonService"
+        ]
+      }
+    },
+    "/lms/v1/lessons/{id}": {
+      "get": {
+        "operationId": "LessonService_GetLessonById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/lessonGetLessonByIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LessonService"
+        ]
+      },
+      "put": {
+        "operationId": "LessonService_UpdateLesson",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/lessonUpdateLessonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LessonServiceUpdateLessonBody"
+            }
+          }
+        ],
+        "tags": [
+          "LessonService"
+        ]
+      }
+    },
     "/lms/v1/module": {
       "get": {
         "summary": "Get all module",
@@ -533,6 +666,36 @@
         ]
       }
     },
+    "/lms/v1/modules/lessons": {
+      "get": {
+        "operationId": "LessonService_GetAllLessonsByModuleId",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/lessonGetLessonsByModuleIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "moduleId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LessonService"
+        ]
+      }
+    },
     "/v1/files": {
       "post": {
         "operationId": "FileService_UploadFile",
@@ -602,6 +765,23 @@
       "type": "object",
       "properties": {
         "organisation": {
+          "type": "string"
+        }
+      }
+    },
+    "LessonServiceUpdateLessonBody": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "materialType": {
+          "type": "string"
+        },
+        "moduleId": {
           "type": "string"
         }
       }
@@ -888,57 +1068,107 @@
         }
       }
     },
-    "modulesCreateModuleRequest": {
+    "lessonCreateLessonRequest": {
       "type": "object",
       "properties": {
-        "moduleName": {
+        "title": {
           "type": "string"
         },
-        "courseId": {
+        "content": {
           "type": "string"
         },
-        "description": {
+        "materialType": {
+          "type": "string"
+        },
+        "moduleId": {
           "type": "string"
         }
       }
     },
-    "modulesCreateModuleResponse": {
+    "lessonCreateLessonResponse": {
       "type": "object",
       "properties": {
-        "module": {
-          "$ref": "#/definitions/modulesModule"
+        "lesson": {
+          "$ref": "#/definitions/lessonLesson"
         }
       }
     },
-    "modulesDeleteModulesResponse": {
+    "lessonDeleteLessonsResponse": {
       "type": "object",
       "properties": {
-        "message": {
-          "type": "string"
+        "success": {
+          "type": "boolean"
         }
       }
     },
-    "modulesGetModuleResponse": {
+    "lessonGetLessonByIdResponse": {
       "type": "object",
       "properties": {
-        "module": {
-          "$ref": "#/definitions/modulesModule"
+        "lesson": {
+          "$ref": "#/definitions/lessonLesson"
         }
       }
     },
-    "modulesListModulesResponse": {
+    "lessonGetLessonsByModuleIdResponse": {
       "type": "object",
       "properties": {
-        "modules": {
+        "lessons": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/modulesModule"
+            "$ref": "#/definitions/lessonLesson"
           }
         }
       }
     },
-    "modulesModule": {
+    "lessonLesson": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "materialType": {
+          "type": "string"
+        },
+        "module": {
+          "$ref": "#/definitions/lmslessonModule"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "lessonUpdateLessonResponse": {
+      "type": "object",
+      "properties": {
+        "lesson": {
+          "$ref": "#/definitions/lessonLesson"
+        }
+      }
+    },
+    "lmslessonModule": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "lmsmodulesModule": {
       "type": "object",
       "properties": {
         "moduleId": {
@@ -963,11 +1193,61 @@
         }
       }
     },
+    "modulesCreateModuleRequest": {
+      "type": "object",
+      "properties": {
+        "moduleName": {
+          "type": "string"
+        },
+        "courseId": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "modulesCreateModuleResponse": {
+      "type": "object",
+      "properties": {
+        "module": {
+          "$ref": "#/definitions/lmsmodulesModule"
+        }
+      }
+    },
+    "modulesDeleteModulesResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "modulesGetModuleResponse": {
+      "type": "object",
+      "properties": {
+        "module": {
+          "$ref": "#/definitions/lmsmodulesModule"
+        }
+      }
+    },
+    "modulesListModulesResponse": {
+      "type": "object",
+      "properties": {
+        "modules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/lmsmodulesModule"
+          }
+        }
+      }
+    },
     "modulesUpdateModuleResponse": {
       "type": "object",
       "properties": {
         "module": {
-          "$ref": "#/definitions/modulesModule"
+          "$ref": "#/definitions/lmsmodulesModule"
         }
       }
     },

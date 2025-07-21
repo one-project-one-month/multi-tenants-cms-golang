@@ -11,6 +11,8 @@ import (
 	_ "github.com/multi-tenants-cms-golang/lms-sys/doc/statik"
 	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	fb "github.com/multi-tenants-cms-golang/lms-sys/protogen/files"
+	lspb "github.com/multi-tenants-cms-golang/lms-sys/protogen/lesson"
+	mpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/modules"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
@@ -85,6 +87,17 @@ func (g *Gateway) Start() error {
 
 	if err != nil {
 		return fmt.Errorf("failed to register authentication handler: %w", err)
+	}
+
+	// lesson
+	err = lspb.RegisterLessonServiceHandlerFromEndpoint(ctx, gwMux, g.grpcAddr, opts)
+	if err != nil {
+		return fmt.Errorf("failed to register lesson handler: %w", err)
+	}
+	// module
+	err = mpb.RegisterModuleServiceHandlerFromEndpoint(ctx, gwMux, g.grpcAddr, opts)
+	if err != nil {
+		return fmt.Errorf("failed to register module handler: %w", err)
 	}
 
 	err = fb.RegisterFileServiceHandlerFromEndpoint(
