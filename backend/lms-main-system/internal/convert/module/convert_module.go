@@ -21,7 +21,7 @@ func ConvertModuleToProto(module db.Module) *mpb.Module {
 }
 
 func ConvertModulesToProto(modules []db.Module) []*mpb.Module {
-	protoModules := make([]*mpb.Module, len(modules))
+	protoModules := make([]*mpb.Module, 0, len(modules))
 
 	for _, module := range modules {
 		protoModules = append(protoModules, ConvertModuleToProto(module))
@@ -56,18 +56,10 @@ func ConvertStringToUUID(uuidStr string) (pgtype.UUID, error) {
 }
 
 func ConvertStringToText(str string) pgtype.Text {
-	pgText := pgtype.Text{
+	return pgtype.Text{
 		String: str,
-		Valid:  false,
+		Valid: str != "",
 	}
-
-	if str != "" {
-		pgText = pgtype.Text{
-			Valid: true,
-		}
-	}
-
-	return pgText
 }
 
 func ConvertPgBoolToBool(pgbool pgtype.Bool) bool {

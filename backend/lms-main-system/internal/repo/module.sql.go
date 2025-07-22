@@ -84,14 +84,21 @@ func (q *Queries) DeleteModules(ctx context.Context, dollar_1 []uuid.UUID) error
 	return err
 }
 
-const getModuleByID = `-- name: GetModuleByID :one
-SELECT module_id, module_name, course_id, description, created_at, updated_at
-FROM Module
-WHERE module_id = $1
+const getModuleByIDWithTenant = `-- name: GetModuleByIDWithTenant :one
+SELECT m.module_id, m.module_name, m.course_id, m.description, m.created_at, m.updated_at
+FROM Module m
+JOIN Course c ON c.course_id = m.course_id
+JOIN Tenants t ON c.owned_by = t.tenant_id
+WHERE m.module_id = $1 AND t.namespace = $2
 `
 
-func (q *Queries) GetModuleByID(ctx context.Context, moduleID uuid.UUID) (Module, error) {
-	row := q.db.QueryRow(ctx, getModuleByID, moduleID)
+type GetModuleByIDWithTenantParams struct {
+	ModuleID  uuid.UUID `json:"module_id"`
+	Namespace string    `json:"namespace"`
+}
+
+func (q *Queries) GetModuleByIDWithTenant(ctx context.Context, arg GetModuleByIDWithTenantParams) (Module, error) {
+	row := q.db.QueryRow(ctx, getModuleByIDWithTenant, arg.ModuleID, arg.Namespace)
 	var i Module
 	err := row.Scan(
 		&i.ModuleID,
@@ -104,14 +111,60 @@ func (q *Queries) GetModuleByID(ctx context.Context, moduleID uuid.UUID) (Module
 	return i, err
 }
 
-const listModules = `-- name: ListModules :many
-SELECT module_id, module_name, course_id, description, created_at, updated_at
-FROM Module
-ORDER BY created_at DESC
+const isCourseOwnedByTenant = `-- name: IsCourseOwnedByTenant :one
+SELECT EXISTS (
+    SELECT 1 
+    FROM Course c
+    JOIN Tenants t ON c.owned_by = t.tenant_id
+    WHERE c.course_id = $1 AND t.namespace = $2
+) AS is_owned
 `
 
-func (q *Queries) ListModules(ctx context.Context) ([]Module, error) {
-	rows, err := q.db.Query(ctx, listModules)
+type IsCourseOwnedByTenantParams struct {
+	CourseID  uuid.UUID `json:"course_id"`
+	Namespace string    `json:"namespace"`
+}
+
+func (q *Queries) IsCourseOwnedByTenant(ctx context.Context, arg IsCourseOwnedByTenantParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isCourseOwnedByTenant, arg.CourseID, arg.Namespace)
+	var is_owned bool
+	err := row.Scan(&is_owned)
+	return is_owned, err
+}
+
+const isModuleOwnedByTenant = `-- name: IsModuleOwnedByTenant :one
+SELECT EXISTS (
+    SELECT 1
+    FROM Module m
+    JOIN Course c ON c.course_id = m.course_id
+    JOIN Tenants t ON c.owned_by = t.tenant_id
+    WHERE m.module_id = $1 AND t.namespace = $2
+) as is_owned
+`
+
+type IsModuleOwnedByTenantParams struct {
+	ModuleID  uuid.UUID `json:"module_id"`
+	Namespace string    `json:"namespace"`
+}
+
+func (q *Queries) IsModuleOwnedByTenant(ctx context.Context, arg IsModuleOwnedByTenantParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isModuleOwnedByTenant, arg.ModuleID, arg.Namespace)
+	var is_owned bool
+	err := row.Scan(&is_owned)
+	return is_owned, err
+}
+
+const listModulesWithTenant = `-- name: ListModulesWithTenant :many
+SELECT m.module_id, m.module_name, m.course_id, m.description, m.created_at, m.updated_at
+FROM Module m
+JOIN Course c ON c.course_id = m.course_id
+JOIN Tenants t ON c.owned_by = t.tenant_id
+WHERE t.namespace = $1
+ORDER BY m.created_at DESC
+`
+
+func (q *Queries) ListModulesWithTenant(ctx context.Context, namespace string) ([]Module, error) {
+	rows, err := q.db.Query(ctx, listModulesWithTenant, namespace)
 	if err != nil {
 		return nil, err
 	}

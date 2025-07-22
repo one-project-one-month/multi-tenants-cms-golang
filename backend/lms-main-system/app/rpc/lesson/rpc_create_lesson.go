@@ -2,21 +2,41 @@ package lesson
 
 import (
 	"context"
+	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/multi-tenants-cms-golang/lms-sys/internal/convert/global"
 	"github.com/multi-tenants-cms-golang/lms-sys/internal/convert/lesson"
+	"github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	db "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils"
 	lspb "github.com/multi-tenants-cms-golang/lms-sys/protogen/lesson"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"time"
 )
 
 func (ls *LessonService) CreateLesson(ctx context.Context, req *lspb.CreateLessonRequest) (*lspb.CreateLessonResponse, error) {
 	ls.logger.WithFields(logrus.Fields{
 		"method": "CreateLesson",
-	}).Info("Creating Lesson")
+	}).Info("Creating Lesson") 
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, utils.ErrMissingOrganization().ToGRPCStatus()
+	}
+
+	// INFO: To be deleted
+	fmt.Printf("rpc_get_module: org FromIncomingContext: %+v\n", md)
+
+	orgValues := md.Get("x-organisation")
+	if len(orgValues) <= 0 {
+		return nil, utils.ErrMissingOrganization().ToGRPCStatus()
+	}
+
+	orgName := orgValues[0]
 
 	if req.Title == "" {
 		return nil, status.Error(codes.InvalidArgument, "title is required")
@@ -33,7 +53,12 @@ func (ls *LessonService) CreateLesson(ctx context.Context, req *lspb.CreateLesso
 
 	pgModuleUUID := uuid.MustParse(pgModuleId.String())
 
-	module, err := ls.store.GetModuleByID(dbCtx, pgModuleUUID)
+	args := repo.GetModuleByIDWithTenantParams{
+		ModuleID: pgModuleUUID,
+		Namespace: orgName,
+	}
+
+	module, err := ls.store.GetModuleByIDWithTenant(dbCtx, args)
 
 	if err != nil {
 		ls.logger.WithError(err).Error("Failed to fetch module")

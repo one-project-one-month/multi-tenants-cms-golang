@@ -4,6 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/gateway/ipfs"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/gateway/modifier"
@@ -20,11 +26,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 type Gateway struct {
@@ -84,7 +85,6 @@ func (g *Gateway) Start() error {
 		g.grpcAddr,
 		opts,
 	)
-
 	if err != nil {
 		return fmt.Errorf("failed to register authentication handler: %w", err)
 	}
