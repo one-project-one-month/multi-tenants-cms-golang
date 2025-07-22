@@ -2,21 +2,40 @@ package module
 
 import (
 	"context"
-	"github.com/google/uuid"
+	"fmt"
 	"time"
 
 	"github.com/multi-tenants-cms-golang/lms-sys/internal/convert/module"
+	"github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
 	db "github.com/multi-tenants-cms-golang/lms-sys/internal/repo"
+	"github.com/multi-tenants-cms-golang/lms-sys/pkg/utils"
 	mpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/modules"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
 func (ms *ModulesService) CreateModule(ctx context.Context, req *mpb.CreateModuleRequest) (*mpb.CreateModuleResponse, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, utils.ErrMissingOrganization().ToGRPCStatus()
+	}
+
+	// INFO: To be deleted
+	fmt.Printf("rpc_create_module: org FromIncomingContext: %+v\n", md)
+
+	orgValues := md.Get("x-organisation")
+	if len(orgValues) <= 0 {
+		return nil, utils.ErrMissingOrganization().ToGRPCStatus()
+	}
+
+	orgName := orgValues[0]
+
 	ms.logger.WithFields(logrus.Fields{
 		"method":      "CreateModule",
 		"module_name": req.ModuleName,
+		"org":         orgName,
 	}).Info("Creating module")
 
 	if req.ModuleName == "" {
@@ -27,18 +46,29 @@ func (ms *ModulesService) CreateModule(ctx context.Context, req *mpb.CreateModul
 		return nil, status.Error(codes.InvalidArgument, "course id is required")
 	}
 
-	pgCourseId, err := module.ConvertStringToUUID(req.CourseId)
+	courseID := module.ConvertStringToGoogleUUID(req.CourseId)
+
+	tenantCheckArgs := repo.IsCourseOwnedByTenantParams{
+		CourseID:  courseID,
+		Namespace: orgName,
+	}
+
+	isOwnedBy, err := ms.store.IsCourseOwnedByTenant(ctx, tenantCheckArgs)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid id format: %v", err)
+		ms.logger.WithError(err).Error("Failed to check if course is owned by tenant")
+		return nil, status.Error(codes.Internal, "failed to check course tenant relation")
+	}
+
+	if !isOwnedBy {
+		return nil, status.Error(codes.PermissionDenied, "not allowed to create a module of a course owned by another tenant")
 	}
 
 	dbCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	pgCourseUUID := uuid.MustParse(pgCourseId.String())
 	args := db.CreateModuleParams{
 		ModuleName:  req.ModuleName,
-		CourseID:    pgCourseUUID,
+		CourseID:    courseID,
 		Description: module.ConvertStringToText(req.Description),
 	}
 

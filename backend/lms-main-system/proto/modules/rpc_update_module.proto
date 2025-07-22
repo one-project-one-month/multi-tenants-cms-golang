@@ -8,9 +8,9 @@ import "modules/module.proto";
 
 message UpdateModuleRequest {
   string module_id = 1;
-  string module_name = 2;
-  string course_id = 3;
-  string description = 4;
+  optional string module_name = 2;
+  optional string course_id = 3;
+  optional string description = 4;
 }
 
 message UpdateModuleResponse {

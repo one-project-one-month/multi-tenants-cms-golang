@@ -23,12 +23,14 @@ type Querier interface {
 	DeleteModule(ctx context.Context, moduleID uuid.UUID) error
 	DeleteModules(ctx context.Context, dollar_1 []uuid.UUID) error
 	GetDefaultRoleIDs(ctx context.Context) ([]uuid.UUID, error)
-	GetModuleByID(ctx context.Context, moduleID uuid.UUID) (Module, error)
+	GetModuleByIDWithTenant(ctx context.Context, arg GetModuleByIDWithTenantParams) (Module, error)
 	GetRoleIdByName(ctx context.Context, lmsRoleName LmsRoleType) (uuid.UUID, error)
 	GetTenantIdByNameSpace(ctx context.Context, namespace string) (uuid.UUID, error)
 	GetUserByEmail(ctx context.Context, lmsUserEmail string) (LmsUser, error)
 	GetUserPasswordMfaByNameSpaceDomain(ctx context.Context, namespaceDomain pgtype.Text) (GetUserPasswordMfaByNameSpaceDomainRow, error)
-	ListModules(ctx context.Context) ([]Module, error)
+	IsCourseOwnedByTenant(ctx context.Context, arg IsCourseOwnedByTenantParams) (bool, error)
+	IsModuleOwnedByTenant(ctx context.Context, arg IsModuleOwnedByTenantParams) (bool, error)
+	ListModulesWithTenant(ctx context.Context, namespace string) ([]Module, error)
 	ModuleHasAssociations(ctx context.Context, moduleID uuid.UUID) (pgtype.Bool, error)
 	SetUpMFA(ctx context.Context, arg SetUpMFAParams) (uuid.UUID, error)
 	UpdateEmailVerification(ctx context.Context, lmsUserEmail string) error
