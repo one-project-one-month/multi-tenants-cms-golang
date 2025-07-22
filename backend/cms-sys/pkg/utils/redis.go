@@ -13,7 +13,7 @@ import (
 var RedisClient *redis.Client
 
 func InitRedis() error {
-	host := GetEnv("REDIS_HOST", "localhost")
+	host := GetEnv("REDIS_HOST", "redis")
 	port := GetEnv("REDIS_PORT", "6379")
 	password := GetEnv("REDIS_PASSWORD", "")
 	dbStr := GetEnv("REDIS_DB", "0")

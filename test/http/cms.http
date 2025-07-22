@@ -1,0 +1,173 @@
+### Variables
+@baseUrl = http://localhost:8081/cms/auth
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiODVkOWY3ZmUtY2VhOC00YmUwLWFjMmYtODEyYWU2NDdhNDhkIiwiZW1haWwiOiJzd2FuaHRldDEwMjAwMkBnbWFpbC5jb20iLCJyb2xlIjoiQ01TX0NVU1RPTUVSIiwidG9rZW5fdHlwZSI6ImFjY2VzcyIsImV4cCI6MTc1MzA1NTA5OSwibmJmIjoxNzUzMDU0MTk5LCJpYXQiOjE3NTMwNTQxOTksImp0aSI6IjZmZjI1ZjYyNzQyZjhhZTg2YjcyMjNkMGQzNzM2NTFhIn0.xqhHE2iWhnvUiaZNHzVBPHEjsw5E1ZXYTwdNrR5C5wM
+@refreshToken = your_refresh_token_here
+@userId = your_user_id_here
+@tokenId = 1
+
+### 1. Register
+POST {{baseUrl}}/register
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "swanhtet102002@gmail.com",
+  "password": "Password1231",
+  "role": "CMS_CUSTOMER"
+}
+
+### 2. Verify Email
+POST {{baseUrl}}/verify-email
+Content-Type: application/json
+
+{
+  "email": "swanhtet102002@gmail.com",
+  "code": "826127"
+}
+
+### Resend Email
+POST {{baseUrl}}/resend
+Content-Type: application/json
+
+{
+  "email": "swanhtet102002@gmail.com"
+}
+### 3. Login
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "swanhtet102002@gmail.com",
+  "password": "Password1231"
+}
+
+### 4. Get Me (Profile)
+GET {{baseUrl}}/me
+Authorization: Bearer {{accessToken}}
+
+### 5. Update User Profile
+PUT {{baseUrl}}/profile/{{userId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "John Updated"
+}
+
+### 6. Setup MFA
+POST {{baseUrl}}/mfa/setup/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+### 7. Verify MFA Setup
+POST {{baseUrl}}/mfa/verify/{{userId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+    "token_id": {{tokenId}},
+    "code": "123456"
+}
+
+### 8. Login with MFA
+POST {{baseUrl}}/mfa/login/{{userId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "mfa_code": "123456"
+}
+
+### 9. Refresh Token
+POST {{baseUrl}}/refresh
+Authorization: Bearer {{refreshToken}}
+Content-Type: application/json
+
+{
+    "refresh_token": "{{refreshToken}}"
+}
+
+### 10. Logout
+POST {{baseUrl}}/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+    "refresh_token": "{{refreshToken}}"
+}
+
+#### 11. Owner Create (if you have this endpoint)
+#POST http://localhost:8080/cms/owner
+#Content-Type: application/json
+#
+#{
+#  "name": "Owner Name",
+#  "email": "owner@example.com",
+#  "namespace": "owner-namespace",
+#  "password": "password123"
+#}
+#
+#### 12. Owner Update (if you have this endpoint)
+#PUT http://localhost:8080/cms/owner/{{userId}}
+#Authorization: Bearer {{accessToken}}
+#Content-Type: application/json
+#
+#{
+#  "name": "Updated Owner Name",
+#  "namespace": "updated-namespace"
+#}
+#
+#### 13. Create Page Request (if you have this endpoint)
+#POST http://localhost:8080/cms/pages
+#Authorization: Bearer {{accessToken}}
+#Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+#
+#------WebKitFormBoundary7MA4YWxkTrZu0gW
+#Content-Disposition: form-data; name="ownerId"
+#
+#123e4567-e89b-12d3-a456-426614174000
+#------WebKitFormBoundary7MA4YWxkTrZu0gW
+#Content-Disposition: form-data; name="requestType"
+#
+#create
+#------WebKitFormBoundary7MA4YWxkTrZu0gW
+#Content-Disposition: form-data; name="title"
+#
+#Sample Page Title
+#------WebKitFormBoundary7MA4YWxkTrZu0gW
+#Content-Disposition: form-data; name="description"
+#
+#Sample page description
+#------WebKitFormBoundary7MA4YWxkTrZu0gW
+#Content-Disposition: form-data; name="pageUrl"
+#
+#https://example.com/sample-page
+#------WebKitFormBoundary7MA4YWxkTrZu0gW
+#Content-Disposition: form-data; name="logo"; filename="logo.png"
+#Content-Type: image/png
+#
+#< ./logo.png
+#------WebKitFormBoundary7MA4YWxkTrZu0gW--
+#
+#### 14. Owner Delete (if you have this endpoint)
+#DELETE http://localhost:8080/cms/owner
+#Authorization: Bearer {{accessToken}}
+#Content-Type: application/json
+#
+#{
+#  "ids": ["123e4567-e89b-12d3-a456-426614174000", "987fcdeb-51a2-43d1-b123-456789abcdef"],
+#  "forceDelete": false
+#}
+#
+#### 15. Change Page Status (if you have this endpoint)
+#PUT http://localhost:8080/cms/pages/status
+#Authorization: Bearer {{accessToken}}
+#Content-Type: application/json
+#
+#{
+#  "requestId": "123e4567-e89b-12d3-a456-426614174000",
+#  "status": "approved"
+#}
+#
+#### 16. Paginated Request Example (if you have this endpoint)
+#GET http://localhost:8080/cms/pages?page=1&limit=10
+#Authorization: Bearer {{accessToken}}

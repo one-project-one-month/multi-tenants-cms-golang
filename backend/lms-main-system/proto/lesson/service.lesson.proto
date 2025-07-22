@@ -1,0 +1,84 @@
+syntax = "proto3";
+package lms.lesson;
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/lesson";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "google/api/annotations.proto";
+import "lesson/rpc_lesson_get.proto";
+import "lesson/rpc_lesson_create.proto";
+import "lesson/rpc_lesson_update.proto";
+import "lesson/rpc_lesson_delete.proto";
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "LMS Lesson Endpoints";
+    version: "1.0";
+    description: "APIs for lesson in the Learning Management System";
+    contact: {
+      name: "LMS Team";
+      url: "https://lms.example.com/support";
+      email: "support@lms.example.com";
+    };
+    license: {
+      name: "Apache 2.0";
+      url: "https://www.apache.org/licenses/LICENSE-2.0.html";
+    };
+  };
+  schemes: HTTPS;
+  schemes: HTTP;
+  consumes: "application/json";
+  produces: "application/json";
+  host: "localhost:8086";
+  base_path: "/v1";
+  security_definitions: {
+    security: {
+      key: "Bearer";
+      value: {
+        type: TYPE_API_KEY;
+        in: IN_HEADER;
+        name: "Authorization";
+        description: "Authentication token, prefixed with Bearer";
+      }
+    }
+  };
+  security: {
+    security_requirement: {
+      key: "Bearer";
+      value: {};
+    }
+  }
+};
+
+
+service LessonService {
+
+  rpc CreateLesson(CreateLessonRequest) returns (CreateLessonResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/lessons"
+      body: "*"
+    };
+  }
+
+  rpc GetLessonById(GetLessonByIdRequest) returns (GetLessonByIdResponse) {
+    option (google.api.http) = {
+      get: "/lms/v1/lessons/{id}"
+    };
+  }
+
+  rpc GetAllLessonsByModuleId(GetLessonsByModuleIdRequest) returns (GetLessonsByModuleIdResponse) {
+    option (google.api.http) = {
+      get: "/lms/v1/modules/lessons"
+    };
+  }
+
+  rpc UpdateLesson(UpdateLessonRequest) returns (UpdateLessonResponse) {
+    option (google.api.http) = {
+      put: "/lms/v1/lessons/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteLessons(DeleteLessonsRequest) returns (DeleteLessonsResponse) {
+    option (google.api.http) = {
+      delete: "/lms/v1/lessons"
+    };
+  }
+}

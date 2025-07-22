@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	loggMiddleware "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/routes"
 	"github.com/multi-tenants-cms-golang/cms-sys/internal/types"
@@ -442,12 +441,14 @@ func main() {
 		Output: appLogger.Writer(),
 	}))
 
-	origns := utils.GetEnv("CMS_AllOWED_ORIGIN", "")
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: origns,
-		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
-		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
-	}))
+	/*
+		origns := utils.GetEnv("CMS_AllOWED_ORIGIN", "")
+		app.Use(cors.New(cors.Config{
+			AllowOrigins: origns,
+			AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
+			AllowHeaders: "Origin,Content-Type,Accept,Authorization",
+		}))
+	*/
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{

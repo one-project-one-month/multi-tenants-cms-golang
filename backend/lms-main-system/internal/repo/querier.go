@@ -16,14 +16,18 @@ type Querier interface {
 	AssignRolesToUser(ctx context.Context, arg AssignRolesToUserParams) error
 	CheckNameSpaceFromMetaData(ctx context.Context, namespace string) (int32, error)
 	CheckTenantsMemberExistenceByEmail(ctx context.Context, lmsUserEmail string) (int32, error)
+	CreateLesson(ctx context.Context, arg CreateLessonParams) (Lesson, error)
 	CreateModule(ctx context.Context, arg CreateModuleParams) (Module, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	DeleteAssociatedLessons(ctx context.Context, moduleID uuid.UUID) error
 	DeleteAssociatedQuizzes(ctx context.Context, moduleID uuid.UUID) error
+	DeleteLessons(ctx context.Context, dollar_1 []uuid.UUID) ([]uuid.UUID, error)
 	DeleteModule(ctx context.Context, moduleID uuid.UUID) error
 	DeleteModules(ctx context.Context, dollar_1 []uuid.UUID) error
 	GetDefaultRoleIDs(ctx context.Context) ([]uuid.UUID, error)
 	GetModuleByIDWithTenant(ctx context.Context, arg GetModuleByIDWithTenantParams) (Module, error)
+	GetLessonById(ctx context.Context, lessonID uuid.UUID) (GetLessonByIdRow, error)
+	GetLessonsByModuleId(ctx context.Context, moduleID uuid.UUID) ([]GetLessonsByModuleIdRow, error)
 	GetRoleIdByName(ctx context.Context, lmsRoleName LmsRoleType) (uuid.UUID, error)
 	GetTenantIdByNameSpace(ctx context.Context, namespace string) (uuid.UUID, error)
 	GetUserByEmail(ctx context.Context, lmsUserEmail string) (LmsUser, error)
@@ -34,6 +38,7 @@ type Querier interface {
 	ModuleHasAssociations(ctx context.Context, moduleID uuid.UUID) (pgtype.Bool, error)
 	SetUpMFA(ctx context.Context, arg SetUpMFAParams) (uuid.UUID, error)
 	UpdateEmailVerification(ctx context.Context, lmsUserEmail string) error
+	UpdateLesson(ctx context.Context, arg UpdateLessonParams) (Lesson, error)
 	UpdateModuleByID(ctx context.Context, arg UpdateModuleByIDParams) (Module, error)
 }
 

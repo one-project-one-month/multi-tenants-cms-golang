@@ -23,6 +23,7 @@ type AuthHandle interface {
 	VerifyMFASetup(c *fiber.Ctx) error
 	SetupMFA(c *fiber.Ctx) error
 	VerifyEmail(c *fiber.Ctx) error
+	ResendVerificationEmail(c *fiber.Ctx) error
 }
 
 type Handler struct {
@@ -39,6 +40,39 @@ func NewHandler(service service.AuthService) *Handler {
 	}
 }
 
+func (h *Handler) ResendVerificationEmail(c *fiber.Ctx) error {
+	var req *types.ResendVerificationEmailRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.BadRequestResponse(c, "Invalid request body", err.Error())
+	}
+
+	//if err := h.validator.Struct(&req); err != nil {
+	//	return utils.BadRequestResponse(c, "Validation failed", err.Error())
+	//}
+
+	user, err := h.service.GetUserByEmail(req.Email)
+	if err != nil {
+		return utils.SuccessResponse(c, "If the email exists and is not verified, a verification code has been sent.", nil)
+	}
+
+	if user.Verified {
+		return utils.BadRequestResponse(c, "Email is already verified", nil)
+	}
+
+	err = h.service.ResendVerificationEmail(req.Email)
+	if err != nil {
+		switch {
+		case strings.Contains(err.Error(), "user not found"):
+			return utils.SuccessResponse(c, "If the email exists and is not verified, a verification code has been sent.", nil)
+		case strings.Contains(err.Error(), "rate limit"):
+			return TooManyRequestsResponse(c, "Please wait before requesting another verification email", nil)
+		default:
+			return utils.InternalServerErrorResponse(c, "Failed to resend verification email", err.Error())
+		}
+	}
+
+	return utils.SuccessResponse(c, "Verification email has been resent. Please check your inbox.", nil)
+}
 func (h *Handler) Login(c *fiber.Ctx) error {
 	var req types.LoginRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -204,58 +238,6 @@ func (h *Handler) Refresh(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, "Token refreshed successfully", tokenResponse)
 }
 
-// Note: Update the authentication me method to get userId from JWT token
-// By Swan Htet Aung Phyo
-
-func (h *Handler) GetMe(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(uuid.UUID)
-
-	profileResponse, err := h.service.GetUserProfile(userID)
-	if err != nil {
-		switch err.Error() {
-		case "user not found":
-			return utils.NotFoundResponse(c, "User profile not found")
-		default:
-			return utils.InternalServerErrorResponse(c, "Failed to get user profile", err.Error())
-		}
-	}
-
-	return utils.SuccessResponse(c, "User profile retrieved successfully", profileResponse)
-}
-
-func (h *Handler) UpdateUserProfile(c *fiber.Ctx) error {
-	stringId := c.Params("id")
-	id, err := uuid.Parse(stringId)
-	if err != nil {
-		return utils.BadRequestResponse(c, "Invalid user ID format", err.Error())
-	}
-	userID := c.Locals("userID").(uuid.UUID)
-	if userID != id {
-		return utils.ForbiddenResponse(c, "You can only update your own profile")
-	}
-
-	var req types.UserUpdateRequest
-	if err := c.BodyParser(&req); err != nil {
-		return utils.BadRequestResponse(c, "Invalid request body", err.Error())
-	}
-
-	if err := h.validator.Struct(&req); err != nil {
-		return utils.BadRequestResponse(c, "Validation failed", err.Error())
-	}
-
-	updatedProfileResponse, err := h.service.UpdateUserProfile(id, req)
-	if err != nil {
-		switch err.Error() {
-		case "user not found":
-			return utils.NotFoundResponse(c, "User not found")
-		default:
-			return utils.InternalServerErrorResponse(c, "Failed to update user profile", err.Error())
-		}
-	}
-
-	return utils.SuccessResponse(c, "User profile updated successfully", updatedProfileResponse)
-}
-
 func (h *Handler) SetupMFA(c *fiber.Ctx) error {
 	userID := c.Params("userid")
 
@@ -377,4 +359,77 @@ func (h *Handler) LoginWithMFA(c *fiber.Ctx) error {
 	authResponse.RefreshToken = ""
 
 	return utils.SuccessResponse(c, "Login successful with MFA verification", authResponse)
+}
+func TooManyRequestsResponse(c *fiber.Ctx, message string, data interface{}) error {
+	return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+		"success": false,
+		"message": message,
+		"data":    data,
+	})
+}
+func (h *Handler) GetMe(c *fiber.Ctx) error {
+	userIDInterface := c.Locals("userID")
+	if userIDInterface == nil {
+		return utils.UnauthorizedResponse(c, "User ID not found in token")
+	}
+
+	userID, ok := userIDInterface.(uuid.UUID)
+	if !ok {
+		return utils.UnauthorizedResponse(c, "Invalid user ID format in token")
+	}
+
+	profileResponse, err := h.service.GetUserProfile(userID)
+	if err != nil {
+		switch err.Error() {
+		case "user not found":
+			return utils.NotFoundResponse(c, "User profile not found")
+		default:
+			return utils.InternalServerErrorResponse(c, "Failed to get user profile", err.Error())
+		}
+	}
+
+	return utils.SuccessResponse(c, "User profile retrieved successfully", profileResponse)
+}
+
+func (h *Handler) UpdateUserProfile(c *fiber.Ctx) error {
+	stringId := c.Params("id")
+	id, err := uuid.Parse(stringId)
+	if err != nil {
+		return utils.BadRequestResponse(c, "Invalid user ID format", err.Error())
+	}
+
+	userIDInterface := c.Locals("userID")
+	if userIDInterface == nil {
+		return utils.UnauthorizedResponse(c, "User ID not found in token")
+	}
+
+	userID, ok := userIDInterface.(uuid.UUID)
+	if !ok {
+		return utils.UnauthorizedResponse(c, "Invalid user ID format in token")
+	}
+
+	if userID != id {
+		return utils.ForbiddenResponse(c, "You can only update your own profile")
+	}
+
+	var req types.UserUpdateRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.BadRequestResponse(c, "Invalid request body", err.Error())
+	}
+
+	if err := h.validator.Struct(&req); err != nil {
+		return utils.BadRequestResponse(c, "Validation failed", err.Error())
+	}
+
+	updatedProfileResponse, err := h.service.UpdateUserProfile(id, req)
+	if err != nil {
+		switch err.Error() {
+		case "user not found":
+			return utils.NotFoundResponse(c, "User not found")
+		default:
+			return utils.InternalServerErrorResponse(c, "Failed to update user profile", err.Error())
+		}
+	}
+
+	return utils.SuccessResponse(c, "User profile updated successfully", updatedProfileResponse)
 }
