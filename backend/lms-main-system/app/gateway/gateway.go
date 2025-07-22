@@ -4,6 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/gateway/ipfs"
 	"github.com/multi-tenants-cms-golang/lms-sys/app/gateway/modifier"
@@ -11,6 +17,7 @@ import (
 	_ "github.com/multi-tenants-cms-golang/lms-sys/doc/statik"
 	authenticationpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	fb "github.com/multi-tenants-cms-golang/lms-sys/protogen/files"
+	mspb "github.com/multi-tenants-cms-golang/lms-sys/protogen/modules"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
@@ -18,11 +25,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 type Gateway struct {
@@ -82,9 +84,18 @@ func (g *Gateway) Start() error {
 		g.grpcAddr,
 		opts,
 	)
-
 	if err != nil {
 		return fmt.Errorf("failed to register authentication handler: %w", err)
+	}
+
+	err = mspb.RegisterModuleServiceHandlerFromEndpoint(
+		ctx,
+		gwMux,
+		g.grpcAddr,
+		opts,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to register module handler: %w", err)
 	}
 
 	err = fb.RegisterFileServiceHandlerFromEndpoint(
