@@ -47,10 +47,10 @@ CREATE INDEX idx_namespace_consumer_active ON namespace_consumer(is_active);
 CREATE INDEX idx_namespace_consumer_joined_date ON namespace_consumer(joined_date);
 
 -- Enrollment indexes
-CREATE INDEX idx_enrollment_student ON enrollment(student_id);
-CREATE INDEX idx_enrollment_course ON enrollment(course_id);
-CREATE INDEX idx_enrollment_status ON enrollment(status);
-CREATE INDEX idx_enrollment_date ON enrollment(enrollment_date);
+CREATE INDEX idx_enrollment_student ON Enrollment(student_id);
+CREATE INDEX idx_enrollment_course ON Enrollment(course_id);
+CREATE INDEX idx_enrollment_status ON Enrollment(status);
+CREATE INDEX idx_enrollment_date ON Enrollment(enrollment_date);
 
 -- Rating indexes
 CREATE INDEX idx_rating_user ON Rating(user_id);

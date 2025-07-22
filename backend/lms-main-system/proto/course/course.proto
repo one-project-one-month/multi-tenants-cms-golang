@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package lms.course;
+
+option go_package = "coursepb";
+
+
+
+message Course {
+  int64 id = 1;
+  string title = 2;
+  string description = 3;
+  int64 category_id = 4;
+  int64 instructor_id = 5;
+  int32 overall_rating = 6;
+  string status = 7;
+  int32 duration_day_count = 8;
+  string created_at = 9;
+  string updated_at = 10;
+  string deleted_at = 11; 
+}

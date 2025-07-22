@@ -105,7 +105,7 @@ CREATE TABLE namespace_consumer (
 );
 
 -- 8. Enrollment table
-CREATE TABLE enrollment (
+CREATE TABLE Enrollment (
                             enrollment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                             student_id UUID NOT NULL,
                             course_id UUID NOT NULL,

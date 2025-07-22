@@ -6,7 +6,7 @@ CREATE TYPE enrollment_status AS ENUM (
   'WITHDRAWN'
 );
 
-CREATE TABLE "Enrollments" (
+CREATE TABLE "Enrollment" (
                                "enrollment_id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                "student_id" UUID NOT NULL,
                                "course_id" UUID NOT NULL,
