@@ -1,0 +1,50 @@
+### Get Lessons By Module Id
+GET http://localhost:8086/lms/v1/modules/lessons
+Accept: application/json
+Content-Type: application/json
+
+{
+  "module_id": "e678a95f-7829-41e2-9b62-e23e0bb8a338"
+}
+
+### Create Lesson
+POST http://localhost:8086/lms/v1/lessons
+Accept: application/json
+Content-Type: application/json
+
+{
+  "title": "Introduction to Databases",
+  "content": "https://example.com/database-intro.pdf",
+  "materialType": "PDF",
+  "moduleId": "e678a95f-7829-41e2-9b62-e23e0bb8a338"
+}
+
+### Get lesson by id
+GET http://localhost:8086/lms/v1/lessons/e678a95f-7829-41e2-9b62-e23e0bb8a338
+Accept: application/json
+Content-Type: application/json
+
+### Update lesson by id
+PUT http://localhost:8086/lms/v1/lessons/e678a95f-7829-41e2-9b62-e23e0bb8a338
+Content-Type: application/json
+Accept: application/json
+
+{
+  "id": "e678a95f-7829-41e2-9b62-e23e0bb8a338",
+  "title": "Updated Lesson Title",
+  "content": "Updated lesson content",
+  "material_type": "video",
+  "module_id": "e678a95f-7829-41e2-9b62-e23e0bb8a338"
+}
+
+### Bulk Delete Lessons
+DELETE http://localhost:8086/lms/v1/lessons
+Accept: application/json
+Content-Type: application/json
+
+{
+  "ids": [
+    "e678a95f-7829-41e2-9b62-e23e0bb8a338",
+    "e678a95f-7829-41e2-9b62-e23e0bb8a338"
+  ]
+}

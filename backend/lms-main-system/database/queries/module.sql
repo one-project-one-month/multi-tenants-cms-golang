@@ -5,15 +5,28 @@ INSERT INTO Module (module_name,
                     updated_at)
 VALUES ($1, $2, $3, CURRENT_TIMESTAMP) RETURNING *;
 
--- name: GetModuleByID :one
-SELECT *
-FROM Module
-WHERE module_id = $1;
+-- name: IsCourseOwnedByTenant :one
+SELECT EXISTS (
+    SELECT 1 
+    FROM Course c
+    JOIN Tenants t ON c.owned_by = t.tenant_id
+    WHERE c.course_id = $1 AND t.namespace = $2
+) AS is_owned;
 
--- name: ListModules :many
-SELECT *
-FROM Module
-ORDER BY created_at DESC;
+-- name: GetModuleByIDWithTenant :one
+SELECT m.*
+FROM Module m
+JOIN Course c ON c.course_id = m.course_id
+JOIN Tenants t ON c.owned_by = t.tenant_id
+WHERE m.module_id = $1 AND t.namespace = $2;
+
+-- name: ListModulesWithTenant :many
+SELECT m.*
+FROM Module m
+JOIN Course c ON c.course_id = m.course_id
+JOIN Tenants t ON c.owned_by = t.tenant_id
+WHERE t.namespace = $1
+ORDER BY m.created_at DESC;
 
 -- name: UpdateModuleByID :one
 UPDATE Module
@@ -22,6 +35,15 @@ SET module_name = COALESCE($2, module_name),
     description = COALESCE($4, description),
     updated_at  = CURRENT_TIMESTAMP
 WHERE module_id = $1 RETURNING *;
+
+-- name: IsModuleOwnedByTenant :one
+SELECT EXISTS (
+    SELECT 1
+    FROM Module m
+    JOIN Course c ON c.course_id = m.course_id
+    JOIN Tenants t ON c.owned_by = t.tenant_id
+    WHERE m.module_id = $1 AND t.namespace = $2
+) as is_owned;
 
 -- name: DeleteModule :exec
 DELETE
