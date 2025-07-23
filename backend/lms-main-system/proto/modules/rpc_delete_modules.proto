@@ -5,11 +5,6 @@ package lms.modules;
 option go_package = "github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/module";
 
 
-message DeleteModulesRequest {
-  repeated string ids = 1;
-  bool            force_delete = 2;
-}
+message DeleteModulesRequest { bool force_delete = 1; }
 
-message DeleteModulesResponse {
-  string message = 1;
-}
+message DeleteModulesResponse { string message = 1; }

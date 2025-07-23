@@ -27,13 +27,15 @@ var File_modules_service_module_proto protoreflect.FileDescriptor
 
 const file_modules_service_module_proto_rawDesc = "" +
 	"\n" +
-	"\x1cmodules/service.module.proto\x12\vlms.modules\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fmodules/rpc_create_module.proto\x1a modules/rpc_delete_modules.proto\x1a\x1cmodules/rpc_get_module.proto\x1a\x1emodules/rpc_list_modules.proto\x1a\x1fmodules/rpc_update_module.proto2\x90\x06\n" +
-	"\rModuleService\x12\x95\x01\n" +
-	"\fCreateModule\x12 .lms.modules.CreateModuleRequest\x1a!.lms.modules.CreateModuleResponse\"@\x92A$\x12\rCreate module\x1a\x13Create a new module\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/lms/v1/module\x12\xa7\x01\n" +
-	"\fUpdateModule\x12 .lms.modules.UpdateModuleRequest\x1a!.lms.modules.UpdateModuleResponse\"R\x92A*\x12\rUpdate module\x1a\x19Update an existing module\x82\xd3\xe4\x93\x02\x1f:\x01*\x1a\x1a/lms/v1/module/{module_id}\x12\xa2\x01\n" +
-	"\rDeleteModules\x12!.lms.modules.DeleteModulesRequest\x1a\".lms.modules.DeleteModulesResponse\"J\x92A1\x12\rDelete module\x1a Delete single or multiple module\x82\xd3\xe4\x93\x02\x10*\x0e/lms/v1/module\x12\x87\x01\n" +
-	"\vListModules\x12\x16.google.protobuf.Empty\x1a .lms.modules.ListModulesResponse\">\x92A%\x12\x0eGet all module\x1a\x13List/Get all module\x82\xd3\xe4\x93\x02\x10\x12\x0e/lms/v1/module\x12\x8d\x01\n" +
-	"\tGetModule\x12\x1d.lms.modules.GetModuleRequest\x1a\x1e.lms.modules.GetModuleResponse\"A\x92A\x1c\x12\fGet a module\x1a\fGet a module\x82\xd3\xe4\x93\x02\x1c\x12\x1a/lms/v1/module/{module_id}B@Z>github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/moduleb\x06proto3"
+	"\x1cmodules/service.module.proto\x12\vlms.modules\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fmodules/rpc_create_module.proto\x1a modules/rpc_delete_modules.proto\x1a\x1cmodules/rpc_get_module.proto\x1a\x1emodules/rpc_list_modules.proto\x1a\x1fmodules/rpc_update_module.proto2\xce\x06\n" +
+	"\rModuleService\x12\x96\x01\n" +
+	"\fCreateModule\x12 .lms.modules.CreateModuleRequest\x1a!.lms.modules.CreateModuleResponse\"A\x92A$\x12\rCreate module\x1a\x13Create a new module\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/lms/v1/modules\x12\xa8\x01\n" +
+	"\fUpdateModule\x12 .lms.modules.UpdateModuleRequest\x1a!.lms.modules.UpdateModuleResponse\"S\x92A*\x12\rUpdate module\x1a\x19Update an existing module\x82\xd3\xe4\x93\x02 :\x01*\x1a\x1b/lms/v1/modules/{module_id}\x12\xdc\x01\n" +
+	"\rDeleteModules\x12!.lms.modules.DeleteModulesRequest\x1a\".lms.modules.DeleteModulesResponse\"\x83\x01\x92Ai\x12\x10Delete module(s)\x1a!Delete single or multiple modulesr2\n" +
+	"0\n" +
+	"\fX-Module-Ids\x12\x1cList of module ids to delete\x18\x01(\x01\x82\xd3\xe4\x93\x02\x11*\x0f/lms/v1/modules\x12\x88\x01\n" +
+	"\vListModules\x12\x16.google.protobuf.Empty\x1a .lms.modules.ListModulesResponse\"?\x92A%\x12\x0eGet all module\x1a\x13List/Get all module\x82\xd3\xe4\x93\x02\x11\x12\x0f/lms/v1/modules\x12\x8e\x01\n" +
+	"\tGetModule\x12\x1d.lms.modules.GetModuleRequest\x1a\x1e.lms.modules.GetModuleResponse\"B\x92A\x1c\x12\fGet a module\x1a\fGet a module\x82\xd3\xe4\x93\x02\x1d\x12\x1b/lms/v1/modules/{module_id}B@Z>github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/moduleb\x06proto3"
 
 var file_modules_service_module_proto_goTypes = []any{
 	(*CreateModuleRequest)(nil),   // 0: lms.modules.CreateModuleRequest
