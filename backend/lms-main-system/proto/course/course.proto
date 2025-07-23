@@ -2,9 +2,7 @@ syntax = "proto3";
 
 package lms.course;
 
-option go_package = "coursepb";
-
-
+option go_package = "github.com/YeZawHlaing/multi-tenants-cms-golang/backend/lms-main-system/protogen/course;coursepb";
 
 message Course {
   int64 id = 1;

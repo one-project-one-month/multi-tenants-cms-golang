@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package lms.course;
+
+option go_package = "github.com/YeZawHlaing/multi-tenants-cms-golang/backend/lms-main-system/protogen/course;coursepb";
+
+
+message GetCourseByIdRequest {
+  int64 id = 1;
+}
+
+message GetCourseByIdResponse {
+  Course course = 1;
+}
+
+message GetAllCoursesRequest {
+  int32 page = 1;       
+  int32 page_size = 2;   
+}
+
+
+message GetAllCoursesResponse {
+  repeated Course courses = 1;
+  int32 total = 2;        
+  int32 page = 3;
+  int32 page_size = 4;
+}

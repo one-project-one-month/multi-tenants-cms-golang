@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package lms.course;
+
+option go_package = "github.com/YeZawHlaing/multi-tenants-cms-golang/backend/lms-main-system/protogen/course;coursepb";
+
+
+message CreateCourseRequest {
+  string title = 1;
+  string description = 2;
+  int64 category_id = 3;
+  int64 instructor_id = 4;
+  string status = 5;
+  int32 duration_day_count = 6;
+}
+
+message CreateCourseResponse {
+  Course course = 1;
+  string message = 2;         
+}

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package lms.course;
+
+option go_package = "github.com/YeZawHlaing/multi-tenants-cms-golang/backend/lms-main-system/protogen/course;coursepb";
+
+message DeleteCourseRequest {
+  int64 id = 1;
+}
+
+
+message DeleteCourseResponse {
+  bool success = 1;
+  string message = 2;
+}
