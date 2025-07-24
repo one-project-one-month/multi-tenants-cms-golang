@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package lms.course;
+
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/course;coursepb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "LMS Course Endpoints";
+    version: "1.0";
+    description: "APIs for courses in the Learning Management System";
+    contact: {
+      name: "LMS Team";
+      url: "https://lms.example.com/support";
+      email: "support@lms.example.com";
+    };
+    license: {
+      name: "Apache 2.0";
+      url: "https://www.apache.org/licenses/LICENSE-2.0.html";
+    };
+  };
+  schemes: HTTPS;
+  schemes: HTTP;
+  consumes: "application/json";
+  produces: "application/json";
+  host: "localhost:8086";
+  base_path: "/v1";
+  security_definitions: {
+    security: {
+      key: "Bearer";
+      value: {
+        type: TYPE_API_KEY;
+        in: IN_HEADER;
+        name: "Authorization";
+        description: "Authentication token, prefixed with Bearer";
+      }
+    }
+  };
+  security: {
+    security_requirement: {
+      key: "Bearer";
+      value: {};
+    }
+  };
+};
+
+
+service CourseService {
+
+  rpc CreateCourse(CreateCourseRequest) returns (CreateCourseResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/courses"
+      body: "*"
+    };
+  }
+
+  rpc GetCourseById(GetCourseByIdRequest) returns (GetCourseByIdResponse) {
+    option (google.api.http) = {
+      get: "/lms/v1/courses/{id}"
+    };
+  }
+
+  rpc GetAllCourses(GetAllCoursesRequest) returns (GetAllCoursesResponse) {
+    option (google.api.http) = {
+      get: "/lms/v1/courses"
+    };
+  }
+
+  rpc UpdateCourse(UpdateCourseRequest) returns (UpdateCourseResponse) {
+    option (google.api.http) = {
+      put: "/lms/v1/courses/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteCourses(DeleteCoursesRequest) returns (DeleteCoursesResponse) {
+    option (google.api.http) = {
+      delete: "/lms/v1/courses"
+      body: "*" // grpc-gateway allows delete with body; if you don't want that, switch to query param ids
+    };
+  }
+}
