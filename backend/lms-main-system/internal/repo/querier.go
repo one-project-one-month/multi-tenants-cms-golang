@@ -16,28 +16,40 @@ type Querier interface {
 	AssignRolesToUser(ctx context.Context, arg AssignRolesToUserParams) error
 	CheckNameSpaceFromMetaData(ctx context.Context, namespace string) (int32, error)
 	CheckTenantsMemberExistenceByEmail(ctx context.Context, lmsUserEmail string) (int32, error)
+	CreateEnrollment(ctx context.Context, arg CreateEnrollmentParams) (uuid.UUID, error)
 	CreateLesson(ctx context.Context, arg CreateLessonParams) (Lesson, error)
 	CreateModule(ctx context.Context, arg CreateModuleParams) (Module, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	DeleteAssociatedLessons(ctx context.Context, moduleID uuid.UUID) error
 	DeleteAssociatedQuizzes(ctx context.Context, moduleID uuid.UUID) error
+	DeleteEnrollmentsByID(ctx context.Context, enrollmentID uuid.UUID) error
 	DeleteLessons(ctx context.Context, dollar_1 []uuid.UUID) ([]uuid.UUID, error)
 	DeleteModule(ctx context.Context, moduleID uuid.UUID) error
 	DeleteModules(ctx context.Context, dollar_1 []uuid.UUID) error
 	GetDefaultRoleIDs(ctx context.Context) ([]uuid.UUID, error)
-	GetModuleByIDWithTenant(ctx context.Context, arg GetModuleByIDWithTenantParams) (Module, error)
+	GetEnrollmentByIDAndTenant(ctx context.Context, arg GetEnrollmentByIDAndTenantParams) (EnrollmentDetails, error)
 	GetLessonById(ctx context.Context, lessonID uuid.UUID) (GetLessonByIdRow, error)
 	GetLessonsByModuleId(ctx context.Context, moduleID uuid.UUID) ([]GetLessonsByModuleIdRow, error)
+	GetModuleByIDWithTenant(ctx context.Context, arg GetModuleByIDWithTenantParams) (Module, error)
 	GetRoleIdByName(ctx context.Context, lmsRoleName LmsRoleType) (uuid.UUID, error)
 	GetTenantIdByNameSpace(ctx context.Context, namespace string) (uuid.UUID, error)
 	GetUserByEmail(ctx context.Context, lmsUserEmail string) (LmsUser, error)
 	GetUserPasswordMfaByNameSpaceDomain(ctx context.Context, namespaceDomain pgtype.Text) (GetUserPasswordMfaByNameSpaceDomainRow, error)
 	IsCourseOwnedByTenant(ctx context.Context, arg IsCourseOwnedByTenantParams) (bool, error)
+	IsEnrolleeStudent(ctx context.Context, arg IsEnrolleeStudentParams) (bool, error)
+	IsEnrollmentExist(ctx context.Context, arg IsEnrollmentExistParams) (bool, error)
+	IsEnrollmentOwnedByTenant(ctx context.Context, arg IsEnrollmentOwnedByTenantParams) (bool, error)
 	IsModuleOwnedByTenant(ctx context.Context, arg IsModuleOwnedByTenantParams) (bool, error)
+	ListEnrollmentsWithCategoryID(ctx context.Context, arg ListEnrollmentsWithCategoryIDParams) ([]EnrollmentDetails, error)
+	ListEnrollmentsWithCourseID(ctx context.Context, arg ListEnrollmentsWithCourseIDParams) ([]EnrollmentDetails, error)
+	ListEnrollmentsWithStudentEmails(ctx context.Context, arg ListEnrollmentsWithStudentEmailsParams) ([]EnrollmentDetails, error)
+	ListEnrollmentsWithTenant(ctx context.Context, namespace string) ([]EnrollmentDetails, error)
 	ListModulesWithTenant(ctx context.Context, namespace string) ([]Module, error)
 	ModuleHasAssociations(ctx context.Context, moduleID uuid.UUID) (pgtype.Bool, error)
 	SetUpMFA(ctx context.Context, arg SetUpMFAParams) (uuid.UUID, error)
 	UpdateEmailVerification(ctx context.Context, lmsUserEmail string) error
+	UpdateEnrollmentProgress(ctx context.Context, arg UpdateEnrollmentProgressParams) (Enrollment, error)
+	UpdateEnrollmentStatus(ctx context.Context, arg UpdateEnrollmentStatusParams) (Enrollment, error)
 	UpdateLesson(ctx context.Context, arg UpdateLessonParams) (Lesson, error)
 	UpdateModuleByID(ctx context.Context, arg UpdateModuleByIDParams) (Module, error)
 }

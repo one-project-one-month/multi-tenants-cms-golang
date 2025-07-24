@@ -19,6 +19,9 @@
       "name": "AuthenticationService"
     },
     {
+      "name": "EnrollmentService"
+    },
+    {
       "name": "FileService"
     },
     {
@@ -367,6 +370,40 @@
         ],
         "tags": [
           "Authentication"
+        ]
+      }
+    },
+    "/lms/v1/enrollments": {
+      "post": {
+        "summary": "Create enrollment",
+        "description": "Create a new enrollment",
+        "operationId": "EnrollmentService_CreateEnrollment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/enrollmentsCreateEnrollmentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/enrollmentsCreateEnrollmentRequest"
+            }
+          }
+        ],
+        "tags": [
+          "EnrollmentService"
         ]
       }
     },
@@ -971,6 +1008,78 @@
         }
       },
       "title": "Is equal to the LMS USER"
+    },
+    "enrollmentsCategory": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "enrollmentsCourse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      }
+    },
+    "enrollmentsCreateEnrollmentRequest": {
+      "type": "object",
+      "properties": {
+        "studentId": {
+          "type": "string"
+        },
+        "courseId": {
+          "type": "string"
+        }
+      }
+    },
+    "enrollmentsCreateEnrollmentResponse": {
+      "type": "object",
+      "properties": {
+        "enrollment": {
+          "$ref": "#/definitions/enrollmentsEnrollmentResponse"
+        }
+      }
+    },
+    "enrollmentsEnrollmentResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "student": {
+          "$ref": "#/definitions/enrollmentsStudent"
+        },
+        "course": {
+          "$ref": "#/definitions/enrollmentsCourse"
+        },
+        "category": {
+          "$ref": "#/definitions/enrollmentsCategory"
+        }
+      }
+    },
+    "enrollmentsStudent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      }
     },
     "filesFileMetadata": {
       "type": "object",

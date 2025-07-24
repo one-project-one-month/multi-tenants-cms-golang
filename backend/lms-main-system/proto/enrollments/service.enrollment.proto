@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package lms.enrollments;
+
+option go_package = "github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/enrollment";
+
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+import "enrollments/rpc_create_enrollment.proto";
+
+service EnrollmentService {
+  rpc CreateEnrollment(CreateEnrollmentRequest) returns (CreateEnrollmentResponse) {
+    option (google.api.http) = {
+      post: "/lms/v1/enrollments";
+      body: "*";
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Create a new enrollment";
+      summary: "Create enrollment";
+    };
+  }
+}

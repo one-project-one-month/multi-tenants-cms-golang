@@ -278,6 +278,26 @@ type Enrollment struct {
 	UpdatedAt      pgtype.Timestamp `json:"updated_at"`
 }
 
+type EnrollmentDetails struct {
+	EnrollmentID   uuid.UUID        `json:"enrollment_id"`
+	EnrollmentDate pgtype.Timestamp `json:"enrollment_date"`
+	Progress       pgtype.Numeric   `json:"progress"`
+	Status         EnrollmentType   `json:"status"`
+	DueDate        pgtype.Timestamp `json:"due_date"`
+	CreatedAt      pgtype.Timestamp `json:"created_at"`
+	StudentID      uuid.UUID        `json:"student_id"`
+	StudentName    string           `json:"student_name"`
+	StudentEmail   string           `json:"student_email"`
+	CourseID       uuid.UUID        `json:"course_id"`
+	CourseTitle    string           `json:"course_title"`
+	CourseCategory uuid.UUID        `json:"course_category"`
+	OwnedBy        uuid.UUID        `json:"owned_by"`
+	CategoryID     uuid.UUID        `json:"category_id"`
+	CategoryName   string           `json:"category_name"`
+	Namespace      string           `json:"namespace"`
+	TenantID       uuid.UUID        `json:"tenant_id"`
+}
+
 type Lesson struct {
 	LessonID     uuid.UUID        `json:"lesson_id"`
 	Title        string           `json:"title"`
