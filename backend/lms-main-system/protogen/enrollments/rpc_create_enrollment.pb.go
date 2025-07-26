@@ -130,7 +130,7 @@ const file_enrollments_rpc_create_enrollment_proto_rawDesc = "" +
 	"\x18CreateEnrollmentResponse\x12C\n" +
 	"\n" +
 	"enrollment\x18\x01 \x01(\v2#.lms.enrollments.EnrollmentResponseR\n" +
-	"enrollmentBDZBgithub.com/multi-tenant-cms-doc-golang/lms-sys/protogen/enrollmentb\x06proto3"
+	"enrollmentB@Z>github.com/multi-tenant-cms-golang/lms-sys/protogen/enrollmentb\x06proto3"
 
 var (
 	file_enrollments_rpc_create_enrollment_proto_rawDescOnce sync.Once

@@ -19,13 +19,16 @@ INSERT INTO Enrollment (
     status,
     due_date,
     updated_at
-) VALUES (
+)
+SELECT
     $1,
     $2,
     $3,
     $4,
     CURRENT_TIMESTAMP
-) RETURNING enrollment_id
+FROM Course c
+WHERE c.course_id = $2 AND c.status = 'Active'
+RETURNING enrollment_id
 `
 
 type CreateEnrollmentParams struct {
@@ -58,7 +61,7 @@ func (q *Queries) DeleteEnrollmentsByID(ctx context.Context, enrollmentID uuid.U
 }
 
 const getEnrollmentByIDAndTenant = `-- name: GetEnrollmentByIDAndTenant :one
-SELECT enrollment_id, enrollment_date, progress, status, due_date, created_at, student_id, student_name, student_email, course_id, course_title, course_category, owned_by, category_id, category_name, namespace, tenant_id FROM enrollment_details
+SELECT enrollment_id, enrollment_date, progress, status, due_date, created_at, student_id, student_name, student_email, course_id, course_title, course_category, owned_by, instructor_id, category_id, category_name, namespace, tenant_id FROM enrollment_details
 WHERE namespace = $1 AND enrollment_id = $2
 `
 
@@ -84,39 +87,13 @@ func (q *Queries) GetEnrollmentByIDAndTenant(ctx context.Context, arg GetEnrollm
 		&i.CourseTitle,
 		&i.CourseCategory,
 		&i.OwnedBy,
+		&i.InstructorID,
 		&i.CategoryID,
 		&i.CategoryName,
 		&i.Namespace,
 		&i.TenantID,
 	)
 	return i, err
-}
-
-const isEnrolleeStudent = `-- name: IsEnrolleeStudent :one
-SELECT EXISTS (
-    SELECT 1 
-    FROM LMS_USER u
-    JOIN lms_user_roles_map rm ON rm.lms_user_id = u.lms_user_id
-    JOIN LMS_USER_Role r ON r.lms_role_id = rm.lms_role_id
-    JOIN Tenants t ON t.tenant_id = u.tenant_id
-    WHERE t.namespace = $1 
-        AND t.is_active = true
-        AND u.lms_user_id = $2 
-        AND r.lms_role_name = 'STUDENT'
-        AND rm.is_active = true
-) as is_student
-`
-
-type IsEnrolleeStudentParams struct {
-	Namespace string    `json:"namespace"`
-	LmsUserID uuid.UUID `json:"lms_user_id"`
-}
-
-func (q *Queries) IsEnrolleeStudent(ctx context.Context, arg IsEnrolleeStudentParams) (bool, error) {
-	row := q.db.QueryRow(ctx, isEnrolleeStudent, arg.Namespace, arg.LmsUserID)
-	var is_student bool
-	err := row.Scan(&is_student)
-	return is_student, err
 }
 
 const isEnrollmentExist = `-- name: IsEnrollmentExist :one
@@ -161,66 +138,53 @@ func (q *Queries) IsEnrollmentOwnedByTenant(ctx context.Context, arg IsEnrollmen
 	return is_owned, err
 }
 
-const listEnrollmentsWithCategoryID = `-- name: ListEnrollmentsWithCategoryID :many
-SELECT enrollment_id, enrollment_date, progress, status, due_date, created_at, student_id, student_name, student_email, course_id, course_title, course_category, owned_by, category_id, category_name, namespace, tenant_id FROM enrollment_details
-WHERE namespace = $1 AND category_id = $2
+const isUserInRole = `-- name: IsUserInRole :one
+SELECT EXISTS (
+    SELECT 1 
+    FROM user_role_details
+    WHERE namespace = $1 
+        AND lms_user_id = $2 
+        AND lms_role_name = $3
+        AND tenant_is_active = true
+        AND role_map_is_active = true
+) as in_role
 `
 
-type ListEnrollmentsWithCategoryIDParams struct {
-	Namespace  string    `json:"namespace"`
-	CategoryID uuid.UUID `json:"category_id"`
+type IsUserInRoleParams struct {
+	Namespace   string      `json:"namespace"`
+	LmsUserID   uuid.UUID   `json:"lms_user_id"`
+	LmsRoleName LmsRoleType `json:"lms_role_name"`
 }
 
-func (q *Queries) ListEnrollmentsWithCategoryID(ctx context.Context, arg ListEnrollmentsWithCategoryIDParams) ([]EnrollmentDetails, error) {
-	rows, err := q.db.Query(ctx, listEnrollmentsWithCategoryID, arg.Namespace, arg.CategoryID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []EnrollmentDetails{}
-	for rows.Next() {
-		var i EnrollmentDetails
-		if err := rows.Scan(
-			&i.EnrollmentID,
-			&i.EnrollmentDate,
-			&i.Progress,
-			&i.Status,
-			&i.DueDate,
-			&i.CreatedAt,
-			&i.StudentID,
-			&i.StudentName,
-			&i.StudentEmail,
-			&i.CourseID,
-			&i.CourseTitle,
-			&i.CourseCategory,
-			&i.OwnedBy,
-			&i.CategoryID,
-			&i.CategoryName,
-			&i.Namespace,
-			&i.TenantID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) IsUserInRole(ctx context.Context, arg IsUserInRoleParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isUserInRole, arg.Namespace, arg.LmsUserID, arg.LmsRoleName)
+	var in_role bool
+	err := row.Scan(&in_role)
+	return in_role, err
 }
 
-const listEnrollmentsWithCourseID = `-- name: ListEnrollmentsWithCourseID :many
-SELECT enrollment_id, enrollment_date, progress, status, due_date, created_at, student_id, student_name, student_email, course_id, course_title, course_category, owned_by, category_id, category_name, namespace, tenant_id FROM enrollment_details
-WHERE namespace = $1 AND course_id = $2
+const listEnrollmentsByAdminFilters = `-- name: ListEnrollmentsByAdminFilters :many
+SELECT enrollment_id, enrollment_date, progress, status, due_date, created_at, student_id, student_name, student_email, course_id, course_title, course_category, owned_by, instructor_id, category_id, category_name, namespace, tenant_id FROM enrollment_details
+WHERE namespace = $1 
+    AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR course_id = $2) 
+    AND ($3::uuid = '00000000-0000-0000-0000-000000000000' OR category_id = $3)
+    AND ($4::text = '' OR student_email = $4)
 `
 
-type ListEnrollmentsWithCourseIDParams struct {
+type ListEnrollmentsByAdminFiltersParams struct {
 	Namespace string    `json:"namespace"`
-	CourseID  uuid.UUID `json:"course_id"`
+	Column2   uuid.UUID `json:"column_2"`
+	Column3   uuid.UUID `json:"column_3"`
+	Column4   string    `json:"column_4"`
 }
 
-func (q *Queries) ListEnrollmentsWithCourseID(ctx context.Context, arg ListEnrollmentsWithCourseIDParams) ([]EnrollmentDetails, error) {
-	rows, err := q.db.Query(ctx, listEnrollmentsWithCourseID, arg.Namespace, arg.CourseID)
+func (q *Queries) ListEnrollmentsByAdminFilters(ctx context.Context, arg ListEnrollmentsByAdminFiltersParams) ([]EnrollmentDetails, error) {
+	rows, err := q.db.Query(ctx, listEnrollmentsByAdminFilters,
+		arg.Namespace,
+		arg.Column2,
+		arg.Column3,
+		arg.Column4,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -242,6 +206,7 @@ func (q *Queries) ListEnrollmentsWithCourseID(ctx context.Context, arg ListEnrol
 			&i.CourseTitle,
 			&i.CourseCategory,
 			&i.OwnedBy,
+			&i.InstructorID,
 			&i.CategoryID,
 			&i.CategoryName,
 			&i.Namespace,
@@ -257,18 +222,31 @@ func (q *Queries) ListEnrollmentsWithCourseID(ctx context.Context, arg ListEnrol
 	return items, nil
 }
 
-const listEnrollmentsWithStudentEmails = `-- name: ListEnrollmentsWithStudentEmails :many
-SELECT enrollment_id, enrollment_date, progress, status, due_date, created_at, student_id, student_name, student_email, course_id, course_title, course_category, owned_by, category_id, category_name, namespace, tenant_id FROM enrollment_details
-WHERE namespace = $1 AND student_email = $2
+const listEnrollmentsByInstructorFilters = `-- name: ListEnrollmentsByInstructorFilters :many
+SELECT enrollment_id, enrollment_date, progress, status, due_date, created_at, student_id, student_name, student_email, course_id, course_title, course_category, owned_by, instructor_id, category_id, category_name, namespace, tenant_id FROM enrollment_details
+WHERE namespace = $1 
+    AND instructor_id = $2 
+    AND ($3::uuid = '00000000-0000-0000-0000-000000000000' OR course_id = $3) 
+    AND ($4::uuid = '00000000-0000-0000-0000-000000000000' OR category_id = $4)
+    AND ($5::text = '' OR student_email = $5)
 `
 
-type ListEnrollmentsWithStudentEmailsParams struct {
-	Namespace    string `json:"namespace"`
-	StudentEmail string `json:"student_email"`
+type ListEnrollmentsByInstructorFiltersParams struct {
+	Namespace    string    `json:"namespace"`
+	InstructorID uuid.UUID `json:"instructor_id"`
+	Column3      uuid.UUID `json:"column_3"`
+	Column4      uuid.UUID `json:"column_4"`
+	Column5      string    `json:"column_5"`
 }
 
-func (q *Queries) ListEnrollmentsWithStudentEmails(ctx context.Context, arg ListEnrollmentsWithStudentEmailsParams) ([]EnrollmentDetails, error) {
-	rows, err := q.db.Query(ctx, listEnrollmentsWithStudentEmails, arg.Namespace, arg.StudentEmail)
+func (q *Queries) ListEnrollmentsByInstructorFilters(ctx context.Context, arg ListEnrollmentsByInstructorFiltersParams) ([]EnrollmentDetails, error) {
+	rows, err := q.db.Query(ctx, listEnrollmentsByInstructorFilters,
+		arg.Namespace,
+		arg.InstructorID,
+		arg.Column3,
+		arg.Column4,
+		arg.Column5,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -290,49 +268,7 @@ func (q *Queries) ListEnrollmentsWithStudentEmails(ctx context.Context, arg List
 			&i.CourseTitle,
 			&i.CourseCategory,
 			&i.OwnedBy,
-			&i.CategoryID,
-			&i.CategoryName,
-			&i.Namespace,
-			&i.TenantID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listEnrollmentsWithTenant = `-- name: ListEnrollmentsWithTenant :many
-SELECT enrollment_id, enrollment_date, progress, status, due_date, created_at, student_id, student_name, student_email, course_id, course_title, course_category, owned_by, category_id, category_name, namespace, tenant_id FROM enrollment_details
-WHERE namespace = $1
-`
-
-func (q *Queries) ListEnrollmentsWithTenant(ctx context.Context, namespace string) ([]EnrollmentDetails, error) {
-	rows, err := q.db.Query(ctx, listEnrollmentsWithTenant, namespace)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []EnrollmentDetails{}
-	for rows.Next() {
-		var i EnrollmentDetails
-		if err := rows.Scan(
-			&i.EnrollmentID,
-			&i.EnrollmentDate,
-			&i.Progress,
-			&i.Status,
-			&i.DueDate,
-			&i.CreatedAt,
-			&i.StudentID,
-			&i.StudentName,
-			&i.StudentEmail,
-			&i.CourseID,
-			&i.CourseTitle,
-			&i.CourseCategory,
-			&i.OwnedBy,
+			&i.InstructorID,
 			&i.CategoryID,
 			&i.CategoryName,
 			&i.Namespace,

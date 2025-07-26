@@ -45,3 +45,13 @@ func ConvertEnrollmentDetailsToProto(ed db.EnrollmentDetails) *epb.EnrollmentRes
 		},
 	}
 }
+
+func ConvertEnrollmentDetailsListToProto(eds []db.EnrollmentDetails) []*epb.EnrollmentResponse {
+	protoEnrollmentDetailsList := make([]*epb.EnrollmentResponse, 0, len(eds))
+
+	for _, ed := range eds {
+		protoEnrollmentDetailsList = append(protoEnrollmentDetailsList, ConvertEnrollmentDetailsToProto(ed))
+	}
+
+	return protoEnrollmentDetailsList
+}

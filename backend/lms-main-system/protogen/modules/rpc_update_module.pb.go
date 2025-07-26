@@ -149,7 +149,7 @@ const file_modules_rpc_update_module_proto_rawDesc = "" +
 	"_course_idB\x0e\n" +
 	"\f_description\"C\n" +
 	"\x14UpdateModuleResponse\x12+\n" +
-	"\x06module\x18\x01 \x01(\v2\x13.lms.modules.ModuleR\x06moduleB@Z>github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/moduleb\x06proto3"
+	"\x06module\x18\x01 \x01(\v2\x13.lms.modules.ModuleR\x06moduleB<Z:github.com/multi-tenant-cms-golang/lms-sys/protogen/moduleb\x06proto3"
 
 var (
 	file_modules_rpc_update_module_proto_rawDescOnce sync.Once

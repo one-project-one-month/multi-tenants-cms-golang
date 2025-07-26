@@ -2,13 +2,15 @@ syntax = "proto3";
 
 package lms.enrollments;
 
-option go_package = "github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/enrollment";
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/enrollment";
 
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 
 import "enrollments/rpc_create_enrollment.proto";
+import "enrollments/rpc_list_enrollments.proto";
+import "enrollments/rpc_search_enrollments.proto";
 
 service EnrollmentService {
   rpc CreateEnrollment(CreateEnrollmentRequest) returns (CreateEnrollmentResponse) {
@@ -21,4 +23,20 @@ service EnrollmentService {
       summary: "Create enrollment";
     };
   }
+
+  rpc ListEnrollments(google.protobuf.Empty) returns (ListEnrollmentsResponse) {
+    option (google.api.http) = {
+      get: "/lms/v1/enrollments";
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Get all enrollments based on Admin or Instructor";
+      summary: "Get all enrollments"
+    };
+  };
+
+  rpc SearchEnrollments(SearchEnrollmentsRequest) returns (SearchEnrollmentsResponse) {
+    option (google.api.http) = {
+      get: "/lms/v1/enrollments/search";
+    };
+  };
 }

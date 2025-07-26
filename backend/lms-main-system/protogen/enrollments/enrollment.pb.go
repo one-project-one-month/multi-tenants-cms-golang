@@ -273,7 +273,7 @@ const file_enrollments_enrollment_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x122\n" +
 	"\astudent\x18\x02 \x01(\v2\x18.lms.enrollments.StudentR\astudent\x12/\n" +
 	"\x06course\x18\x03 \x01(\v2\x17.lms.enrollments.CourseR\x06course\x125\n" +
-	"\bcategory\x18\x04 \x01(\v2\x19.lms.enrollments.CategoryR\bcategoryBDZBgithub.com/multi-tenant-cms-doc-golang/lms-sys/protogen/enrollmentb\x06proto3"
+	"\bcategory\x18\x04 \x01(\v2\x19.lms.enrollments.CategoryR\bcategoryB@Z>github.com/multi-tenant-cms-golang/lms-sys/protogen/enrollmentb\x06proto3"
 
 var (
 	file_enrollments_enrollment_proto_rawDescOnce sync.Once

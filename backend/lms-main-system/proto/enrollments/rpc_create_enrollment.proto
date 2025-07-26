@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package lms.enrollments;
 
-option go_package = "github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/enrollment";
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/enrollment";
 
 import "google/protobuf/timestamp.proto";
 

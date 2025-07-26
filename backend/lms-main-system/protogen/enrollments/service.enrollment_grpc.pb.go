@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,7 +20,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	EnrollmentService_CreateEnrollment_FullMethodName = "/lms.enrollments.EnrollmentService/CreateEnrollment"
+	EnrollmentService_CreateEnrollment_FullMethodName  = "/lms.enrollments.EnrollmentService/CreateEnrollment"
+	EnrollmentService_ListEnrollments_FullMethodName   = "/lms.enrollments.EnrollmentService/ListEnrollments"
+	EnrollmentService_SearchEnrollments_FullMethodName = "/lms.enrollments.EnrollmentService/SearchEnrollments"
 )
 
 // EnrollmentServiceClient is the client API for EnrollmentService service.
@@ -27,6 +30,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EnrollmentServiceClient interface {
 	CreateEnrollment(ctx context.Context, in *CreateEnrollmentRequest, opts ...grpc.CallOption) (*CreateEnrollmentResponse, error)
+	ListEnrollments(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListEnrollmentsResponse, error)
+	SearchEnrollments(ctx context.Context, in *SearchEnrollmentsRequest, opts ...grpc.CallOption) (*SearchEnrollmentsResponse, error)
 }
 
 type enrollmentServiceClient struct {
@@ -47,11 +52,33 @@ func (c *enrollmentServiceClient) CreateEnrollment(ctx context.Context, in *Crea
 	return out, nil
 }
 
+func (c *enrollmentServiceClient) ListEnrollments(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListEnrollmentsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListEnrollmentsResponse)
+	err := c.cc.Invoke(ctx, EnrollmentService_ListEnrollments_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *enrollmentServiceClient) SearchEnrollments(ctx context.Context, in *SearchEnrollmentsRequest, opts ...grpc.CallOption) (*SearchEnrollmentsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SearchEnrollmentsResponse)
+	err := c.cc.Invoke(ctx, EnrollmentService_SearchEnrollments_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EnrollmentServiceServer is the server API for EnrollmentService service.
 // All implementations must embed UnimplementedEnrollmentServiceServer
 // for forward compatibility.
 type EnrollmentServiceServer interface {
 	CreateEnrollment(context.Context, *CreateEnrollmentRequest) (*CreateEnrollmentResponse, error)
+	ListEnrollments(context.Context, *emptypb.Empty) (*ListEnrollmentsResponse, error)
+	SearchEnrollments(context.Context, *SearchEnrollmentsRequest) (*SearchEnrollmentsResponse, error)
 	mustEmbedUnimplementedEnrollmentServiceServer()
 }
 
@@ -64,6 +91,12 @@ type UnimplementedEnrollmentServiceServer struct{}
 
 func (UnimplementedEnrollmentServiceServer) CreateEnrollment(context.Context, *CreateEnrollmentRequest) (*CreateEnrollmentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateEnrollment not implemented")
+}
+func (UnimplementedEnrollmentServiceServer) ListEnrollments(context.Context, *emptypb.Empty) (*ListEnrollmentsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListEnrollments not implemented")
+}
+func (UnimplementedEnrollmentServiceServer) SearchEnrollments(context.Context, *SearchEnrollmentsRequest) (*SearchEnrollmentsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchEnrollments not implemented")
 }
 func (UnimplementedEnrollmentServiceServer) mustEmbedUnimplementedEnrollmentServiceServer() {}
 func (UnimplementedEnrollmentServiceServer) testEmbeddedByValue()                           {}
@@ -104,6 +137,42 @@ func _EnrollmentService_CreateEnrollment_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EnrollmentService_ListEnrollments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EnrollmentServiceServer).ListEnrollments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EnrollmentService_ListEnrollments_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EnrollmentServiceServer).ListEnrollments(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EnrollmentService_SearchEnrollments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchEnrollmentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EnrollmentServiceServer).SearchEnrollments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EnrollmentService_SearchEnrollments_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EnrollmentServiceServer).SearchEnrollments(ctx, req.(*SearchEnrollmentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EnrollmentService_ServiceDesc is the grpc.ServiceDesc for EnrollmentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +183,14 @@ var EnrollmentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateEnrollment",
 			Handler:    _EnrollmentService_CreateEnrollment_Handler,
+		},
+		{
+			MethodName: "ListEnrollments",
+			Handler:    _EnrollmentService_ListEnrollments_Handler,
+		},
+		{
+			MethodName: "SearchEnrollments",
+			Handler:    _EnrollmentService_SearchEnrollments_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

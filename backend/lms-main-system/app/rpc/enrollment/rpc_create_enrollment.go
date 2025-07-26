@@ -2,6 +2,8 @@ package enrollment
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -49,13 +51,17 @@ func (es *EnrollmentService) CreateEnrollment(
 		return nil, status.Error(codes.InvalidArgument, "course id is required")
 	}
 
+	dbCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	courseID := enrollment.ConvertStringToGoogleUUID(req.CourseId)
+	studentID := enrollment.ConvertStringToGoogleUUID(req.StudentId)
 
 	tenantCheckArgs := db.IsCourseOwnedByTenantParams{
 		CourseID:  courseID,
 		Namespace: orgName,
 	}
-	isOwnedByTenant, err := es.store.IsCourseOwnedByTenant(ctx, tenantCheckArgs)
+	isOwnedByTenant, err := es.store.IsCourseOwnedByTenant(dbCtx, tenantCheckArgs)
 	if err != nil {
 		es.logger.WithError(err).Error("Failed to check if course is owned by tenant")
 		return nil, status.Error(codes.Internal, "failed to check course tenant relation")
@@ -65,17 +71,13 @@ func (es *EnrollmentService) CreateEnrollment(
 		return nil, status.Error(codes.PermissionDenied, "not allowed to enroll to a course owned by another tenant")
 	}
 
-	dbCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	studentID := enrollment.ConvertStringToGoogleUUID(req.StudentId)
-
-	studentCheckArgs := db.IsEnrolleeStudentParams{
-		Namespace: orgName,
-		LmsUserID: studentID,
+	studentCheckArgs := db.IsUserInRoleParams{
+		Namespace:   orgName,
+		LmsUserID:   studentID,
+		LmsRoleName: "STUDENT",
 	}
 
-	isEnrolleeStudent, err := es.store.IsEnrolleeStudent(dbCtx, studentCheckArgs)
+	isEnrolleeStudent, err := es.store.IsUserInRole(dbCtx, studentCheckArgs)
 	if err != nil {
 		es.logger.WithError(err).Errorf("Failed to check if enrollee is student\n student id: %s\ncourse id: %s\n",
 			req.StudentId,
@@ -114,6 +116,13 @@ func (es *EnrollmentService) CreateEnrollment(
 	}
 
 	enrollmentID, err := es.store.CreateEnrollment(dbCtx, createArgs)
+	if errors.Is(err, sql.ErrNoRows) {
+		es.logger.Warnf("Enrollment failed: Course '%s' not found or not in 'Active' status", req.CourseId)
+		return nil, status.Error(codes.FailedPrecondition, "course is not published or not available for enrollment")
+	}
+	if isPgError(err, "23505") {
+		return nil, status.Error(codes.AlreadyExists, "student has already enrolled in this course")
+	}
 	if err != nil {
 		es.logger.WithError(err).Errorf("Failed to create a new enrollment\n student id: %s\ncourse id: %s\n",
 			req.StudentId,

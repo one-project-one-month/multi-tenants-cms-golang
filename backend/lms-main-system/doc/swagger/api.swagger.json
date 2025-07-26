@@ -374,6 +374,28 @@
       }
     },
     "/lms/v1/enrollments": {
+      "get": {
+        "summary": "Get all enrollments",
+        "description": "Get all enrollments based on Admin or Instructor",
+        "operationId": "EnrollmentService_ListEnrollments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/enrollmentsListEnrollmentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "EnrollmentService"
+        ]
+      },
       "post": {
         "summary": "Create enrollment",
         "description": "Create a new enrollment",
@@ -400,6 +422,48 @@
             "schema": {
               "$ref": "#/definitions/enrollmentsCreateEnrollmentRequest"
             }
+          }
+        ],
+        "tags": [
+          "EnrollmentService"
+        ]
+      }
+    },
+    "/lms/v1/enrollments/search": {
+      "get": {
+        "operationId": "EnrollmentService_SearchEnrollments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/enrollmentsSearchEnrollmentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "studentEmail",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "courseId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "categoryId",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1064,6 +1128,30 @@
         },
         "category": {
           "$ref": "#/definitions/enrollmentsCategory"
+        }
+      }
+    },
+    "enrollmentsListEnrollmentsResponse": {
+      "type": "object",
+      "properties": {
+        "enrollments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/enrollmentsEnrollmentResponse"
+          }
+        }
+      }
+    },
+    "enrollmentsSearchEnrollmentsResponse": {
+      "type": "object",
+      "properties": {
+        "enrollments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/enrollmentsEnrollmentResponse"
+          }
         }
       }
     },

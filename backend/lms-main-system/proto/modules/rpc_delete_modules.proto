@@ -2,8 +2,7 @@ syntax = "proto3";
 
 package lms.modules;
 
-option go_package = "github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/module";
-
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/module";
 
 message DeleteModulesRequest {
   repeated string ids = 1;

@@ -11,7 +11,7 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/emptypb"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	unsafe "unsafe"
 )
@@ -27,19 +27,29 @@ var File_enrollments_service_enrollment_proto protoreflect.FileDescriptor
 
 const file_enrollments_service_enrollment_proto_rawDesc = "" +
 	"\n" +
-	"$enrollments/service.enrollment.proto\x12\x0flms.enrollments\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a'enrollments/rpc_create_enrollment.proto2\xcc\x01\n" +
+	"$enrollments/service.enrollment.proto\x12\x0flms.enrollments\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a'enrollments/rpc_create_enrollment.proto\x1a&enrollments/rpc_list_enrollments.proto\x1a(enrollments/rpc_search_enrollments.proto2\x9a\x04\n" +
 	"\x11EnrollmentService\x12\xb6\x01\n" +
-	"\x10CreateEnrollment\x12(.lms.enrollments.CreateEnrollmentRequest\x1a).lms.enrollments.CreateEnrollmentResponse\"M\x92A,\x12\x11Create enrollment\x1a\x17Create a new enrollment\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/lms/v1/enrollmentsBDZBgithub.com/multi-tenant-cms-doc-golang/lms-sys/protogen/enrollmentb\x06proto3"
+	"\x10CreateEnrollment\x12(.lms.enrollments.CreateEnrollmentRequest\x1a).lms.enrollments.CreateEnrollmentResponse\"M\x92A,\x12\x11Create enrollment\x1a\x17Create a new enrollment\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/lms/v1/enrollments\x12\xba\x01\n" +
+	"\x0fListEnrollments\x12\x16.google.protobuf.Empty\x1a(.lms.enrollments.ListEnrollmentsResponse\"e\x92AG\x12\x13Get all enrollments\x1a0Get all enrollments based on Admin or Instructor\x82\xd3\xe4\x93\x02\x15\x12\x13/lms/v1/enrollments\x12\x8e\x01\n" +
+	"\x11SearchEnrollments\x12).lms.enrollments.SearchEnrollmentsRequest\x1a*.lms.enrollments.SearchEnrollmentsResponse\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/lms/v1/enrollments/searchB@Z>github.com/multi-tenant-cms-golang/lms-sys/protogen/enrollmentb\x06proto3"
 
 var file_enrollments_service_enrollment_proto_goTypes = []any{
-	(*CreateEnrollmentRequest)(nil),  // 0: lms.enrollments.CreateEnrollmentRequest
-	(*CreateEnrollmentResponse)(nil), // 1: lms.enrollments.CreateEnrollmentResponse
+	(*CreateEnrollmentRequest)(nil),   // 0: lms.enrollments.CreateEnrollmentRequest
+	(*emptypb.Empty)(nil),             // 1: google.protobuf.Empty
+	(*SearchEnrollmentsRequest)(nil),  // 2: lms.enrollments.SearchEnrollmentsRequest
+	(*CreateEnrollmentResponse)(nil),  // 3: lms.enrollments.CreateEnrollmentResponse
+	(*ListEnrollmentsResponse)(nil),   // 4: lms.enrollments.ListEnrollmentsResponse
+	(*SearchEnrollmentsResponse)(nil), // 5: lms.enrollments.SearchEnrollmentsResponse
 }
 var file_enrollments_service_enrollment_proto_depIdxs = []int32{
 	0, // 0: lms.enrollments.EnrollmentService.CreateEnrollment:input_type -> lms.enrollments.CreateEnrollmentRequest
-	1, // 1: lms.enrollments.EnrollmentService.CreateEnrollment:output_type -> lms.enrollments.CreateEnrollmentResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	1, // 1: lms.enrollments.EnrollmentService.ListEnrollments:input_type -> google.protobuf.Empty
+	2, // 2: lms.enrollments.EnrollmentService.SearchEnrollments:input_type -> lms.enrollments.SearchEnrollmentsRequest
+	3, // 3: lms.enrollments.EnrollmentService.CreateEnrollment:output_type -> lms.enrollments.CreateEnrollmentResponse
+	4, // 4: lms.enrollments.EnrollmentService.ListEnrollments:output_type -> lms.enrollments.ListEnrollmentsResponse
+	5, // 5: lms.enrollments.EnrollmentService.SearchEnrollments:output_type -> lms.enrollments.SearchEnrollmentsResponse
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -51,6 +61,8 @@ func file_enrollments_service_enrollment_proto_init() {
 		return
 	}
 	file_enrollments_rpc_create_enrollment_proto_init()
+	file_enrollments_rpc_list_enrollments_proto_init()
+	file_enrollments_rpc_search_enrollments_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

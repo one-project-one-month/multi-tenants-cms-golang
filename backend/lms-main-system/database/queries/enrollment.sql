@@ -5,29 +5,31 @@ INSERT INTO Enrollment (
     status,
     due_date,
     updated_at
-) VALUES (
+)
+SELECT
     $1,
     $2,
     $3,
     $4,
     CURRENT_TIMESTAMP
-) RETURNING enrollment_id;
+FROM Course c
+WHERE c.course_id = $2 AND c.status = 'Active'
+RETURNING enrollment_id;
 
--- name: ListEnrollmentsWithTenant :many
+-- name: ListEnrollmentsByAdminFilters :many
 SELECT * FROM enrollment_details
-WHERE namespace = $1;
+WHERE namespace = $1 
+    AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR course_id = $2) 
+    AND ($3::uuid = '00000000-0000-0000-0000-000000000000' OR category_id = $3)
+    AND ($4::text = '' OR student_email = $4);
 
--- name: ListEnrollmentsWithStudentEmails :many
+-- name: ListEnrollmentsByInstructorFilters :many
 SELECT * FROM enrollment_details
-WHERE namespace = $1 AND student_email = $2;
-
--- name: ListEnrollmentsWithCourseID :many
-SELECT * FROM enrollment_details
-WHERE namespace = $1 AND course_id = $2;
-
--- name: ListEnrollmentsWithCategoryID :many
-SELECT * FROM enrollment_details
-WHERE namespace = $1 AND category_id = $2;
+WHERE namespace = $1 
+    AND instructor_id = $2 
+    AND ($3::uuid = '00000000-0000-0000-0000-000000000000' OR course_id = $3) 
+    AND ($4::uuid = '00000000-0000-0000-0000-000000000000' OR category_id = $4)
+    AND ($5::text = '' OR student_email = $5);
 
 -- name: DeleteEnrollmentsByID :exec
 DELETE FROM Enrollment
@@ -67,16 +69,13 @@ SELECT EXISTS (
     WHERE student_id = $1 AND course_id = $2
 ) as exists;
 
--- name: IsEnrolleeStudent :one
+-- name: IsUserInRole :one
 SELECT EXISTS (
     SELECT 1 
-    FROM LMS_USER u
-    JOIN lms_user_roles_map rm ON rm.lms_user_id = u.lms_user_id
-    JOIN LMS_USER_Role r ON r.lms_role_id = rm.lms_role_id
-    JOIN Tenants t ON t.tenant_id = u.tenant_id
-    WHERE t.namespace = $1 
-        AND t.is_active = true
-        AND u.lms_user_id = $2 
-        AND r.lms_role_name = 'STUDENT'
-        AND rm.is_active = true
-) as is_student;
+    FROM user_role_details
+    WHERE namespace = $1 
+        AND lms_user_id = $2 
+        AND lms_role_name = $3
+        AND tenant_is_active = true
+        AND role_map_is_active = true
+) as in_role;
