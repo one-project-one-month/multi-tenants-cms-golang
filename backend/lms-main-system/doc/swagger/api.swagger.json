@@ -26,6 +26,9 @@
     },
     {
       "name": "ModuleService"
+    },
+    {
+      "name": "QuizService"
     }
   ],
   "host": "localhost:8086",
@@ -696,6 +699,145 @@
         ]
       }
     },
+    "/lms/v1/quiz": {
+      "delete": {
+        "operationId": "QuizService_DeleteQuiz",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "forceDelete",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "QuizService"
+        ]
+      },
+      "post": {
+        "operationId": "QuizService_CreateQuiz",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/quizQuizResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/quizCreateQuizRequest"
+            }
+          }
+        ],
+        "tags": [
+          "QuizService"
+        ]
+      }
+    },
+    "/lms/v1/quiz/modules": {
+      "get": {
+        "operationId": "QuizService_GetQuizzesByModule",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/quizGetQuizByModuleResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "moduleId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "QuizService"
+        ]
+      }
+    },
+    "/lms/v1/quiz/{questionId}": {
+      "put": {
+        "operationId": "QuizService_UpdateQuiz",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/quizQuestion"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/QuizServiceUpdateQuizBody"
+            }
+          }
+        ],
+        "tags": [
+          "QuizService"
+        ]
+      }
+    },
     "/v1/files": {
       "post": {
         "operationId": "FileService_UploadFile",
@@ -797,6 +939,21 @@
         },
         "description": {
           "type": "string"
+        }
+      }
+    },
+    "QuizServiceUpdateQuizBody": {
+      "type": "object",
+      "properties": {
+        "question": {
+          "type": "string"
+        },
+        "answerOptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/quizAnswerOption"
+          }
         }
       }
     },
@@ -1259,6 +1416,153 @@
         }
       },
       "additionalProperties": {}
+    },
+    "quizAnswer": {
+      "type": "object",
+      "properties": {
+        "answerId": {
+          "type": "string"
+        },
+        "questionId": {
+          "type": "string"
+        },
+        "answer": {
+          "type": "string"
+        },
+        "isCorrect": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "quizAnswerOption": {
+      "type": "object",
+      "properties": {
+        "answerId": {
+          "type": "string"
+        },
+        "answer": {
+          "type": "string"
+        },
+        "isCorrect": {
+          "type": "boolean"
+        }
+      }
+    },
+    "quizCreateQuizRequest": {
+      "type": "object",
+      "properties": {
+        "moduleId": {
+          "type": "string"
+        },
+        "quiz": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/quizQuestionInput"
+          }
+        }
+      }
+    },
+    "quizGetQuizByModuleResponse": {
+      "type": "object",
+      "properties": {
+        "quizzes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/quizQuizResponse"
+          }
+        }
+      }
+    },
+    "quizQuestion": {
+      "type": "object",
+      "properties": {
+        "questionId": {
+          "type": "string"
+        },
+        "quizId": {
+          "type": "string"
+        },
+        "question": {
+          "type": "string"
+        },
+        "answers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/quizAnswer"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "quizQuestionInput": {
+      "type": "object",
+      "properties": {
+        "question": {
+          "type": "string"
+        },
+        "answerOptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/quizAnswerOption"
+          }
+        }
+      }
+    },
+    "quizQuiz": {
+      "type": "object",
+      "properties": {
+        "quizId": {
+          "type": "string"
+        },
+        "moduleId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "quizQuizResponse": {
+      "type": "object",
+      "properties": {
+        "quiz": {
+          "$ref": "#/definitions/quizQuiz"
+        },
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/quizQuestion"
+          }
+        }
+      }
     }
   },
   "securityDefinitions": {

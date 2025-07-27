@@ -1,0 +1,96 @@
+### Create Quiz
+POST {{lms_url}}/lms/v1/quiz
+Content-Type: application/json
+X-Organisation: new-namespace
+Accept: application/json
+
+{
+  "moduleId": "60944d61-5419-4433-a2a2-0a4be4538c6f",
+  "quiz": [
+    {
+      "question": "Which planet is known as the Red Planet?",
+      "answerOptions": [
+        {
+          "answer": "Mars",
+          "isCorrect": true
+        },
+        {
+          "answer": "Venus",
+          "isCorrect": false
+        },
+        {
+          "answer": "Jupiter",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "question": "Which gas do plants absorb from the atmosphere?",
+      "answerOptions": [
+        {
+          "answer": "Carbon Dioxide",
+          "isCorrect": true
+        },
+        {
+          "answer": "Oxygen",
+          "isCorrect": false
+        },
+        {
+          "answer": "Nitrogen",
+          "isCorrect": false
+        }
+      ]
+    }
+  ]
+}
+
+### Get all quizzes by Module ID
+GET {{lms_url}}/lms/v1/quiz/modules?moduleId=60944d61-5419-4433-a2a2-0a4be4538c6f
+Accept: application/json
+X-Organisation: new-namespace
+Content-Type: application/json
+
+{
+  "moduleId": "60944d61-5419-4433-a2a2-0a4be4538c6f"
+}
+
+### Update Questions and Answer by Question Id
+PUT {{lms_url}}/lms/v1/quiz/8ab38d5a-b3a3-400d-94f6-aac75e9769ed
+Content-Type: application/json
+Accept: application/json
+X-Organisation: new-namespace
+
+{
+  "question_id": "8ab38d5a-b3a3-400d-94f6-aac75e9769ed",
+  "question": "What is the capital of England?",
+  "answerOptions": [
+    {
+      "answerId": "831a6bdc-f488-4da7-837a-5a5df65019ed",
+      "answer": "London",
+      "isCorrect": true
+    },
+    {
+      "answerId": "a46507e6-e425-41ed-9302-01f2c76f0340",
+      "answer": "Liverpool",
+      "isCorrect": false
+    },
+    {
+      "answerId": "ccfc62fd-2217-4ac1-b796-7026b4636101",
+      "answer": "Berlin",
+      "isCorrect": false
+    }
+  ]
+}
+
+### Attempt soft delete with association check
+DELETE {{lms_url}}/lms/v1/quiz
+Content-Type: application/json
+Accept: application/json
+X-Organisation: new-namespace
+
+{
+  "ids": [
+    "d7e473dd-17ae-40a7-86a6-31c25cad1408"
+  ],
+  "force_delete": false
+}
