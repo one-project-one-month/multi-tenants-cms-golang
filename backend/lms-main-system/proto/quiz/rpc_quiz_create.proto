@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package lms.quiz;
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/quiz";
+import "quiz/quiz.proto";
+
+message CreateQuizRequest {
+  string moduleId = 1;
+  repeated QuestionInput quiz = 2;
+}

@@ -1,33 +1,37 @@
 ### Get Lessons By Module Id
-GET http://localhost:8086/lms/v1/modules/lessons
+GET {{lms_url}}/lms/v1/modules/lessons
 Accept: application/json
 Content-Type: application/json
+X-Organisation: tenant_namespace_1
 
 {
-  "module_id": "e678a95f-7829-41e2-9b62-e23e0bb8a338"
+  "module_id": "60944d61-5419-4433-a2a2-0a4be4538c6f"
 }
 
 ### Create Lesson
-POST http://localhost:8086/lms/v1/lessons
+POST {{lms_url}}/lms/v1/lessons
 Accept: application/json
 Content-Type: application/json
+X-Organisation: tenant_namespace_1
 
 {
   "title": "Introduction to Databases",
   "content": "https://example.com/database-intro.pdf",
   "materialType": "PDF",
-  "moduleId": "e678a95f-7829-41e2-9b62-e23e0bb8a338"
+  "moduleId": "60944d61-5419-4433-a2a2-0a4be4538c6f"
 }
 
 ### Get lesson by id
-GET http://localhost:8086/lms/v1/lessons/e678a95f-7829-41e2-9b62-e23e0bb8a338
+GET {{lms_url}}/lms/v1/lessons/b81901c9-beb8-45b8-99dc-ba530d33a27e
+X-Organisation: tenant_namespace_1
 Accept: application/json
 Content-Type: application/json
 
 ### Update lesson by id
-PUT http://localhost:8086/lms/v1/lessons/e678a95f-7829-41e2-9b62-e23e0bb8a338
+PUT {{lms_url}}/lms/v1/lessons/e678a95f-7829-41e2-9b62-e23e0bb8a338
 Content-Type: application/json
 Accept: application/json
+X-Organisation: tenant_namespace_1
 
 {
   "id": "e678a95f-7829-41e2-9b62-e23e0bb8a338",
@@ -38,9 +42,10 @@ Accept: application/json
 }
 
 ### Bulk Delete Lessons
-DELETE http://localhost:8086/lms/v1/lessons
+DELETE {{lms_url}}/lms/v1/lessons
 Accept: application/json
 Content-Type: application/json
+X-Organisation: tenant_namespace_1
 
 {
   "ids": [

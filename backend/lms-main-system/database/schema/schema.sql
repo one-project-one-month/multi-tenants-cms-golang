@@ -190,16 +190,13 @@ CREATE TABLE Module
 );
 
 -- 13. Quiz
-CREATE TABLE Quiz
-(
-    quiz_id    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    question   TEXT NOT NULL,
-    answer     TEXT NOT NULL,
-    module_id  UUID NOT NULL,
-    created_at TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP,
-    CONSTRAINT fk_quiz_module FOREIGN KEY (module_id)
-        REFERENCES Module (module_id) ON DELETE CASCADE
+CREATE TABLE Quiz (
+                      "quiz_id" uuid NOT NULL DEFAULT gen_random_uuid(),
+                      "module_id" uuid NOT NULL,
+                      "created_at" timestamp DEFAULT CURRENT_TIMESTAMP,
+                      "updated_at" timestamp,
+                      "title" text NOT NULL,
+                      PRIMARY KEY ("quiz_id")
 );
 
 -- 14. Student Quiz
@@ -289,6 +286,28 @@ CREATE TABLE Report
     updated_at           TIMESTAMP,
     CONSTRAINT fk_report_user FOREIGN KEY (generated_by_user_id)
         REFERENCES LMS_USER (lms_user_id) ON DELETE CASCADE
+);
+
+-- 20. Question
+CREATE TABLE Question (
+                          "question_id" uuid NOT NULL DEFAULT gen_random_uuid(),
+                          "question" text NOT NULL,
+                          "quiz_id" uuid NOT NULL,
+                          "created_at" timestamp DEFAULT CURRENT_TIMESTAMP,
+                          "updated_at" timestamp,
+                          PRIMARY KEY ("question_id")
+);
+
+-- 21. Answer
+CREATE TABLE Answer
+(
+    "answer_id" uuid NOT NULL DEFAULT gen_random_uuid(),
+    "answer" text NOT NULL,
+    "is_correct" bool DEFAULT false,
+    "question_id" uuid NOT NULL,
+    "created_at" timestamp DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" timestamp,
+    PRIMARY KEY ("answer_id")
 );
 
 CREATE  TABLE  LMS_USER_MFA (

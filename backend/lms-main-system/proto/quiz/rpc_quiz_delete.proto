@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package lms.quiz;
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/quiz";
+
+message DeleteQuizRequest {
+  repeated string ids = 1;
+  bool force_delete = 2;
+}

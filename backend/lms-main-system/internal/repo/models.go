@@ -226,6 +226,15 @@ func AllMaterialTypeValues() []MaterialType {
 	}
 }
 
+type Answer struct {
+	AnswerID   uuid.UUID        `json:"answer_id"`
+	Answer     string           `json:"answer"`
+	IsCorrect  pgtype.Bool      `json:"is_correct"`
+	QuestionID uuid.UUID        `json:"question_id"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+	UpdatedAt  pgtype.Timestamp `json:"updated_at"`
+}
+
 type Assignment struct {
 	AssignmentID uuid.UUID        `json:"assignment_id"`
 	CourseID     uuid.UUID        `json:"course_id"`
@@ -343,13 +352,20 @@ type NamespaceConsumer struct {
 	IsActive   pgtype.Bool      `json:"is_active"`
 }
 
+type Question struct {
+	QuestionID uuid.UUID        `json:"question_id"`
+	Question   string           `json:"question"`
+	QuizID     uuid.UUID        `json:"quiz_id"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+	UpdatedAt  pgtype.Timestamp `json:"updated_at"`
+}
+
 type Quiz struct {
 	QuizID    uuid.UUID        `json:"quiz_id"`
-	Question  string           `json:"question"`
-	Answer    string           `json:"answer"`
 	ModuleID  uuid.UUID        `json:"module_id"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+	Title     string           `json:"title"`
 }
 
 type Rating struct {

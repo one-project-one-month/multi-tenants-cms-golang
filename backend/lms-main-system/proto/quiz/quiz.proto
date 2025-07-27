@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package lms.quiz;
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/quiz";
+import "google/protobuf/timestamp.proto";
+
+message Quiz {
+  string quizId = 1;
+  string moduleId = 2;
+  string title = 3;
+  google.protobuf.Timestamp createdAt = 4;
+  google.protobuf.Timestamp updatedAt = 5;
+}
+
+message Question {
+  string questionId = 1;
+  string quizId = 2;
+  string question = 3;
+  repeated Answer answers = 4;
+  google.protobuf.Timestamp createdAt = 5;
+  google.protobuf.Timestamp updatedAt = 6;
+}
+
+message Answer {
+  string answerId = 1;
+  string questionId = 2;
+  string answer = 3;
+  bool isCorrect = 4;
+  google.protobuf.Timestamp createdAt = 5;
+  google.protobuf.Timestamp updatedAt = 6;
+}
+
+message AnswerOption {
+  string answerId=1;
+  string answer = 2;
+  bool isCorrect = 3;
+}
+
+message QuestionInput {
+  string question = 1;
+  repeated AnswerOption answerOptions = 2;
+}
+
+message QuizResponse {
+  Quiz quiz = 1;
+  repeated Question questions = 2;
+}

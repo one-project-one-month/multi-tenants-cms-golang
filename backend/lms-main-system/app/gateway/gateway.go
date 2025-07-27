@@ -19,6 +19,7 @@ import (
 	fb "github.com/multi-tenants-cms-golang/lms-sys/protogen/files"
 	lspb "github.com/multi-tenants-cms-golang/lms-sys/protogen/lesson"
 	mpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/modules"
+	qspb "github.com/multi-tenants-cms-golang/lms-sys/protogen/quiz"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
@@ -98,6 +99,11 @@ func (g *Gateway) Start() error {
 	err = mpb.RegisterModuleServiceHandlerFromEndpoint(ctx, gwMux, g.grpcAddr, opts)
 	if err != nil {
 		return fmt.Errorf("failed to register module handler: %w", err)
+	}
+	// Quiz
+	err = qspb.RegisterQuizServiceHandlerFromEndpoint(ctx, gwMux, g.grpcAddr, opts)
+	if err != nil {
+		return fmt.Errorf("failed to register quiz handler: %w", err)
 	}
 
 	err = fb.RegisterFileServiceHandlerFromEndpoint(

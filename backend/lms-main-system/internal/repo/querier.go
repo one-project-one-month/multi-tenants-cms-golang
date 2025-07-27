@@ -16,18 +16,32 @@ type Querier interface {
 	AssignRolesToUser(ctx context.Context, arg AssignRolesToUserParams) error
 	CheckNameSpaceFromMetaData(ctx context.Context, namespace string) (int32, error)
 	CheckTenantsMemberExistenceByEmail(ctx context.Context, lmsUserEmail string) (int32, error)
+	CreateAnswer(ctx context.Context, arg CreateAnswerParams) (Answer, error)
 	CreateLesson(ctx context.Context, arg CreateLessonParams) (Lesson, error)
 	CreateModule(ctx context.Context, arg CreateModuleParams) (Module, error)
+	CreateQuestion(ctx context.Context, arg CreateQuestionParams) (Question, error)
+	CreateQuiz(ctx context.Context, arg CreateQuizParams) (Quiz, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
+	DeleteAnswersByQuestionIDs(ctx context.Context, dollar_1 []uuid.UUID) error
+	DeleteAnswersByQuestionId(ctx context.Context, questionID uuid.UUID) error
 	DeleteAssociatedLessons(ctx context.Context, moduleID uuid.UUID) error
 	DeleteAssociatedQuizzes(ctx context.Context, moduleID uuid.UUID) error
 	DeleteLessons(ctx context.Context, dollar_1 []uuid.UUID) ([]uuid.UUID, error)
 	DeleteModule(ctx context.Context, moduleID uuid.UUID) error
 	DeleteModules(ctx context.Context, dollar_1 []uuid.UUID) error
+	DeleteQuestionsByQuizIDs(ctx context.Context, dollar_1 []uuid.UUID) error
+	DeleteQuestionsByQuizId(ctx context.Context, quizID uuid.UUID) error
+	DeleteQuizById(ctx context.Context, quizID uuid.UUID) error
+	DeleteQuizzes(ctx context.Context, dollar_1 []uuid.UUID) error
+	GetAnswersByQuestionID(ctx context.Context, questionID uuid.UUID) ([]Answer, error)
 	GetDefaultRoleIDs(ctx context.Context) ([]uuid.UUID, error)
-	GetModuleByIDWithTenant(ctx context.Context, arg GetModuleByIDWithTenantParams) (Module, error)
 	GetLessonById(ctx context.Context, lessonID uuid.UUID) (GetLessonByIdRow, error)
 	GetLessonsByModuleId(ctx context.Context, moduleID uuid.UUID) ([]GetLessonsByModuleIdRow, error)
+	GetModuleByIDWithTenant(ctx context.Context, arg GetModuleByIDWithTenantParams) (Module, error)
+	GetQuestionByID(ctx context.Context, questionID uuid.UUID) (Question, error)
+	GetQuestionsByQuizID(ctx context.Context, quizID uuid.UUID) ([]Question, error)
+	GetQuizById(ctx context.Context, quizID uuid.UUID) (Quiz, error)
+	GetQuizzesByModule(ctx context.Context, moduleID uuid.UUID) ([]Quiz, error)
 	GetRoleIdByName(ctx context.Context, lmsRoleName LmsRoleType) (uuid.UUID, error)
 	GetTenantIdByNameSpace(ctx context.Context, namespace string) (uuid.UUID, error)
 	GetUserByEmail(ctx context.Context, lmsUserEmail string) (LmsUser, error)
@@ -37,9 +51,11 @@ type Querier interface {
 	ListModulesWithTenant(ctx context.Context, namespace string) ([]Module, error)
 	ModuleHasAssociations(ctx context.Context, moduleID uuid.UUID) (pgtype.Bool, error)
 	SetUpMFA(ctx context.Context, arg SetUpMFAParams) (uuid.UUID, error)
+	UpdateAnswer(ctx context.Context, arg UpdateAnswerParams) (Answer, error)
 	UpdateEmailVerification(ctx context.Context, lmsUserEmail string) error
 	UpdateLesson(ctx context.Context, arg UpdateLessonParams) (Lesson, error)
 	UpdateModuleByID(ctx context.Context, arg UpdateModuleByIDParams) (Module, error)
+	UpdateQuestion(ctx context.Context, arg UpdateQuestionParams) (Question, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -4,7 +4,6 @@ package lms.files;
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
-import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/multi-tenants-cms-golang/lms-sys/protogen/files";
 
