@@ -11,6 +11,7 @@ import "google/protobuf/empty.proto";
 import "enrollments/rpc_create_enrollment.proto";
 import "enrollments/rpc_list_enrollments.proto";
 import "enrollments/rpc_search_enrollments.proto";
+import "enrollments/rpc_delete_enrollment.proto";
 
 service EnrollmentService {
   rpc CreateEnrollment(CreateEnrollmentRequest) returns (CreateEnrollmentResponse) {
@@ -39,4 +40,14 @@ service EnrollmentService {
       get: "/lms/v1/enrollments/search";
     };
   };
+
+  rpc DeleteEnrollment(DeleteEnrollmentRequest) returns (DeleteEnrollmentResponse) {
+    option (google.api.http) = {
+      delete: "/lms/v1/enrollments/{enrollment_id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Delete enrollment (cancel or unenroll a course)"
+      summary: "Delete (Cancel) an enrollment"
+    };
+  }
 }

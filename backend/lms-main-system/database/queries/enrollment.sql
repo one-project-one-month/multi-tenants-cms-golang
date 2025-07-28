@@ -31,7 +31,7 @@ WHERE namespace = $1
     AND ($4::uuid = '00000000-0000-0000-0000-000000000000' OR category_id = $4)
     AND ($5::text = '' OR student_email = $5);
 
--- name: DeleteEnrollmentsByID :exec
+-- name: DeleteEnrollmentByID :exec
 DELETE FROM Enrollment
 WHERE enrollment_id = $1;
 
@@ -62,11 +62,25 @@ SET progress    = COALESCE($2, progress),
 WHERE enrollment_id = $1
 RETURNING *;
 
--- name: IsEnrollmentExist :one
+-- name: IsEnrollmentExistUnderCourseID :one
 SELECT EXISTS (
     SELECT 1
-    FROM Enrollment e
+    FROM Enrollment
     WHERE student_id = $1 AND course_id = $2
+) as exists;
+
+-- name: IsEnrollmentExists :one
+SELECT EXISTS (
+    SELECT 1
+    FROM Enrollment
+    WHERE enrollment_id = $1
+) as exists;
+
+-- name: IsEnrollmentBelongsToStudent :one
+SELECT EXISTS (
+    SELECT 1
+    FROM Enrollment
+    WHERE student_id = $1 AND enrollment_id = $2
 ) as exists;
 
 -- name: IsUserInRole :one

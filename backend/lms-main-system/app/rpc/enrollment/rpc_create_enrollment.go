@@ -90,7 +90,7 @@ func (es *EnrollmentService) CreateEnrollment(
 		return nil, status.Error(codes.PermissionDenied, "enrollee is not a student")
 	}
 
-	isEnrollmentExist, err := es.store.IsEnrollmentExist(dbCtx, db.IsEnrollmentExistParams{
+	isEnrollmentExist, err := es.store.IsEnrollmentExistUnderCourseID(dbCtx, db.IsEnrollmentExistUnderCourseIDParams{
 		StudentID: studentID,
 		CourseID:  courseID,
 	})

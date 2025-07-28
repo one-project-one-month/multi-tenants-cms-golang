@@ -22,7 +22,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	DeleteAssociatedLessons(ctx context.Context, moduleID uuid.UUID) error
 	DeleteAssociatedQuizzes(ctx context.Context, moduleID uuid.UUID) error
-	DeleteEnrollmentsByID(ctx context.Context, enrollmentID uuid.UUID) error
+	DeleteEnrollmentByID(ctx context.Context, enrollmentID uuid.UUID) error
 	DeleteLessons(ctx context.Context, dollar_1 []uuid.UUID) ([]uuid.UUID, error)
 	DeleteModule(ctx context.Context, moduleID uuid.UUID) error
 	DeleteModules(ctx context.Context, dollar_1 []uuid.UUID) error
@@ -36,7 +36,9 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, lmsUserEmail string) (LmsUser, error)
 	GetUserPasswordMfaByNameSpaceDomain(ctx context.Context, namespaceDomain pgtype.Text) (GetUserPasswordMfaByNameSpaceDomainRow, error)
 	IsCourseOwnedByTenant(ctx context.Context, arg IsCourseOwnedByTenantParams) (bool, error)
-	IsEnrollmentExist(ctx context.Context, arg IsEnrollmentExistParams) (bool, error)
+	IsEnrollmentBelongsToStudent(ctx context.Context, arg IsEnrollmentBelongsToStudentParams) (bool, error)
+	IsEnrollmentExistUnderCourseID(ctx context.Context, arg IsEnrollmentExistUnderCourseIDParams) (bool, error)
+	IsEnrollmentExists(ctx context.Context, enrollmentID uuid.UUID) (bool, error)
 	IsEnrollmentOwnedByTenant(ctx context.Context, arg IsEnrollmentOwnedByTenantParams) (bool, error)
 	IsModuleOwnedByTenant(ctx context.Context, arg IsModuleOwnedByTenantParams) (bool, error)
 	IsUserInRole(ctx context.Context, arg IsUserInRoleParams) (bool, error)

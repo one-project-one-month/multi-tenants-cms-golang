@@ -50,13 +50,13 @@ func (q *Queries) CreateEnrollment(ctx context.Context, arg CreateEnrollmentPara
 	return enrollment_id, err
 }
 
-const deleteEnrollmentsByID = `-- name: DeleteEnrollmentsByID :exec
+const deleteEnrollmentByID = `-- name: DeleteEnrollmentByID :exec
 DELETE FROM Enrollment
 WHERE enrollment_id = $1
 `
 
-func (q *Queries) DeleteEnrollmentsByID(ctx context.Context, enrollmentID uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteEnrollmentsByID, enrollmentID)
+func (q *Queries) DeleteEnrollmentByID(ctx context.Context, enrollmentID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteEnrollmentByID, enrollmentID)
 	return err
 }
 
@@ -96,21 +96,56 @@ func (q *Queries) GetEnrollmentByIDAndTenant(ctx context.Context, arg GetEnrollm
 	return i, err
 }
 
-const isEnrollmentExist = `-- name: IsEnrollmentExist :one
+const isEnrollmentBelongsToStudent = `-- name: IsEnrollmentBelongsToStudent :one
 SELECT EXISTS (
     SELECT 1
-    FROM Enrollment e
+    FROM Enrollment
+    WHERE student_id = $1 AND enrollment_id = $2
+) as exists
+`
+
+type IsEnrollmentBelongsToStudentParams struct {
+	StudentID    uuid.UUID `json:"student_id"`
+	EnrollmentID uuid.UUID `json:"enrollment_id"`
+}
+
+func (q *Queries) IsEnrollmentBelongsToStudent(ctx context.Context, arg IsEnrollmentBelongsToStudentParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isEnrollmentBelongsToStudent, arg.StudentID, arg.EnrollmentID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const isEnrollmentExistUnderCourseID = `-- name: IsEnrollmentExistUnderCourseID :one
+SELECT EXISTS (
+    SELECT 1
+    FROM Enrollment
     WHERE student_id = $1 AND course_id = $2
 ) as exists
 `
 
-type IsEnrollmentExistParams struct {
+type IsEnrollmentExistUnderCourseIDParams struct {
 	StudentID uuid.UUID `json:"student_id"`
 	CourseID  uuid.UUID `json:"course_id"`
 }
 
-func (q *Queries) IsEnrollmentExist(ctx context.Context, arg IsEnrollmentExistParams) (bool, error) {
-	row := q.db.QueryRow(ctx, isEnrollmentExist, arg.StudentID, arg.CourseID)
+func (q *Queries) IsEnrollmentExistUnderCourseID(ctx context.Context, arg IsEnrollmentExistUnderCourseIDParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isEnrollmentExistUnderCourseID, arg.StudentID, arg.CourseID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const isEnrollmentExists = `-- name: IsEnrollmentExists :one
+SELECT EXISTS (
+    SELECT 1
+    FROM Enrollment
+    WHERE enrollment_id = $1
+) as exists
+`
+
+func (q *Queries) IsEnrollmentExists(ctx context.Context, enrollmentID uuid.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, isEnrollmentExists, enrollmentID)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err

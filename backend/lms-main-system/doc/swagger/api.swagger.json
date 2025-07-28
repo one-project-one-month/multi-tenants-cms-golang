@@ -471,6 +471,38 @@
         ]
       }
     },
+    "/lms/v1/enrollments/{enrollmentId}": {
+      "delete": {
+        "summary": "Delete (Cancel) an enrollment",
+        "description": "Delete enrollment (cancel or unenroll a course)",
+        "operationId": "EnrollmentService_DeleteEnrollment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/enrollmentsDeleteEnrollmentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "enrollmentId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "EnrollmentService"
+        ]
+      }
+    },
     "/lms/v1/lessons": {
       "delete": {
         "operationId": "LessonService_DeleteLessons",
@@ -1111,6 +1143,14 @@
       "properties": {
         "enrollment": {
           "$ref": "#/definitions/enrollmentsEnrollmentResponse"
+        }
+      }
+    },
+    "enrollmentsDeleteEnrollmentResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
         }
       }
     },

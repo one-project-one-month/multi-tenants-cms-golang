@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package lms.enrollments;
+
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/enrollment";
+
+message DeleteEnrollmentRequest { string enrollment_id = 1; }
+
+message DeleteEnrollmentResponse { string message = 1; }
