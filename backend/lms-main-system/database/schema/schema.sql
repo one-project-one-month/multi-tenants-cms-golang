@@ -130,7 +130,7 @@ CREATE TABLE namespace_consumer
 );
 
 -- 9. Enrollment
-CREATE TABLE enrollment
+CREATE TABLE Enrollment
 (
     enrollment_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     student_id      UUID            NOT NULL,
@@ -461,3 +461,50 @@ CREATE TRIGGER trg_auto_assign_student_role
     ON lms_user_roles_map
     FOR EACH ROW
     EXECUTE FUNCTION auto_assign_student_to_namespace_consumer();
+
+CREATE OR REPLACE VIEW enrollment_details AS
+SELECT
+    -- Enrollment
+    e.enrollment_id, e.enrollment_date,
+    e.progress, e.status,
+    e.due_date, e.created_at,
+    -- Student
+    s.lms_user_id AS student_id,
+    s.lms_user_name AS student_name,
+    s.lms_user_email AS student_email,
+    -- Course
+    c.course_id, c.course_title, 
+    c.course_category, c.owned_by,
+    c.instructor_id,
+    -- Course_Category
+    cat.category_id, cat.category_name,
+    -- Tenant
+    t.namespace, t.tenant_id
+FROM Enrollment e
+JOIN LMS_USER s 
+    ON s.lms_user_id = e.student_id
+JOIN Course c 
+    ON c.course_id = e.course_id
+JOIN Course_Category cat 
+    ON cat.category_id = c.course_category
+JOIN Tenants t 
+    ON t.tenant_id = c.owned_by;
+
+CREATE OR REPLACE VIEW user_role_details AS
+SELECT
+    u.lms_user_id, 
+    u.lms_user_name, 
+    u.lms_user_email,
+    r.lms_role_id, 
+    r.lms_role_name,
+    t.tenant_id, 
+    t.namespace,
+    t.is_active AS tenant_is_active,
+    rm.is_active AS role_map_is_active
+FROM LMS_USER u
+JOIN lms_user_roles_map rm 
+    ON rm.lms_user_id = u.lms_user_id
+JOIN LMS_USER_Role r 
+    ON r.lms_role_id = rm.lms_role_id
+JOIN Tenants t 
+    ON t.tenant_id = u.tenant_id;

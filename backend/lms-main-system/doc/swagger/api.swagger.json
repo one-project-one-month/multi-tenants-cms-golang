@@ -19,6 +19,9 @@
       "name": "AuthenticationService"
     },
     {
+      "name": "EnrollmentService"
+    },
+    {
       "name": "FileService"
     },
     {
@@ -367,6 +370,136 @@
         ],
         "tags": [
           "Authentication"
+        ]
+      }
+    },
+    "/lms/v1/enrollments": {
+      "get": {
+        "summary": "Get all enrollments",
+        "description": "Get all enrollments based on Admin or Instructor",
+        "operationId": "EnrollmentService_ListEnrollments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/enrollmentsListEnrollmentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "EnrollmentService"
+        ]
+      },
+      "post": {
+        "summary": "Create enrollment",
+        "description": "Create a new enrollment",
+        "operationId": "EnrollmentService_CreateEnrollment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/enrollmentsCreateEnrollmentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/enrollmentsCreateEnrollmentRequest"
+            }
+          }
+        ],
+        "tags": [
+          "EnrollmentService"
+        ]
+      }
+    },
+    "/lms/v1/enrollments/search": {
+      "get": {
+        "operationId": "EnrollmentService_SearchEnrollments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/enrollmentsSearchEnrollmentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "studentEmail",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "courseId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "categoryId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "EnrollmentService"
+        ]
+      }
+    },
+    "/lms/v1/enrollments/{enrollmentId}": {
+      "delete": {
+        "summary": "Delete (Cancel) an enrollment",
+        "description": "Delete enrollment (cancel or unenroll a course)",
+        "operationId": "EnrollmentService_DeleteEnrollment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/enrollmentsDeleteEnrollmentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "enrollmentId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "EnrollmentService"
         ]
       }
     },
@@ -968,6 +1101,110 @@
         }
       },
       "title": "Is equal to the LMS USER"
+    },
+    "enrollmentsCategory": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "enrollmentsCourse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      }
+    },
+    "enrollmentsCreateEnrollmentRequest": {
+      "type": "object",
+      "properties": {
+        "studentId": {
+          "type": "string"
+        },
+        "courseId": {
+          "type": "string"
+        }
+      }
+    },
+    "enrollmentsCreateEnrollmentResponse": {
+      "type": "object",
+      "properties": {
+        "enrollment": {
+          "$ref": "#/definitions/enrollmentsEnrollmentResponse"
+        }
+      }
+    },
+    "enrollmentsDeleteEnrollmentResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "enrollmentsEnrollmentResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "student": {
+          "$ref": "#/definitions/enrollmentsStudent"
+        },
+        "course": {
+          "$ref": "#/definitions/enrollmentsCourse"
+        },
+        "category": {
+          "$ref": "#/definitions/enrollmentsCategory"
+        }
+      }
+    },
+    "enrollmentsListEnrollmentsResponse": {
+      "type": "object",
+      "properties": {
+        "enrollments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/enrollmentsEnrollmentResponse"
+          }
+        }
+      }
+    },
+    "enrollmentsSearchEnrollmentsResponse": {
+      "type": "object",
+      "properties": {
+        "enrollments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/enrollmentsEnrollmentResponse"
+          }
+        }
+      }
+    },
+    "enrollmentsStudent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      }
     },
     "filesFileMetadata": {
       "type": "object",

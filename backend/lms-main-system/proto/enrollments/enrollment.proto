@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package lms.enrollments;
+
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/enrollment";
+
+import "google/protobuf/timestamp.proto";
+
+message Student {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+}
+
+message Course {
+  string id = 1;
+  string title = 2;
+}
+
+message Category {
+  string id = 1;
+  string name = 2;
+}
+
+message EnrollmentResponse {
+  string id = 1;
+  Student student = 2;
+  Course course = 3;
+  Category category = 4;
+}

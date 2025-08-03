@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package lms.modules;
 
-option go_package = "github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/module";
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/module";
 
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "google/api/annotations.proto";

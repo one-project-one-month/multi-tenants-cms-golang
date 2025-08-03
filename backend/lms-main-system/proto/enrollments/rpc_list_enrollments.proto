@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package lms.enrollments;
+
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/enrollment";
+
+import "enrollments/enrollment.proto";
+
+message ListEnrollmentsResponse { repeated EnrollmentResponse enrollments = 1; }

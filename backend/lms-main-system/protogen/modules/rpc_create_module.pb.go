@@ -136,7 +136,7 @@ const file_modules_rpc_create_module_proto_rawDesc = "" +
 	"\tcourse_id\x18\x02 \x01(\tR\bcourseId\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\"C\n" +
 	"\x14CreateModuleResponse\x12+\n" +
-	"\x06module\x18\x01 \x01(\v2\x13.lms.modules.ModuleR\x06moduleB@Z>github.com/multi-tenant-cms-doc-golang/lms-sys/protogen/moduleb\x06proto3"
+	"\x06module\x18\x01 \x01(\v2\x13.lms.modules.ModuleR\x06moduleB<Z:github.com/multi-tenant-cms-golang/lms-sys/protogen/moduleb\x06proto3"
 
 var (
 	file_modules_rpc_create_module_proto_rawDescOnce sync.Once
