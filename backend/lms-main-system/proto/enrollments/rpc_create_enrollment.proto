@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package lms.enrollments;
+
+option go_package = "github.com/multi-tenant-cms-golang/lms-sys/protogen/enrollment";
+
+import "google/protobuf/timestamp.proto";
+
+import "enrollments/enrollment.proto";
+
+message CreateEnrollmentRequest {
+  string student_id = 1;
+  string course_id  = 2;
+}
+
+message CreateEnrollmentResponse {
+  EnrollmentResponse enrollment = 1;
+}

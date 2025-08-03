@@ -18,10 +18,12 @@ import (
 	authSrv "github.com/multi-tenants-cms-golang/lms-sys/app/rpc/authentication"
 	lsv "github.com/multi-tenants-cms-golang/lms-sys/app/rpc/lesson"
 	msv "github.com/multi-tenants-cms-golang/lms-sys/app/rpc/module"
+	esv "github.com/multi-tenants-cms-golang/lms-sys/app/rpc/enrollment"
 	"github.com/multi-tenants-cms-golang/lms-sys/internal/types"
 	authpb "github.com/multi-tenants-cms-golang/lms-sys/protogen/authentication"
 	lspb "github.com/multi-tenants-cms-golang/lms-sys/protogen/lesson"
 	mspb "github.com/multi-tenants-cms-golang/lms-sys/protogen/modules"
+	epb "github.com/multi-tenants-cms-golang/lms-sys/protogen/enrollments"
 	"github.com/oklog/run"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -116,6 +118,10 @@ func (s *Server) Run() error {
 	// Lesson
 	lessonService := lsv.NewLessonService(s.store, s.logger)
 	lspb.RegisterLessonServiceServer(grpcServer, lessonService)
+
+	// Enrollment
+	enrollmentService := esv.NewEnrollmentService(s.store, s.logger)
+	epb.RegisterEnrollmentServiceServer(grpcServer, enrollmentService)
 
 	//fb.RegisterFileServiceServer(grpcServer, fileService)
 	var g run.Group

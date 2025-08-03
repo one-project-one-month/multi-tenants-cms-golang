@@ -278,6 +278,27 @@ type Enrollment struct {
 	UpdatedAt      pgtype.Timestamp `json:"updated_at"`
 }
 
+type EnrollmentDetails struct {
+	EnrollmentID   uuid.UUID        `json:"enrollment_id"`
+	EnrollmentDate pgtype.Timestamp `json:"enrollment_date"`
+	Progress       pgtype.Numeric   `json:"progress"`
+	Status         EnrollmentType   `json:"status"`
+	DueDate        pgtype.Timestamp `json:"due_date"`
+	CreatedAt      pgtype.Timestamp `json:"created_at"`
+	StudentID      uuid.UUID        `json:"student_id"`
+	StudentName    string           `json:"student_name"`
+	StudentEmail   string           `json:"student_email"`
+	CourseID       uuid.UUID        `json:"course_id"`
+	CourseTitle    string           `json:"course_title"`
+	CourseCategory uuid.UUID        `json:"course_category"`
+	OwnedBy        uuid.UUID        `json:"owned_by"`
+	InstructorID   uuid.UUID        `json:"instructor_id"`
+	CategoryID     uuid.UUID        `json:"category_id"`
+	CategoryName   string           `json:"category_name"`
+	Namespace      string           `json:"namespace"`
+	TenantID       uuid.UUID        `json:"tenant_id"`
+}
+
 type Lesson struct {
 	LessonID     uuid.UUID        `json:"lesson_id"`
 	Title        string           `json:"title"`
@@ -416,4 +437,16 @@ type TenantsMembers struct {
 	JoinedDate   pgtype.Timestamp `json:"joined_date"`
 	IsActive     pgtype.Bool      `json:"is_active"`
 	LmsUserEmail string           `json:"lms_user_email"`
+}
+
+type UserRoleDetails struct {
+	LmsUserID       uuid.UUID   `json:"lms_user_id"`
+	LmsUserName     string      `json:"lms_user_name"`
+	LmsUserEmail    string      `json:"lms_user_email"`
+	LmsRoleID       uuid.UUID   `json:"lms_role_id"`
+	LmsRoleName     LmsRoleType `json:"lms_role_name"`
+	TenantID        uuid.UUID   `json:"tenant_id"`
+	Namespace       string      `json:"namespace"`
+	TenantIsActive  pgtype.Bool `json:"tenant_is_active"`
+	RoleMapIsActive pgtype.Bool `json:"role_map_is_active"`
 }
