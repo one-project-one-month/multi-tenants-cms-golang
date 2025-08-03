@@ -49,19 +49,21 @@ func (CMSWholeSysRole) TableName() string {
 }
 
 type CMSUser struct {
-	CMSUserID    uuid.UUID        `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"cms_user_id"`
-	CMSUserName  string           `gorm:"size:100;not null" json:"cms_user_name"`
-	CMSUserEmail string           `gorm:"size:150;not null;unique" json:"cms_user_email"`
-	CMSNameSpace *string          `gorm:"size:100" json:"cms_name_space,omitempty"`
-	Password     string           `gorm:"size:90;not null" json:"-"`
-	CMSUserRole  string           `gorm:"size:15;not null" json:"cms_user_role"`
-	Verified     bool             `gorm:"default:false" json:"verified"`
-	CreatedAt    time.Time        `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt    time.Time        `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-	Role         CMSWholeSysRole  `gorm:"foreignKey:CMSUserRole;references:RoleName" json:"role,omitempty"`
-	Purchases    []CMSCusPurchase `gorm:"foreignKey:CMSCusID" json:"purchases,omitempty"`
-	MFATokens    []MFAToken       `gorm:"foreignKey:UserID" json:"mfa_tokens,omitempty"`
-	MFAEnabled   bool             `gorm:"default:false" json:"mfa_enabled"`
+	CMSUserID            uuid.UUID        `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"cms_user_id"`
+	CMSUserName          string           `gorm:"size:100;not null" json:"cms_user_name"`
+	CMSUserEmail         string           `gorm:"size:150;not null;unique" json:"cms_user_email"`
+	CMSNameSpace         *string          `gorm:"size:100" json:"cms_name_space,omitempty"`
+	Password             string           `gorm:"size:90;not null" json:"-"`
+	CMSUserRole          string           `gorm:"size:15;not null" json:"cms_user_role"`
+	Verified             bool             `gorm:"default:false" json:"verified"`
+	CreatedAt            time.Time        `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt            time.Time        `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
+	Role                 CMSWholeSysRole  `gorm:"foreignKey:CMSUserRole;references:RoleName" json:"role,omitempty"`
+	Purchases            []CMSCusPurchase `gorm:"foreignKey:CMSCusID" json:"purchases,omitempty"`
+	MFATokens            []MFAToken       `gorm:"foreignKey:UserID" json:"mfa_tokens,omitempty"`
+	MFAEnabled           bool             `gorm:"default:false" json:"mfa_enabled"`
+	NumberOfRequestPages int64            `json:"-"`
+	NumberOfPagesOwned   int64            `json:"-"`
 }
 
 func (CMSUser) TableName() string {

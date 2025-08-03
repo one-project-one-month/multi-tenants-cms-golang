@@ -35,22 +35,29 @@ type TokenResponse struct {
 }
 
 type OwnerResponse struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Role      string    `json:"role"`
-	NameSpace string    `json:"name_space"`
-	Verified  bool      `json:"verified"`
+	ID                   uuid.UUID `json:"id"`
+	Name                 string    `json:"name"`
+	Email                string    `json:"email"`
+	Role                 *string   `json:"role"`
+	NameSpace            string    `json:"name_space"`
+	Verified             bool      `json:"verified"`
+	NumberOfRequestPages *int64    `json:"numberOfRequestPages,omitempty"`
+	NumberOfPagesOwned   *int64    `json:"numberOfPagesOwned,omitempty"`
+}
+
+type RoleResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
 }
 
 type PageRequestResponse struct {
-	ID          uuid.UUID `json:"id"`
-	OwnerID     uuid.UUID `json:"ownerId"`
-	RequestType string    `json:"requestType"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	Status		RequestStatus	`json:"status"`
-	PageUrl     *string   `json:"pageUrl"`
-	LogoUrl     *string   `json:"logoUrl"`
-	CreatedAt   time.Time `json:"createdAt"`
+	ID          uuid.UUID     `json:"id"`
+	OwnerID     uuid.UUID     `json:"ownerId"`
+	RequestType string        `json:"requestType"`
+	Title       string        `json:"title"`
+	Description string        `json:"description"`
+	Status      RequestStatus `json:"status"`
+	PageUrl     *string       `json:"pageUrl"`
+	LogoUrl     *string       `json:"logoUrl"`
+	CreatedAt   time.Time     `json:"createdAt"`
 }

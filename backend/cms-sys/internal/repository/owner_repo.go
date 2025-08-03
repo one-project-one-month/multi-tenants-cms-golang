@@ -51,7 +51,16 @@ func (r *OwnerRepositoryImpl) UpdateOwner(owner *types.CMSUser) error {
 
 func (r *OwnerRepositoryImpl) GetAllOwners() ([]types.CMSUser, error) {
 	var owners []types.CMSUser
-	if err := r.db.Find(&owners).Error; err != nil {
+	err := r.db.Model(&types.CMSUser{}).
+		Preload("Role").
+		Select(`"cms_user".*, 
+            (SELECT count(*) FROM "user_page_request" WHERE "user_page_request"."user_id" = "cms_user"."cms_user_id") as number_of_request_pages,
+            (SELECT count(*) FROM "cms_page" WHERE "cms_page"."owner_id" = "cms_user"."cms_user_id") as number_of_pages_owned`).
+		Joins(`JOIN "cms_whole_sys_role" ON "cms_whole_sys_role"."role_name" = "cms_user"."cms_user_role"`).
+		Where(`"cms_whole_sys_role"."role_name" = ?`, types.CMSCustomer).
+		Find(&owners).Error
+
+	if err != nil {
 		return nil, err
 	}
 	return owners, nil
