@@ -219,7 +219,7 @@ services:
 
 #  lms-main-system:
 #    build:
-#      context: ./backend/lms-sys
+#      context: ./backend/lms-main-system
 #      dockerfile: Dockerfile
 #    networks:
 #      - whole-system-network

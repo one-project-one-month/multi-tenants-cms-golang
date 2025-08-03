@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"github.com/multi-tenants-cms-golang/cms-sys/internal/mapper"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,7 +16,7 @@ import (
 type OwnerService interface {
 	Create(req types.OwnerCreateRequest) (*types.OwnerResponse, error)
 	Update(id string, req types.OwnerUpdateRequest) (*types.OwnerResponse, error)
-	GetAllOwners() ([]types.OwnerResponse, error)
+	GetAllOwners() ([]*types.OwnerResponse, error)
 	GetOwnerByID(id string) (*types.OwnerResponse, error)
 	BulkDeleteOwners(ids []string, force bool) error
 }
@@ -69,14 +70,14 @@ func (os *OwnerServiceImpl) Create(req types.OwnerCreateRequest) (*types.OwnerRe
 		return nil, errors.New("failed to create owner")
 	}
 
-	return &types.OwnerResponse{
-		ID:        owner.CMSUserID,
-		Name:      owner.CMSUserName,
-		Email:     owner.CMSUserEmail,
-		Role:      owner.CMSUserRole,
-		NameSpace: *owner.CMSNameSpace,
-		Verified:  owner.Verified,
-	}, nil
+	createdOwner, err := os.repo.GetOwnerByID(owner.CMSUserID.String())
+	if err != nil {
+		os.log.WithError(err).Error("Failed to retrieve newly created owner")
+		return nil, err
+	}
+
+	ownerResponse := mapper.ToOwnerResponse(createdOwner)
+	return ownerResponse, nil
 }
 
 func (os *OwnerServiceImpl) Update(id string, req types.OwnerUpdateRequest) (*types.OwnerResponse, error) {
@@ -93,16 +94,11 @@ func (os *OwnerServiceImpl) Update(id string, req types.OwnerUpdateRequest) (*ty
 		return nil, errors.New("failed to update owner")
 	}
 
-	return &types.OwnerResponse{
-		ID:        owner.CMSUserID,
-		Name:      owner.CMSUserName,
-		Email:     owner.CMSUserEmail,
-		Role:      owner.CMSUserRole,
-		NameSpace: *owner.CMSNameSpace,
-		Verified:  owner.Verified,
-	}, nil
+	ownerResponse := mapper.ToOwnerResponse(owner)
+	return ownerResponse, nil
 }
 
+/*
 func (os *OwnerServiceImpl) GetAllOwners() ([]types.OwnerResponse, error) {
 	owners, err := os.repo.GetAllOwners()
 	if err != nil {
@@ -130,6 +126,17 @@ func (os *OwnerServiceImpl) GetAllOwners() ([]types.OwnerResponse, error) {
 
 	return responses, nil
 }
+*/
+
+func (os *OwnerServiceImpl) GetAllOwners() ([]*types.OwnerResponse, error) {
+	owners, err := os.repo.GetAllOwners()
+	if err != nil {
+		os.log.WithError(err).Error("Failed to get all owners from repository")
+		return nil, err
+	}
+
+	return mapper.ToOwnerListResponse(owners), nil
+}
 
 func (os *OwnerServiceImpl) GetOwnerByID(id string) (*types.OwnerResponse, error) {
 	owner, err := os.repo.GetById(id)
@@ -138,19 +145,8 @@ func (os *OwnerServiceImpl) GetOwnerByID(id string) (*types.OwnerResponse, error
 		return nil, errors.New("failed to fetch owner")
 	}
 
-	var nameSpace string
-	if owner.CMSNameSpace != nil {
-		nameSpace = *owner.CMSNameSpace
-	}
-
-	return &types.OwnerResponse{
-		ID:        owner.CMSUserID,
-		Name:      owner.CMSUserName,
-		Email:     owner.CMSUserEmail,
-		Role:      owner.CMSUserRole,
-		NameSpace: nameSpace,
-		Verified:  owner.Verified,
-	}, nil
+	ownerResponse := mapper.ToOwnerResponse(owner)
+	return ownerResponse, nil
 }
 
 func (os *OwnerServiceImpl) BulkDeleteOwners(ids []string, force bool) error {
