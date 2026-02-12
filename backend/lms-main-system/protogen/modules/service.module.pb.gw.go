@@ -215,7 +215,7 @@ func RegisterModuleServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.modules.ModuleService/CreateModule", runtime.WithHTTPPathPattern("/lms/v1/module"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.modules.ModuleService/CreateModule", runtime.WithHTTPPathPattern("/lms/v1/modules"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -235,7 +235,7 @@ func RegisterModuleServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.modules.ModuleService/UpdateModule", runtime.WithHTTPPathPattern("/lms/v1/module/{module_id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.modules.ModuleService/UpdateModule", runtime.WithHTTPPathPattern("/lms/v1/modules/{module_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -255,7 +255,7 @@ func RegisterModuleServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.modules.ModuleService/DeleteModules", runtime.WithHTTPPathPattern("/lms/v1/module"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.modules.ModuleService/DeleteModules", runtime.WithHTTPPathPattern("/lms/v1/modules"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -275,7 +275,7 @@ func RegisterModuleServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.modules.ModuleService/ListModules", runtime.WithHTTPPathPattern("/lms/v1/module"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.modules.ModuleService/ListModules", runtime.WithHTTPPathPattern("/lms/v1/modules"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -295,7 +295,7 @@ func RegisterModuleServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.modules.ModuleService/GetModule", runtime.WithHTTPPathPattern("/lms/v1/module/{module_id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/lms.modules.ModuleService/GetModule", runtime.WithHTTPPathPattern("/lms/v1/modules/{module_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -353,7 +353,7 @@ func RegisterModuleServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.modules.ModuleService/CreateModule", runtime.WithHTTPPathPattern("/lms/v1/module"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.modules.ModuleService/CreateModule", runtime.WithHTTPPathPattern("/lms/v1/modules"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -370,7 +370,7 @@ func RegisterModuleServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.modules.ModuleService/UpdateModule", runtime.WithHTTPPathPattern("/lms/v1/module/{module_id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.modules.ModuleService/UpdateModule", runtime.WithHTTPPathPattern("/lms/v1/modules/{module_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -387,7 +387,7 @@ func RegisterModuleServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.modules.ModuleService/DeleteModules", runtime.WithHTTPPathPattern("/lms/v1/module"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.modules.ModuleService/DeleteModules", runtime.WithHTTPPathPattern("/lms/v1/modules"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -404,7 +404,7 @@ func RegisterModuleServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.modules.ModuleService/ListModules", runtime.WithHTTPPathPattern("/lms/v1/module"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.modules.ModuleService/ListModules", runtime.WithHTTPPathPattern("/lms/v1/modules"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -421,7 +421,7 @@ func RegisterModuleServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.modules.ModuleService/GetModule", runtime.WithHTTPPathPattern("/lms/v1/module/{module_id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/lms.modules.ModuleService/GetModule", runtime.WithHTTPPathPattern("/lms/v1/modules/{module_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -438,11 +438,11 @@ func RegisterModuleServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 }
 
 var (
-	pattern_ModuleService_CreateModule_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"lms", "v1", "module"}, ""))
-	pattern_ModuleService_UpdateModule_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"lms", "v1", "module", "module_id"}, ""))
-	pattern_ModuleService_DeleteModules_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"lms", "v1", "module"}, ""))
-	pattern_ModuleService_ListModules_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"lms", "v1", "module"}, ""))
-	pattern_ModuleService_GetModule_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"lms", "v1", "module", "module_id"}, ""))
+	pattern_ModuleService_CreateModule_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"lms", "v1", "modules"}, ""))
+	pattern_ModuleService_UpdateModule_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"lms", "v1", "modules", "module_id"}, ""))
+	pattern_ModuleService_DeleteModules_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"lms", "v1", "modules"}, ""))
+	pattern_ModuleService_ListModules_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"lms", "v1", "modules"}, ""))
+	pattern_ModuleService_GetModule_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"lms", "v1", "modules", "module_id"}, ""))
 )
 
 var (

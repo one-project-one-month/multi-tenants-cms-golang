@@ -633,7 +633,7 @@
         ]
       }
     },
-    "/lms/v1/module": {
+    "/lms/v1/modules": {
       "get": {
         "summary": "Get all module",
         "description": "List/Get all module",
@@ -657,8 +657,8 @@
         ]
       },
       "delete": {
-        "summary": "Delete module",
-        "description": "Delete single or multiple module",
+        "summary": "Delete module(s)",
+        "description": "Delete single or multiple modules",
         "operationId": "ModuleService_DeleteModules",
         "responses": {
           "200": {
@@ -676,20 +676,17 @@
         },
         "parameters": [
           {
-            "name": "ids",
-            "in": "query",
-            "required": false,
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "collectionFormat": "multi"
-          },
-          {
             "name": "forceDelete",
             "in": "query",
             "required": false,
             "type": "boolean"
+          },
+          {
+            "name": "X-Module-Ids",
+            "description": "List of module ids to delete",
+            "in": "header",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [
@@ -729,7 +726,37 @@
         ]
       }
     },
-    "/lms/v1/module/{moduleId}": {
+    "/lms/v1/modules/lessons": {
+      "get": {
+        "operationId": "LessonService_GetAllLessonsByModuleId",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/lessonGetLessonsByModuleIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "moduleId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LessonService"
+        ]
+      }
+    },
+    "/lms/v1/modules/{moduleId}": {
       "get": {
         "summary": "Get a module",
         "description": "Get a module",
@@ -796,36 +823,6 @@
         ],
         "tags": [
           "ModuleService"
-        ]
-      }
-    },
-    "/lms/v1/modules/lessons": {
-      "get": {
-        "operationId": "LessonService_GetAllLessonsByModuleId",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/lessonGetLessonsByModuleIdResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "moduleId",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "LessonService"
         ]
       }
     },

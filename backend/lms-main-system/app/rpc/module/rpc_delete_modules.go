@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/multi-tenants-cms-golang/lms-sys/internal/convert/module"
@@ -19,7 +20,7 @@ import (
 func (ms *ModulesService) DeleteModules(ctx context.Context, req *mpb.DeleteModulesRequest) (*mpb.DeleteModulesResponse, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, utils.ErrMissingOrganization().ToGRPCStatus()
+		return nil, status.Error(codes.InvalidArgument, "failed to retrieve metadata")
 	}
 
 	orgValues := md.Get("x-organisation")
@@ -29,16 +30,28 @@ func (ms *ModulesService) DeleteModules(ctx context.Context, req *mpb.DeleteModu
 
 	orgName := orgValues[0]
 
+	headerValues := md.Get("x-module-ids")
+	if len(headerValues) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "module-ids header required")
+	}
+
+	var module_ids []string
+	if len(headerValues) == 1 {
+		module_ids = strings.Split(headerValues[0], ",")
+	} else {
+		module_ids = headerValues
+	}
+
 	ms.logger.WithFields(logrus.Fields{
 		"method":     "DeleteModules",
-		"module_ids": req.Ids,
+		"module_ids": strings.Join(module_ids, ", "),
 		"org":        orgName,
 	}).Info("Deleting modules")
 
 	dbCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	for _, id := range req.Ids {
+	for _, id := range module_ids {
 		if id == "" {
 			return nil, status.Error(codes.InvalidArgument, "module id is required")
 		}

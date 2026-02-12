@@ -23,8 +23,7 @@ const (
 
 type DeleteModulesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ids           []string               `protobuf:"bytes,1,rep,name=ids,proto3" json:"ids,omitempty"`
-	ForceDelete   bool                   `protobuf:"varint,2,opt,name=force_delete,json=forceDelete,proto3" json:"force_delete,omitempty"`
+	ForceDelete   bool                   `protobuf:"varint,1,opt,name=force_delete,json=forceDelete,proto3" json:"force_delete,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -57,13 +56,6 @@ func (x *DeleteModulesRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use DeleteModulesRequest.ProtoReflect.Descriptor instead.
 func (*DeleteModulesRequest) Descriptor() ([]byte, []int) {
 	return file_modules_rpc_delete_modules_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *DeleteModulesRequest) GetIds() []string {
-	if x != nil {
-		return x.Ids
-	}
-	return nil
 }
 
 func (x *DeleteModulesRequest) GetForceDelete() bool {
@@ -121,10 +113,9 @@ var File_modules_rpc_delete_modules_proto protoreflect.FileDescriptor
 
 const file_modules_rpc_delete_modules_proto_rawDesc = "" +
 	"\n" +
-	" modules/rpc_delete_modules.proto\x12\vlms.modules\"K\n" +
-	"\x14DeleteModulesRequest\x12\x10\n" +
-	"\x03ids\x18\x01 \x03(\tR\x03ids\x12!\n" +
-	"\fforce_delete\x18\x02 \x01(\bR\vforceDelete\"1\n" +
+	" modules/rpc_delete_modules.proto\x12\vlms.modules\"9\n" +
+	"\x14DeleteModulesRequest\x12!\n" +
+	"\fforce_delete\x18\x01 \x01(\bR\vforceDelete\"1\n" +
 	"\x15DeleteModulesResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessageB<Z:github.com/multi-tenant-cms-golang/lms-sys/protogen/moduleb\x06proto3"
 

@@ -27,6 +27,7 @@ var File_modules_service_module_proto protoreflect.FileDescriptor
 
 const file_modules_service_module_proto_rawDesc = "" +
 	"\n" +
+
 	"\x1cmodules/service.module.proto\x12\vlms.modules\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fmodules/rpc_create_module.proto\x1a modules/rpc_delete_modules.proto\x1a\x1cmodules/rpc_get_module.proto\x1a\x1emodules/rpc_list_modules.proto\x1a\x1fmodules/rpc_update_module.proto2\x90\x06\n" +
 	"\rModuleService\x12\x95\x01\n" +
 	"\fCreateModule\x12 .lms.modules.CreateModuleRequest\x1a!.lms.modules.CreateModuleResponse\"@\x92A$\x12\rCreate module\x1a\x13Create a new module\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/lms/v1/module\x12\xa7\x01\n" +
@@ -34,6 +35,7 @@ const file_modules_service_module_proto_rawDesc = "" +
 	"\rDeleteModules\x12!.lms.modules.DeleteModulesRequest\x1a\".lms.modules.DeleteModulesResponse\"J\x92A1\x12\rDelete module\x1a Delete single or multiple module\x82\xd3\xe4\x93\x02\x10*\x0e/lms/v1/module\x12\x87\x01\n" +
 	"\vListModules\x12\x16.google.protobuf.Empty\x1a .lms.modules.ListModulesResponse\">\x92A%\x12\x0eGet all module\x1a\x13List/Get all module\x82\xd3\xe4\x93\x02\x10\x12\x0e/lms/v1/module\x12\x8d\x01\n" +
 	"\tGetModule\x12\x1d.lms.modules.GetModuleRequest\x1a\x1e.lms.modules.GetModuleResponse\"A\x92A\x1c\x12\fGet a module\x1a\fGet a module\x82\xd3\xe4\x93\x02\x1c\x12\x1a/lms/v1/module/{module_id}B<Z:github.com/multi-tenant-cms-golang/lms-sys/protogen/moduleb\x06proto3"
+
 
 var file_modules_service_module_proto_goTypes = []any{
 	(*CreateModuleRequest)(nil),   // 0: lms.modules.CreateModuleRequest

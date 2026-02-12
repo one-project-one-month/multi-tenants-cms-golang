@@ -17,7 +17,7 @@ import "modules/rpc_update_module.proto";
 service ModuleService {
   rpc CreateModule(CreateModuleRequest) returns (CreateModuleResponse) {
     option (google.api.http) = {
-      post: "/lms/v1/module";
+      post: "/lms/v1/modules";
       body: "*";
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -28,7 +28,7 @@ service ModuleService {
 
   rpc UpdateModule(UpdateModuleRequest) returns (UpdateModuleResponse) {
     option (google.api.http) = {
-      put: "/lms/v1/module/{module_id}";
+      put: "/lms/v1/modules/{module_id}";
       body: "*";
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -39,17 +39,25 @@ service ModuleService {
 
   rpc DeleteModules(DeleteModulesRequest) returns (DeleteModulesResponse) {
     option (google.api.http) = {
-      delete: "/lms/v1/module";
+      delete: "/lms/v1/modules";
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      description: "Delete single or multiple module";
-      summary: "Delete module";
+      description: "Delete single or multiple modules";
+      summary: "Delete module(s)";
+      parameters: {
+        headers: {
+          name: "X-Module-Ids"
+          required: true
+          type: STRING
+          description: "List of module ids to delete"
+        } 
+      }
     };
   }
 
   rpc ListModules(google.protobuf.Empty) returns (ListModulesResponse) {
     option (google.api.http) = {
-      get: "/lms/v1/module";
+      get: "/lms/v1/modules";
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       description: "List/Get all module";
@@ -59,7 +67,7 @@ service ModuleService {
 
   rpc GetModule(GetModuleRequest) returns (GetModuleResponse) {
     option (google.api.http) = {
-      get: "/lms/v1/module/{module_id}";
+      get: "/lms/v1/modules/{module_id}";
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       description: "Get a module";

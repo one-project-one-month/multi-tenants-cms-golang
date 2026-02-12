@@ -25,7 +25,7 @@ func (ls *LessonService) UpdateLesson(ctx context.Context, req *lspb.UpdateLesso
 		"params": req,
 	}).Info("Updating Lesson by ID")
 
-		md, ok := metadata.FromIncomingContext(ctx)
+	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, utils.ErrMissingOrganization().ToGRPCStatus()
 	}
@@ -59,7 +59,7 @@ func (ls *LessonService) UpdateLesson(ctx context.Context, req *lspb.UpdateLesso
 	}
 
 	args := repo.GetModuleByIDWithTenantParams{
-		ModuleID: global.ConvertStringToGoogleUUID(req.ModuleId),
+		ModuleID:  global.ConvertStringToGoogleUUID(req.ModuleId),
 		Namespace: orgName,
 	}
 
